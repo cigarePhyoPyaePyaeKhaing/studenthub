@@ -268,3 +268,5 @@ After obtaining the actual Railway HTTPS domain, manually verify:
 11. Mobile layout on the deployed HTTPS site
 
 These are manual production checks. A successful Maven or Docker build does not prove that Aiven, Brevo, Railway routing, or browser behavior is configured correctly.
+#   s t u d e n t h u b  
+ 
