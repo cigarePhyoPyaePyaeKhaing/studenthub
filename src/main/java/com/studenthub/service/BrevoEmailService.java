@@ -1,18 +1,44 @@
 package com.studenthub.service;
 
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.MessagingException;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Properties;
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
 
 public class BrevoEmailService implements EmailService {
+    static final URI API_ENDPOINT = URI.create("https://api.brevo.com/v3/smtp/email");
+    private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
+
+    interface Configuration {
+        String value(String name);
+    }
+
+    interface Transport {
+        int send(HttpRequest request) throws IOException, InterruptedException;
+    }
+
+    private final Transport transport;
+    private final Configuration configuration;
+    private final ObjectMapper objectMapper;
+
+    public BrevoEmailService() {
+        this(new JavaHttpTransport(), System::getenv, new ObjectMapper());
+    }
+
+    BrevoEmailService(Transport transport, Configuration configuration, ObjectMapper objectMapper) {
+        this.transport = transport;
+        this.configuration = configuration;
+        this.objectMapper = objectMapper;
+    }
+
     @Override
     public void sendVerificationOtp(String recipient, String fullName, String otp)
             throws EmailServiceException {
@@ -34,57 +60,63 @@ public class BrevoEmailService implements EmailService {
                 + purpose + "\n\n" + otp + "\n\nThis code expires in 10 minutes.\n\n" + warning;
     }
 
-    private void send(String recipient, String subject, String content) throws EmailServiceException {
-        String host = required("BREVO_SMTP_HOST");
-        String port = required("BREVO_SMTP_PORT");
-        String username = required("BREVO_SMTP_USERNAME");
-        String password = required("BREVO_SMTP_PASSWORD");
+    private void send(String recipient, String subject, String textContent) throws EmailServiceException {
+        String apiKey = required("BREVO_API_KEY");
         String fromEmail = required("BREVO_FROM_EMAIL");
-        String fromName = required("BREVO_FROM_NAME");
+        String configuredName = configuration.value("BREVO_FROM_NAME");
+        String fromName = configuredName == null || configuredName.isBlank() ? "StudentHub" : configuredName.trim();
 
-        if (!"smtp-relay.brevo.com".equalsIgnoreCase(host.trim())) {
-            throw new EmailServiceException(
-                    "BREVO_SMTP_HOST must be smtp-relay.brevo.com for the Brevo SMTP relay.", null);
-        }
-        if (!"587".equals(port.trim())) {
-            throw new EmailServiceException("BREVO_SMTP_PORT must be 587 for STARTTLS.", null);
-        }
-
-        Properties properties = new Properties();
-        properties.put("mail.smtp.host", host);
-        properties.put("mail.smtp.port", port);
-        properties.put("mail.smtp.auth", "true");
-        properties.put("mail.smtp.starttls.enable", "true");
-        properties.put("mail.smtp.starttls.required", "true");
-        properties.put("mail.smtp.connectiontimeout", "10000");
-        properties.put("mail.smtp.timeout", "10000");
-        properties.put("mail.smtp.writetimeout", "10000");
-
-        Session session = Session.getInstance(properties, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                return new PasswordAuthentication(username, password);
-            }
-        });
-
+        HttpRequest request = HttpRequest.newBuilder(API_ENDPOINT)
+                .timeout(REQUEST_TIMEOUT)
+                .header("accept", "application/json")
+                .header("content-type", "application/json")
+                .header("api-key", apiKey)
+                .POST(HttpRequest.BodyPublishers.ofString(json(fromEmail, fromName, recipient, subject, textContent)))
+                .build();
         try {
-            MimeMessage email = new MimeMessage(session);
-            // BREVO_FROM_EMAIL must be a sender address verified in the Brevo account.
-            email.setFrom(new InternetAddress(fromEmail, fromName, StandardCharsets.UTF_8.name()));
-            email.setRecipient(Message.RecipientType.TO, new InternetAddress(recipient));
-            email.setSubject(subject, StandardCharsets.UTF_8.name());
-            email.setText(content, StandardCharsets.UTF_8.name());
-            Transport.send(email);
-        } catch (MessagingException | java.io.UnsupportedEncodingException exception) {
-            throw new EmailServiceException("Transactional email could not be sent.", exception);
+            int status = transport.send(request);
+            if (status < 200 || status >= 300) {
+                throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null);
+            }
+        } catch (InterruptedException exception) {
+            Thread.currentThread().interrupt();
+            throw new EmailServiceException("Brevo email API request was interrupted.", exception);
+        } catch (IOException exception) {
+            throw new EmailServiceException("Brevo email API is temporarily unavailable.", exception);
+        }
+    }
+
+    private String json(String fromEmail, String fromName, String recipient, String subject, String textContent)
+            throws EmailServiceException {
+        Map<String, Object> body = Map.of(
+                "sender", Map.of("email", fromEmail, "name", fromName),
+                "to", List.of(Map.of("email", recipient)),
+                "subject", subject,
+                "textContent", textContent);
+        try {
+            return objectMapper.writeValueAsString(body);
+        } catch (JsonProcessingException exception) {
+            throw new EmailServiceException("Email request could not be prepared.", exception);
         }
     }
 
     private String required(String name) throws EmailServiceException {
-        String value = System.getenv(name);
+        String value = configuration.value(name);
         if (value == null || value.isBlank()) {
             throw new EmailServiceException("Required email configuration is missing: " + name, null);
         }
-        return value;
+        return value.trim();
+    }
+
+    private static final class JavaHttpTransport implements Transport {
+        private final HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(CONNECT_TIMEOUT)
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .build();
+
+        @Override
+        public int send(HttpRequest request) throws IOException, InterruptedException {
+            return client.send(request, HttpResponse.BodyHandlers.discarding()).statusCode();
+        }
     }
 }

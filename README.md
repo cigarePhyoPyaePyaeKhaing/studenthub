@@ -11,7 +11,7 @@ StudentHub is a server-rendered university community application for UIT student
 - Maven WAR packaging
 - Apache Tomcat 10.1
 - Bootstrap 5 plus project CSS
-- BCrypt passwords and Brevo SMTP OTP delivery
+- BCrypt passwords and Brevo HTTPS Transactional Email API OTP delivery
 
 ## Requirements
 
@@ -19,7 +19,7 @@ StudentHub is a server-rendered university community application for UIT student
 - Maven 3.9+
 - Apache Tomcat 10.1 (the documented local setup uses port `8081`)
 - MySQL 8 (the documented local setup uses port `3307`)
-- A Brevo SMTP account when registration verification and password reset email are required
+- A Brevo account/API key when registration verification and password reset email are required
 
 ## Database setup
 
@@ -56,13 +56,10 @@ $env:STUDENTHUB_DB_USER = 'your_mysql_user'
 $env:STUDENTHUB_DB_PASSWORD = 'your_mysql_password'
 ```
 
-Email verification and password reset use:
+Email verification and password reset use Brevo's HTTPS Transactional Email API:
 
 ```text
-BREVO_SMTP_HOST
-BREVO_SMTP_PORT
-BREVO_SMTP_USERNAME
-BREVO_SMTP_PASSWORD
+BREVO_API_KEY
 BREVO_FROM_EMAIL
 BREVO_FROM_NAME
 ```
@@ -182,7 +179,7 @@ Railway
    |
    +---- verified TLS ----> Aiven MySQL
    |
-   +---- STARTTLS -------> Brevo SMTP
+   +---- HTTPS ----------> Brevo Transactional Email API
 ```
 
 Vercel is not required for the current StudentHub architecture. Railway serves both the Jakarta backend and JSP-rendered frontend. JSP cannot be deployed directly to Vercel, and introducing a duplicate frontend would add unnecessary authentication and CORS complexity. `FRONTEND_URL` and `LOCAL_FRONTEND_URL` are optional CORS allowlist values only if an independent `/api/*` client is introduced later.
@@ -196,10 +193,7 @@ APP_ENV=production
 STUDENTHUB_DB_URL=jdbc:mysql://AIVEN_HOST:AIVEN_PORT/AIVEN_DATABASE?sslMode=VERIFY_IDENTITY&characterEncoding=UTF-8&serverTimezone=UTC
 STUDENTHUB_DB_USER=AIVEN_USER
 STUDENTHUB_DB_PASSWORD=AIVEN_PASSWORD
-BREVO_SMTP_HOST=smtp-relay.brevo.com
-BREVO_SMTP_PORT=587
-BREVO_SMTP_USERNAME=BREVO_SMTP_LOGIN
-BREVO_SMTP_PASSWORD=BREVO_SMTP_PASSWORD
+BREVO_API_KEY=BREVO_TRANSACTIONAL_API_KEY
 BREVO_FROM_EMAIL=VERIFIED_SENDER_EMAIL
 BREVO_FROM_NAME=StudentHub
 ```
@@ -243,12 +237,12 @@ All JSP links and redirects use the servlet request context path, so both deploy
 
 With `APP_ENV=production`, the session cookie is `HttpOnly` and `Secure`. The packaged Tomcat context config sets `SameSite=Lax`. CSRF tokens and server-side authentication/authorization remain active behind Railway HTTPS.
 
-### Brevo production setup
+### Brevo HTTPS API production setup
 
 1. Verify the sender address or domain in Brevo.
-2. Create SMTP credentials and store them only in Railway variables.
-3. Use `smtp-relay.brevo.com` on port `587`; the application requires authentication and STARTTLS.
-4. Set `BREVO_FROM_EMAIL` to the verified sender and configure a non-secret sender name.
+2. Create a Brevo API key with the minimum permission needed to send transactional email and store it only as Railway's `BREVO_API_KEY` secret.
+3. StudentHub sends `POST https://api.brevo.com/v3/smtp/email` over HTTPS using Java 17's HTTP client; no outbound SMTP port is required.
+4. Set `BREVO_FROM_EMAIL` to the verified sender. `BREVO_FROM_NAME` may be supplied and otherwise defaults safely to `StudentHub`.
 5. Test registration verification and password reset after deployment. OTP values are hashed in the database and are not written to application output.
 
 ### Production smoke-test checklist
@@ -268,5 +262,3 @@ After obtaining the actual Railway HTTPS domain, manually verify:
 11. Mobile layout on the deployed HTTPS site
 
 These are manual production checks. A successful Maven or Docker build does not prove that Aiven, Brevo, Railway routing, or browser behavior is configured correctly.
-#   s t u d e n t h u b  
- 

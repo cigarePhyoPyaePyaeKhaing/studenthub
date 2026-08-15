@@ -3,7 +3,6 @@ package com.studenthub.controller;
 import com.studenthub.service.AuthService;
 import com.studenthub.service.EmailServiceException;
 import com.studenthub.util.CsrfToken;
-import jakarta.mail.MessagingException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -78,8 +77,7 @@ public class RegisterServlet extends HttpServlet {
             return "(none)";
         }
         String sanitized = value.replace('\r', ' ').replace('\n', ' ');
-        sanitized = redactEnvironmentValue(sanitized, "BREVO_SMTP_USERNAME");
-        sanitized = redactEnvironmentValue(sanitized, "BREVO_SMTP_PASSWORD");
+        sanitized = redactEnvironmentValue(sanitized, "BREVO_API_KEY");
         return sanitized;
     }
 
@@ -91,18 +89,6 @@ public class RegisterServlet extends HttpServlet {
             String prefix = "Registration email exception[" + position + "] ";
             getServletContext().log(prefix + "class=" + current.getClass().getName());
             getServletContext().log(prefix + "message=" + safeLogValue(current.getMessage()));
-
-            if (current instanceof MessagingException messagingException) {
-                Exception next = messagingException.getNextException();
-                int nextPosition = 1;
-                while (next != null && logged.add(next)) {
-                    String nextPrefix = prefix + "SMTP-next[" + nextPosition + "] ";
-                    getServletContext().log(nextPrefix + "class=" + next.getClass().getName());
-                    getServletContext().log(nextPrefix + "message=" + safeLogValue(next.getMessage()));
-                    next = next instanceof MessagingException nested ? nested.getNextException() : null;
-                    nextPosition++;
-                }
-            }
 
             current = current.getCause();
             position++;
