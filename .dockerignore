@@ -1,0 +1,15 @@
+target
+.git
+.gitignore
+.vscode
+.idea
+.env
+.env.*
+!.env.example
+*.log
+*.key
+*.pem
+*.p12
+*.pfx
+*.jks
+secrets

@@ -1,0 +1,46 @@
+:root { color-scheme: light; }
+.error-page { display:grid; min-height:100vh; margin:0; place-items:center; padding:1rem; color:#172554; background:#f3f6fb; }.error-card { width:min(100%,32rem); padding:2rem; border-radius:1.25rem; background:#fff; box-shadow:0 .75rem 2rem rgba(30,64,175,.1); text-align:center; }.error-card .brand-mark { margin:0 auto; }.error-code { margin:1.25rem 0 .25rem; color:#4f46e5; font-weight:800; letter-spacing:.12em; }.error-card a { display:inline-block; margin-top:1rem; color:#fff; background:#2563eb; border-radius:.7rem; padding:.7rem 1rem; text-decoration:none; }
+
+body {
+    font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.hero {
+    color: #172554;
+    background:
+        radial-gradient(circle at 15% 20%, rgba(59, 130, 246, 0.22), transparent 32%),
+        radial-gradient(circle at 85% 80%, rgba(99, 102, 241, 0.18), transparent 30%),
+        linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+}
+
+.brand-mark {
+    display: grid;
+    width: 4.5rem;
+    height: 4.5rem;
+    place-items: center;
+    border-radius: 1.25rem;
+    color: #fff;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    box-shadow: 0 1rem 2rem rgba(37, 99, 235, 0.25);
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.tagline { color: #475569; letter-spacing: 0.04em; }
+
+.status-card {
+    max-width: 34rem;
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(12px);
+}
+
+.status-dot {
+    display: inline-block;
+    width: 0.75rem;
+    height: 0.75rem;
+    margin-right: 0.6rem;
+    border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 0 0.35rem rgba(34, 197, 94, 0.14);
+}
