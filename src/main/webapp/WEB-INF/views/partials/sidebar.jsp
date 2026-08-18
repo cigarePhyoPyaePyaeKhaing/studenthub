@@ -15,6 +15,13 @@
             <a class="${currentPath.startsWith(pageContext.request.contextPath.concat('/admin/users')) ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/users">Users</a>
         </c:if>
     </div>
+    <div class="sidebar-theme">
+        <div class="theme-control" role="group" aria-label="Color theme">
+            <button type="button" data-theme-choice="light" aria-label="Use light theme">☀</button>
+            <button type="button" data-theme-choice="system" aria-label="Use system theme">◐</button>
+            <button type="button" data-theme-choice="dark" aria-label="Use dark theme">☾</button>
+        </div>
+    </div>
     <form method="post" action="${pageContext.request.contextPath}/logout" class="sidebar-logout">
         <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
         <button type="submit">Logout</button>

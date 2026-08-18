@@ -6,7 +6,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Home | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js"></script><link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
@@ -30,5 +30,5 @@
         <section class="side-card account-card"><div class="avatar avatar-large"><c:out value="${sessionScope.fullName.substring(0, 1)}" /></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role"><c:out value="${sessionScope.role}" /></span></section>
     </aside>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script><script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>

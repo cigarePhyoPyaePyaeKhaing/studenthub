@@ -4,7 +4,7 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Profile | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js"></script><link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css" rel="stylesheet">
 </head><body class="dashboard-body">
 <header class="mobile-header d-lg-none"><a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a><button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation">Menu</button></header>
