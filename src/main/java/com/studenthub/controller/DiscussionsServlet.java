@@ -17,6 +17,9 @@ public class DiscussionsServlet extends HttpServlet {
         long userId = (Long) request.getSession().getAttribute("userId");
         try {
             request.setAttribute("room", service.load(userId, request.getParameter("scope")));
+        } catch (SecurityException exception) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
         } catch (SQLException exception) {
             getServletContext().log("Discussion load failed: " + exception.getClass().getName());
             request.setAttribute("error", "Discussions are temporarily unavailable.");

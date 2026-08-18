@@ -107,10 +107,11 @@ CREATE TABLE IF NOT EXISTS reactions (
 CREATE TABLE IF NOT EXISTS chat_rooms (
     room_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     room_name VARCHAR(100) NOT NULL,
-    room_type ENUM('SECTION', 'SEMESTER', 'ALL') NOT NULL,
+    room_type ENUM('SECTION', 'SEMESTER', 'ALL', 'CR_SEMESTER', 'CR_ALL') NOT NULL,
     semester INT NULL,
     section_name VARCHAR(20) NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_chat_rooms_scope (room_type, semester, section_name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS messages (
@@ -123,7 +124,8 @@ CREATE TABLE IF NOT EXISTS messages (
     CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (user_id),
     INDEX idx_messages_room_id (room_id),
     INDEX idx_messages_created_at (created_at),
-    INDEX idx_messages_sender_id (sender_id)
+    INDEX idx_messages_sender_id (sender_id),
+    INDEX idx_messages_room_recent (room_id, created_at, message_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS notifications (
