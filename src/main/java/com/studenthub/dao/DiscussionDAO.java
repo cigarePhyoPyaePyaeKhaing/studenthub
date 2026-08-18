@@ -108,6 +108,19 @@ public class DiscussionDAO {
     }
 
     private long findOrCreateRoom(Connection connection, DiscussionTarget target) throws SQLException {
+        String lockName = "studenthub:room:" + target.scope() + ":" + target.semester() + ":" + target.sectionName();
+        try (PreparedStatement lock = connection.prepareStatement("SELECT GET_LOCK(?, 5)")) {
+            lock.setString(1, lockName);
+            try (ResultSet result = lock.executeQuery()) {
+                if (!result.next() || result.getInt(1) != 1) throw new SQLException("Could not acquire discussion room lock.");
+            }
+        }
+        // Keep the connection-scoped lock through the caller's commit. DBConnection returns a
+        // physical DriverManager connection, so closing it immediately after commit releases the lock.
+        return findOrCreateRoomWhileLocked(connection, target);
+    }
+
+    private long findOrCreateRoomWhileLocked(Connection connection, DiscussionTarget target) throws SQLException {
         String select = """
                 SELECT room_id FROM chat_rooms
                 WHERE room_type = ? AND semester <=> ? AND section_name <=> ?
