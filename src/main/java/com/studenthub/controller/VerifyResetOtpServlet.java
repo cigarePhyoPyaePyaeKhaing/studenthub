@@ -35,11 +35,11 @@ public class VerifyResetOtpServlet extends HttpServlet {
             catch (SQLException | com.studenthub.service.EmailServiceException exception) { getServletContext().log("Reset resend failed: " + exception.getClass().getName()); }
             request.setAttribute("message", "If an account matches the information provided, a new verification code has been sent."); doGet(request,response); return;
         }
-        if (!(value instanceof Long userId)) { request.setAttribute("error", "The code is incorrect or unavailable."); doGet(request,response); return; }
+        if (!(value instanceof Long userId)) { request.setAttribute("error", "Incorrect or expired code. Please try again."); doGet(request,response); return; }
         try {
             OtpService.VerificationResult result = authService.verifyPasswordReset(userId, request.getParameter("code"));
             if (result == OtpService.VerificationResult.SUCCESS) { request.getSession().setAttribute("passwordResetAuthorizedAt", Instant.now()); response.sendRedirect(request.getContextPath() + "/reset-password"); return; }
-            request.setAttribute("error", result == OtpService.VerificationResult.EXPIRED ? "This code has expired." : "The code is incorrect or unavailable.");
+            request.setAttribute("error", "Incorrect or expired code. Please try again.");
         } catch (SQLException exception) { getServletContext().log("Reset verification failed: " + exception.getClass().getName()); request.setAttribute("error", "Verification is temporarily unavailable."); }
         doGet(request, response);
     }
