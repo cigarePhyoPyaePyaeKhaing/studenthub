@@ -64,15 +64,35 @@ class BrevoEmailServiceTest {
                 .sendPasswordResetOtp("a@example.com", "A", "123456"));
     }
 
-    @Test void fourHundredAndFiveHundredResponsesFailWithoutResponseBodyOrSecret() {
-        for (int status : new int[]{400, 503}) {
+    @Test void unauthorizedResponsesAreClassifiedSeparately() {
+        for (int status : new int[]{401, 403}) {
             EmailServiceException error = assertThrows(EmailServiceException.class,
-                    () -> service(new CapturingTransport(status)).sendVerificationOtp(
+                    () -> service(new CapturingTransport(status, "{\"message\":\"unauthorized\"}")) .sendVerificationOtp(
                             "a@example.com", "A", "123456"));
-            assertTrue(error.getMessage().contains(String.valueOf(status)));
+            assertEquals(EmailServiceException.Reason.UNAUTHORIZED, error.reason());
+            assertEquals(status, error.providerStatus());
+        }
+    }
+
+    @Test void otherClientAndServerResponsesAreProviderFailures() {
+        for (int status : new int[]{400, 500}) {
+            EmailServiceException error = assertThrows(EmailServiceException.class,
+                    () -> service(new CapturingTransport(status, "{\"message\":\"provider rejected reset@example.com code 123456\"}"))
+                            .sendPasswordResetOtp("a@example.com", "A", "123456"));
+            assertEquals(EmailServiceException.Reason.PROVIDER, error.reason());
+            assertEquals(status, error.providerStatus());
             assertFalse(error.getMessage().contains(SECRET));
             assertFalse(error.getMessage().contains("123456"));
         }
+    }
+
+    @Test void providerResponseSanitizationRemovesSensitiveValues() {
+        String sanitized = BrevoEmailService.sanitizeProviderResponse(
+                "email=student@example.com otp=123456 api-key=" + SECRET + " password=hunter2");
+        assertFalse(sanitized.contains("student@example.com"));
+        assertFalse(sanitized.contains("123456"));
+        assertFalse(sanitized.contains(SECRET));
+        assertFalse(sanitized.contains("hunter2"));
     }
 
     @Test void networkFailureIsGenericAndDoesNotLeakKeyOrOtp() {
@@ -127,8 +147,13 @@ class BrevoEmailServiceTest {
 
     private static final class CapturingTransport implements BrevoEmailService.Transport {
         private final int status;
+        private final String responseBody;
         private HttpRequest request;
-        private CapturingTransport(int status) { this.status=status; }
-        public int send(HttpRequest request) { this.request=request; return status; }
+        private CapturingTransport(int status) { this(status, "{}"); }
+        private CapturingTransport(int status, String responseBody) { this.status=status; this.responseBody=responseBody; }
+        public BrevoEmailService.DeliveryResponse send(HttpRequest request) {
+            this.request=request;
+            return new BrevoEmailService.DeliveryResponse(status, responseBody);
+        }
     }
 }

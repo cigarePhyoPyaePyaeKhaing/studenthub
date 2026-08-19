@@ -5,11 +5,13 @@ import com.studenthub.model.OtpPurpose;
 import com.studenthub.model.Role;
 import com.studenthub.model.User;
 import org.junit.jupiter.api.Test;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.lang.reflect.Proxy;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,6 +32,17 @@ class AuthServicePasswordResetTest {
         assertEquals(OtpPurpose.PASSWORD_RESET, otps.purpose);
         assertEquals("registered@gmail.com", email.recipient);
         assertEquals("654321", email.otp);
+    }
+
+    @Test void brevoTwoHundredMakesRecoveryDeliveredSoServletMayRedirectToVerifyPage() {
+        BrevoEmailService brevo = new BrevoEmailService(
+                request -> new BrevoEmailService.DeliveryResponse(202, "{\"messageId\":\"accepted\"}"),
+                Map.of("BREVO_API_KEY", "test-key", "BREVO_FROM_EMAIL", "sender@example.com")::get,
+                new ObjectMapper());
+        AuthService.PasswordResetRequestResult result = service(new FakeUserDAO(VERIFIED), new FakeOtpService(), brevo)
+                .requestPasswordReset("TNT-2419");
+        assertTrue(result.delivered());
+        assertEquals(AuthService.PasswordResetStatus.DELIVERY_ACCEPTED, result.status());
     }
 
     @Test void emailLookupResolvesTheSameAccount() {
@@ -80,6 +93,19 @@ class AuthServicePasswordResetTest {
                 .requestPasswordReset("TNT-2419");
         assertEquals(AuthService.PasswordResetStatus.BREVO_UNAUTHORIZED, result.status());
         assertTrue(otps.invalidated);
+    }
+
+    @Test void resendUsesSessionBoundUserAndStoredEmailWithoutIdentifierLookup() {
+        FakeUserDAO users = new FakeUserDAO(VERIFIED);
+        CapturingEmailService email = new CapturingEmailService();
+
+        AuthService.PasswordResetRequestResult result = service(users, new FakeOtpService(), email)
+                .resendPasswordReset(VERIFIED.userId());
+
+        assertTrue(result.delivered());
+        assertNull(users.studentIdLookup);
+        assertNull(users.emailLookup);
+        assertEquals("registered@gmail.com", email.recipient);
     }
 
     private AuthService service(UserDAO users, OtpService otps, EmailService email) {

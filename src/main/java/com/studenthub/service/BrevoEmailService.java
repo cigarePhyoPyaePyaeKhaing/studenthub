@@ -24,8 +24,10 @@ public class BrevoEmailService implements EmailService {
     }
 
     interface Transport {
-        int send(HttpRequest request) throws IOException, InterruptedException;
+        DeliveryResponse send(HttpRequest request) throws IOException, InterruptedException;
     }
+
+    record DeliveryResponse(int statusCode, String responseBody) {}
 
     private final Transport transport;
     private final Configuration configuration;
@@ -76,8 +78,11 @@ public class BrevoEmailService implements EmailService {
                 .POST(HttpRequest.BodyPublishers.ofString(json(fromEmail, fromName, recipient, subject, textContent)))
                 .build();
         try {
-            int status = transport.send(request);
+            DeliveryResponse response = transport.send(request);
+            int status = response.statusCode();
             if (status < 200 || status >= 300) {
+                LOGGER.warning("Brevo email delivery failed. status=" + status
+                        + ", response=" + sanitizeProviderResponse(response.responseBody()));
                 EmailServiceException.Reason reason = status == 401 || status == 403
                         ? EmailServiceException.Reason.UNAUTHORIZED : EmailServiceException.Reason.PROVIDER;
                 throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null, reason, status);
@@ -92,6 +97,15 @@ public class BrevoEmailService implements EmailService {
             throw new EmailServiceException("Brevo email API is temporarily unavailable.", exception,
                     EmailServiceException.Reason.NETWORK, null);
         }
+    }
+
+    static String sanitizeProviderResponse(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) return "[empty]";
+        String sanitized = responseBody.replaceAll("[\\r\\n]", " ")
+                .replaceAll("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", "[redacted-email]")
+                .replaceAll("(?<!\\d)\\d{6}(?!\\d)", "[redacted-code]")
+                .replaceAll("(?i)(api[-_ ]?key|password|authorization)\\s*[:=]\\s*[^,} ]+", "$1=[redacted]");
+        return sanitized.length() > 500 ? sanitized.substring(0, 500) : sanitized;
     }
 
     private String json(String fromEmail, String fromName, String recipient, String subject, String textContent)
@@ -125,16 +139,9 @@ public class BrevoEmailService implements EmailService {
                 .build();
 
         @Override
-        public int send(HttpRequest request) throws IOException, InterruptedException {
+        public DeliveryResponse send(HttpRequest request) throws IOException, InterruptedException {
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                String safeBody = response.body() == null ? "" : response.body().replaceAll("[\\r\\n]", " ")
-                        .replaceAll("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", "[redacted-email]")
-                        .replaceAll("(?<!\\d)\\d{6}(?!\\d)", "[redacted-code]");
-                if (safeBody.length() > 500) safeBody = safeBody.substring(0, 500);
-                LOGGER.warning("Brevo email API failure HTTP " + response.statusCode() + ": " + safeBody);
-            }
-            return response.statusCode();
+            return new DeliveryResponse(response.statusCode(), response.body());
         }
     }
 }

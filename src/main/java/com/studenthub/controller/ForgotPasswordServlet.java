@@ -36,8 +36,14 @@ public class ForgotPasswordServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/verify-reset-code");
             return;
         }
-        request.setAttribute("message",
-                "If an eligible account matches the information provided, a verification code will be sent.");
+        boolean providerFailure = switch (result.status()) {
+            case BREVO_CONFIGURATION_MISSING, BREVO_UNAUTHORIZED, BREVO_PROVIDER_ERROR,
+                 NETWORK_ERROR, INTERRUPTED_REQUEST -> true;
+            default -> false;
+        };
+        request.setAttribute("message", providerFailure
+                ? "We couldn't send the verification code right now. Please try again shortly."
+                : "If an eligible account matches the information provided, a verification code will be sent.");
         doGet(request, response);
     }
 
