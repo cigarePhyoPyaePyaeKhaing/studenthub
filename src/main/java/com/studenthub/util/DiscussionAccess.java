@@ -6,6 +6,7 @@ public final class DiscussionAccess {
     private DiscussionAccess() {}
 
     public static boolean roleMayAccess(DiscussionScope scope, Object role) {
+        if (role == null) return false;
         if (!scope.isCrOnly()) return true;
         String trustedRole = String.valueOf(role);
         return "CR".equals(trustedRole) || "ADMIN".equals(trustedRole);

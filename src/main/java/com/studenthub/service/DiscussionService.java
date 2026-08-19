@@ -70,13 +70,14 @@ public class DiscussionService {
     }
 
     public OperationResult delete(long userId, Object role, long messageId) throws SQLException {
+        DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        Object currentRole = profile.role();
         DiscussionDAO.MessageRecord message = dao.findMessage(messageId);
         if (message == null) return new OperationResult(false, "NOT_FOUND");
-        if (!DiscussionAuthorization.canDelete(role, userId, message.senderId())) {
+        if (!DiscussionAuthorization.canDelete(currentRole, userId, message.senderId())) {
             return new OperationResult(false, "FORBIDDEN");
         }
-        if (!"ADMIN".equals(String.valueOf(role))) {
-            DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        if (!"ADMIN".equals(String.valueOf(currentRole))) {
             if (!DiscussionAccess.roleMayAccess(message.scope(), profile.role())) {
                 return new OperationResult(false, "FORBIDDEN");
             }
