@@ -21,7 +21,7 @@ public class OtpService {
 
     public String issue(Connection connection, long userId, String email, OtpPurpose purpose)
             throws SQLException {
-        if (otpDAO.sentWithin(connection, userId, purpose, 60)) {
+        if (otpDAO.activeSentWithin(connection, userId, purpose, 60)) {
             throw new IllegalStateException("Please wait 60 seconds before requesting another code.");
         }
         String code = "%06d".formatted(RANDOM.nextInt(1_000_000));

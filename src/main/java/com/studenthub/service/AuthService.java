@@ -162,6 +162,10 @@ public class AuthService {
         }
         User user = found.get();
         LOGGER.info("Password reset account resolved for identifier type=" + identifierType);
+        return deliverPasswordReset(user);
+    }
+
+    private PasswordResetRequestResult deliverPasswordReset(User user) {
         if (user.email() == null || user.email().isBlank()) {
             LOGGER.warning("Password reset EMAIL_MISSING for resolved account.");
             return new PasswordResetRequestResult(PasswordResetStatus.EMAIL_MISSING, null);
@@ -176,6 +180,7 @@ public class AuthService {
             try {
                 otp = otpService.issue(connection, user.userId(), user.email(), OtpPurpose.PASSWORD_RESET);
                 connection.commit();
+                LOGGER.info("Password reset OTP_STORAGE_SUCCEEDED for resolved account.");
             } catch (IllegalStateException exception) {
                 connection.rollback();
                 LOGGER.info("Password reset THROTTLED by server-side OTP issuance policy.");
@@ -212,8 +217,12 @@ public class AuthService {
     public PasswordResetRequestResult resendPasswordReset(long userId) {
         try {
             Optional<User> found = userDAO.findById(userId);
-            if (found.isEmpty()) return new PasswordResetRequestResult(PasswordResetStatus.ACCOUNT_NOT_FOUND, null);
-            return requestPasswordReset(found.get().studentId());
+            if (found.isEmpty()) {
+                LOGGER.info("Password reset resend ACCOUNT_NOT_FOUND for session-bound user.");
+                return new PasswordResetRequestResult(PasswordResetStatus.ACCOUNT_NOT_FOUND, null);
+            }
+            LOGGER.info("Password reset resend resolved session-bound user.");
+            return deliverPasswordReset(found.get());
         } catch (SQLException exception) {
             logSqlFailure("ACCOUNT_LOOKUP_FAILED", exception);
             return new PasswordResetRequestResult(PasswordResetStatus.OTP_STORAGE_FAILED, null);

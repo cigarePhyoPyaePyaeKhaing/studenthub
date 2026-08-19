@@ -75,10 +75,10 @@ public class OtpDAO {
         }
     }
 
-    public boolean sentWithin(Connection connection, long userId, OtpPurpose purpose, int seconds)
+    public boolean activeSentWithin(Connection connection, long userId, OtpPurpose purpose, int seconds)
             throws SQLException {
         String sql = "SELECT EXISTS(SELECT 1 FROM verification_codes WHERE user_id = ? AND purpose = ? "
-                + "AND created_at > ?)";
+                + "AND used_at IS NULL AND created_at > ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
             statement.setString(2, purpose.name());
