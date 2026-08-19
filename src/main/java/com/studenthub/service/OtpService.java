@@ -51,4 +51,8 @@ public class OtpService {
         otpDAO.markUsed(connection, active.codeId());
         return VerificationResult.SUCCESS;
     }
+
+    public void invalidate(Connection connection, long userId, OtpPurpose purpose) throws SQLException {
+        otpDAO.invalidateActive(connection, userId, purpose);
+    }
 }

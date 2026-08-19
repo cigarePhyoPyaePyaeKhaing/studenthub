@@ -9,6 +9,8 @@ class AuthValidationTest {
         assertTrue(AuthValidation.isValidStudentId("TNT-0001"));
         assertTrue(AuthValidation.isValidStudentId("TNT-1234"));
         assertEquals("TNT-1234", AuthValidation.normalizeStudentId(" tnt-1234 "));
+        assertEquals("TNT-1234", AuthValidation.normalizeStudentId("tnt1234"));
+        assertTrue(AuthValidation.isValidStudentId("TNT1234"));
         assertTrue(AuthValidation.isValidStudentId("tnt-1234"));
     }
 

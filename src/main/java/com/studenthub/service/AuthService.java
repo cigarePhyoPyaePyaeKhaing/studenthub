@@ -10,8 +10,14 @@ import com.studenthub.util.PasswordUtil;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.util.logging.Logger;
 
 public class AuthService {
+    private static final Logger LOGGER = Logger.getLogger(AuthService.class.getName());
+    public enum PasswordResetStatus { DELIVERY_ACCEPTED, ACCOUNT_NOT_FOUND, NO_EMAIL, EMAIL_NOT_VERIFIED, OTP_STORAGE_FAILED, EMAIL_PROVIDER_FAILED, CONFIGURATION_ERROR, THROTTLED }
+    public record PasswordResetRequestResult(PasswordResetStatus status, User user) {
+        public boolean delivered() { return status == PasswordResetStatus.DELIVERY_ACCEPTED; }
+    }
     public record RegistrationResult(boolean successful, long userId, String message) {
     }
 
@@ -126,47 +132,86 @@ public class AuthService {
         return new LoginResult(LoginStatus.SUCCESS, found.get());
     }
 
-    public Optional<User> requestPasswordReset(String loginInput) throws SQLException, EmailServiceException {
-        String login = loginInput != null && loginInput.trim().toUpperCase().startsWith("TNT-")
-                ? AuthValidation.normalizeStudentId(loginInput) : AuthValidation.normalizeEmail(loginInput);
-        Optional<User> found = userDAO.findByLogin(login);
-        if (found.isEmpty() || !found.get().emailVerified()) {
-            return Optional.empty();
+    public PasswordResetRequestResult requestPasswordReset(String loginInput) {
+        boolean emailIdentifier = loginInput != null && loginInput.contains("@");
+        String identifierType = emailIdentifier ? "EMAIL" : "STUDENT_ID";
+        String normalized = emailIdentifier ? AuthValidation.normalizeEmail(loginInput)
+                : AuthValidation.normalizeStudentId(loginInput);
+        Optional<User> found;
+        try {
+            found = emailIdentifier ? userDAO.findByEmail(normalized) : userDAO.findByStudentId(normalized);
+        } catch (SQLException exception) {
+            logSqlFailure("ACCOUNT_LOOKUP_FAILED", exception);
+            return new PasswordResetRequestResult(PasswordResetStatus.OTP_STORAGE_FAILED, null);
+        }
+        if (found.isEmpty()) {
+            LOGGER.info("Password reset ACCOUNT_NOT_FOUND for identifier type=" + identifierType);
+            return new PasswordResetRequestResult(PasswordResetStatus.ACCOUNT_NOT_FOUND, null);
         }
         User user = found.get();
+        LOGGER.info("Password reset account resolved for identifier type=" + identifierType);
+        if (user.email() == null || user.email().isBlank()) {
+            LOGGER.warning("Password reset NO_EMAIL for resolved account.");
+            return new PasswordResetRequestResult(PasswordResetStatus.NO_EMAIL, null);
+        }
+        if (!user.emailVerified()) {
+            LOGGER.info("Password reset EMAIL_NOT_VERIFIED for resolved account.");
+            return new PasswordResetRequestResult(PasswordResetStatus.EMAIL_NOT_VERIFIED, null);
+        }
         String otp;
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
                 otp = otpService.issue(connection, user.userId(), user.email(), OtpPurpose.PASSWORD_RESET);
                 connection.commit();
+            } catch (IllegalStateException exception) {
+                connection.rollback();
+                LOGGER.info("Password reset THROTTLED by server-side OTP issuance policy.");
+                return new PasswordResetRequestResult(PasswordResetStatus.THROTTLED, null);
             } catch (SQLException exception) {
                 connection.rollback();
-                throw exception;
+                logSqlFailure("OTP_STORAGE_FAILED", exception);
+                return new PasswordResetRequestResult(PasswordResetStatus.OTP_STORAGE_FAILED, null);
             } finally {
                 connection.setAutoCommit(true);
             }
+        } catch (SQLException exception) {
+            logSqlFailure("OTP_STORAGE_FAILED", exception);
+            return new PasswordResetRequestResult(PasswordResetStatus.OTP_STORAGE_FAILED, null);
         }
-        emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
-        return Optional.of(user);
+        try {
+            emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
+        } catch (EmailServiceException exception) {
+            invalidateFailedDelivery(user.userId());
+            PasswordResetStatus status = exception.getMessage() != null && exception.getMessage().startsWith("Required email configuration is missing:")
+                    ? PasswordResetStatus.CONFIGURATION_ERROR : PasswordResetStatus.EMAIL_PROVIDER_FAILED;
+            String causeType = exception.getCause() == null ? "none" : exception.getCause().getClass().getName();
+            LOGGER.severe("Password reset " + status + ": " + exception.getMessage() + ", cause=" + causeType);
+            return new PasswordResetRequestResult(status, null);
+        }
+        return new PasswordResetRequestResult(PasswordResetStatus.DELIVERY_ACCEPTED, user);
     }
 
-    public void resendPasswordReset(long userId) throws SQLException, EmailServiceException {
-        Optional<User> found = userDAO.findById(userId);
-        if (found.isEmpty() || !found.get().emailVerified()) return;
-        User user = found.get();
-        String otp;
-        try (Connection connection = DBConnection.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                otp = otpService.issue(connection, userId, user.email(), OtpPurpose.PASSWORD_RESET);
-                connection.commit();
-            } catch (SQLException | RuntimeException exception) {
-                connection.rollback();
-                throw exception;
-            } finally { connection.setAutoCommit(true); }
+    public PasswordResetRequestResult resendPasswordReset(long userId) {
+        try {
+            Optional<User> found = userDAO.findById(userId);
+            if (found.isEmpty()) return new PasswordResetRequestResult(PasswordResetStatus.ACCOUNT_NOT_FOUND, null);
+            return requestPasswordReset(found.get().studentId());
+        } catch (SQLException exception) {
+            logSqlFailure("ACCOUNT_LOOKUP_FAILED", exception);
+            return new PasswordResetRequestResult(PasswordResetStatus.OTP_STORAGE_FAILED, null);
         }
-        emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
+    }
+
+    private void invalidateFailedDelivery(long userId) {
+        try (Connection connection = DBConnection.getConnection()) {
+            otpService.invalidate(connection, userId, OtpPurpose.PASSWORD_RESET);
+        } catch (SQLException exception) { logSqlFailure("FAILED_DELIVERY_OTP_INVALIDATION_FAILED", exception); }
+    }
+
+    private void logSqlFailure(String category, SQLException exception) {
+        LOGGER.severe("Password reset " + category + ": SQLState=" + exception.getSQLState()
+                + ", vendorCode=" + exception.getErrorCode() + ", exception=" + exception.getClass().getName());
     }
 
     public Optional<Long> resolveUserId(String loginInput) throws SQLException {

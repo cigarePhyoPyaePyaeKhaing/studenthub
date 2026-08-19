@@ -11,8 +11,10 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 public class BrevoEmailService implements EmailService {
+    private static final Logger LOGGER = Logger.getLogger(BrevoEmailService.class.getName());
     static final URI API_ENDPOINT = URI.create("https://api.brevo.com/v3/smtp/email");
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(15);
@@ -78,6 +80,8 @@ public class BrevoEmailService implements EmailService {
             if (status < 200 || status >= 300) {
                 throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null);
             }
+            LOGGER.info((subject.startsWith("Reset") ? "Password reset" : "Verification")
+                    + " email request accepted by provider (HTTP " + status + ").");
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             throw new EmailServiceException("Brevo email API request was interrupted.", exception);
@@ -116,7 +120,15 @@ public class BrevoEmailService implements EmailService {
 
         @Override
         public int send(HttpRequest request) throws IOException, InterruptedException {
-            return client.send(request, HttpResponse.BodyHandlers.discarding()).statusCode();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                String safeBody = response.body() == null ? "" : response.body().replaceAll("[\\r\\n]", " ")
+                        .replaceAll("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", "[redacted-email]")
+                        .replaceAll("(?<!\\d)\\d{6}(?!\\d)", "[redacted-code]");
+                if (safeBody.length() > 500) safeBody = safeBody.substring(0, 500);
+                LOGGER.warning("Brevo email API failure HTTP " + response.statusCode() + ": " + safeBody);
+            }
+            return response.statusCode();
         }
     }
 }

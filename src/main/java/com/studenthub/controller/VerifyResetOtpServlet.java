@@ -30,9 +30,7 @@ public class VerifyResetOtpServlet extends HttpServlet {
         if (!Boolean.TRUE.equals(request.getSession().getAttribute("passwordRecoveryInitiated"))) { response.sendRedirect(request.getContextPath() + "/forgot-password"); return; }
         Object value = request.getSession().getAttribute("pendingResetUserId");
         if ("resend".equals(request.getParameter("action"))) {
-            try { if (value instanceof Long userId) authService.resendPasswordReset(userId); request.getSession().setAttribute("passwordResetSentAt", Instant.now()); }
-            catch (IllegalStateException exception) { /* Keep the response generic to prevent account enumeration. */ }
-            catch (SQLException | com.studenthub.service.EmailServiceException exception) { getServletContext().log("Reset resend failed: " + exception.getClass().getName()); }
+            if (value instanceof Long userId && authService.resendPasswordReset(userId).delivered()) request.getSession().setAttribute("passwordResetSentAt", Instant.now());
             request.setAttribute("message", "If an account matches the information provided, a new verification code has been sent."); doGet(request,response); return;
         }
         if (!(value instanceof Long userId)) { request.setAttribute("error", "Incorrect or expired code. Please try again."); doGet(request,response); return; }

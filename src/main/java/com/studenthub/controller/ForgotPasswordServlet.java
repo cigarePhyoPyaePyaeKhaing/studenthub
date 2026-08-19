@@ -1,7 +1,6 @@
 package com.studenthub.controller;
 
 import com.studenthub.service.AuthService;
-import com.studenthub.service.EmailServiceException;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,9 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.sql.SQLException;
 import com.studenthub.model.User;
-import java.util.Optional;
 
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = "/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
@@ -28,21 +25,19 @@ public class ForgotPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!CsrfToken.isValid(request)) { response.sendError(403); return; }
         String login = request.getParameter("login");
-        Optional<User> found = Optional.empty();
-        try {
-            found = authService.requestPasswordReset(login);
-        } catch (SQLException | EmailServiceException | IllegalStateException exception) {
-            getServletContext().log("Password reset request failed: " + exception.getClass().getName());
-        }
+        AuthService.PasswordResetRequestResult result = authService.requestPasswordReset(login);
         clearRecovery(request);
-        request.getSession().setAttribute("passwordRecoveryInitiated", Boolean.TRUE);
-        request.getSession().setAttribute("passwordResetSentAt", java.time.Instant.now());
-        if (found.isPresent()) {
-            User user = found.get();
+        if (result.delivered()) {
+            User user = result.user();
+            request.getSession().setAttribute("passwordRecoveryInitiated", Boolean.TRUE);
+            request.getSession().setAttribute("passwordResetSentAt", java.time.Instant.now());
             request.getSession().setAttribute("pendingResetUserId", user.userId());
             request.getSession().setAttribute("pendingResetMaskedEmail", maskEmail(user.email()));
+            response.sendRedirect(request.getContextPath() + "/verify-reset-code");
+            return;
         }
-        response.sendRedirect(request.getContextPath() + "/verify-reset-code");
+        request.setAttribute("message", "If an eligible account matches the information provided, a verification code will be sent. Please try again shortly if it does not arrive.");
+        doGet(request, response);
     }
 
     private void clearRecovery(HttpServletRequest request) {

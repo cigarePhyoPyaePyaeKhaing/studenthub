@@ -13,7 +13,9 @@ public final class AuthValidation {
     }
 
     public static String normalizeStudentId(String value) {
-        return value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+        String normalized = value == null ? "" : value.trim().toUpperCase(Locale.ROOT);
+        if (normalized.matches("^TNT\\d{4}$")) return "TNT-" + normalized.substring(3);
+        return normalized;
     }
 
     public static String normalizeEmail(String value) {

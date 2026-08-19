@@ -64,6 +64,26 @@ public class UserDAO {
         }
     }
 
+    public Optional<User> findByStudentId(String studentId) throws SQLException {
+        return findForPasswordRecovery("student_id", studentId);
+    }
+
+    public Optional<User> findByEmail(String email) throws SQLException {
+        return findForPasswordRecovery("email", email);
+    }
+
+    private Optional<User> findForPasswordRecovery(String column, String value) throws SQLException {
+        String sql = "SELECT user_id, student_id, full_name, email, password_hash, role, email_verified, google_sub "
+                + "FROM users WHERE " + column + " = ? LIMIT 1";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, value);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(map(results)) : Optional.empty();
+            }
+        }
+    }
+
     public Optional<User> findById(long userId) throws SQLException {
         String sql = """
                 SELECT user_id, student_id, full_name, email, password_hash, role, email_verified, google_sub
