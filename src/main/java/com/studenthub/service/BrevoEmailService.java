@@ -78,15 +78,19 @@ public class BrevoEmailService implements EmailService {
         try {
             int status = transport.send(request);
             if (status < 200 || status >= 300) {
-                throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null);
+                EmailServiceException.Reason reason = status == 401 || status == 403
+                        ? EmailServiceException.Reason.UNAUTHORIZED : EmailServiceException.Reason.PROVIDER;
+                throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null, reason, status);
             }
             LOGGER.info((subject.startsWith("Reset") ? "Password reset" : "Verification")
                     + " email request accepted by provider (HTTP " + status + ").");
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
-            throw new EmailServiceException("Brevo email API request was interrupted.", exception);
+            throw new EmailServiceException("Brevo email API request was interrupted.", exception,
+                    EmailServiceException.Reason.INTERRUPTED, null);
         } catch (IOException exception) {
-            throw new EmailServiceException("Brevo email API is temporarily unavailable.", exception);
+            throw new EmailServiceException("Brevo email API is temporarily unavailable.", exception,
+                    EmailServiceException.Reason.NETWORK, null);
         }
     }
 
@@ -100,14 +104,16 @@ public class BrevoEmailService implements EmailService {
         try {
             return objectMapper.writeValueAsString(body);
         } catch (JsonProcessingException exception) {
-            throw new EmailServiceException("Email request could not be prepared.", exception);
+            throw new EmailServiceException("Email request could not be prepared.", exception,
+                    EmailServiceException.Reason.PREPARATION, null);
         }
     }
 
     private String required(String name) throws EmailServiceException {
         String value = configuration.value(name);
         if (value == null || value.isBlank()) {
-            throw new EmailServiceException("Required email configuration is missing: " + name, null);
+            throw new EmailServiceException("Required email configuration is missing: " + name, null,
+                    EmailServiceException.Reason.CONFIGURATION, null);
         }
         return value.trim();
     }

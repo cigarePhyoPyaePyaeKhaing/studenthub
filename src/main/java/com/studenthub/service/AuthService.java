@@ -14,7 +14,7 @@ import java.util.logging.Logger;
 
 public class AuthService {
     private static final Logger LOGGER = Logger.getLogger(AuthService.class.getName());
-    public enum PasswordResetStatus { DELIVERY_ACCEPTED, ACCOUNT_NOT_FOUND, NO_EMAIL, EMAIL_NOT_VERIFIED, OTP_STORAGE_FAILED, EMAIL_PROVIDER_FAILED, CONFIGURATION_ERROR, THROTTLED }
+    public enum PasswordResetStatus { DELIVERY_ACCEPTED, ACCOUNT_NOT_FOUND, ACCOUNT_NOT_ELIGIBLE, EMAIL_MISSING, OTP_STORAGE_FAILED, BREVO_CONFIGURATION_MISSING, BREVO_UNAUTHORIZED, BREVO_PROVIDER_ERROR, NETWORK_ERROR, INTERRUPTED_REQUEST, THROTTLED }
     public record PasswordResetRequestResult(PasswordResetStatus status, User user) {
         public boolean delivered() { return status == PasswordResetStatus.DELIVERY_ACCEPTED; }
     }
@@ -26,9 +26,21 @@ public class AuthService {
     public record LoginResult(LoginStatus status, User user) {
     }
 
-    private final UserDAO userDAO = new UserDAO();
-    private final OtpService otpService = new OtpService();
-    private final EmailService emailService = new BrevoEmailService();
+    interface ConnectionProvider { Connection get() throws SQLException; }
+    private final UserDAO userDAO;
+    private final OtpService otpService;
+    private final EmailService emailService;
+    private final ConnectionProvider connectionProvider;
+
+    public AuthService() { this(new UserDAO(), new OtpService(), new BrevoEmailService(), DBConnection::getConnection); }
+
+    AuthService(UserDAO userDAO, OtpService otpService, EmailService emailService,
+                ConnectionProvider connectionProvider) {
+        this.userDAO = userDAO;
+        this.otpService = otpService;
+        this.emailService = emailService;
+        this.connectionProvider = connectionProvider;
+    }
 
     public RegistrationResult register(String studentIdInput, String fullNameInput, String emailInput,
                                        String password, String confirmation)
@@ -56,7 +68,7 @@ public class AuthService {
 
         long userId;
         String otp;
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 userId = userDAO.createPendingStudent(connection, studentId, fullName, email,
@@ -78,7 +90,7 @@ public class AuthService {
     }
 
     public OtpService.VerificationResult verifyEmail(long userId, String code) throws SQLException {
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 OtpService.VerificationResult result = otpService.verify(
@@ -104,7 +116,7 @@ public class AuthService {
         }
         User user = found.get();
         String otp;
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 otp = otpService.issue(connection, userId, user.email(), OtpPurpose.EMAIL_VERIFICATION);
@@ -151,15 +163,15 @@ public class AuthService {
         User user = found.get();
         LOGGER.info("Password reset account resolved for identifier type=" + identifierType);
         if (user.email() == null || user.email().isBlank()) {
-            LOGGER.warning("Password reset NO_EMAIL for resolved account.");
-            return new PasswordResetRequestResult(PasswordResetStatus.NO_EMAIL, null);
+            LOGGER.warning("Password reset EMAIL_MISSING for resolved account.");
+            return new PasswordResetRequestResult(PasswordResetStatus.EMAIL_MISSING, null);
         }
         if (!user.emailVerified()) {
-            LOGGER.info("Password reset EMAIL_NOT_VERIFIED for resolved account.");
-            return new PasswordResetRequestResult(PasswordResetStatus.EMAIL_NOT_VERIFIED, null);
+            LOGGER.info("Password reset ACCOUNT_NOT_ELIGIBLE for resolved account.");
+            return new PasswordResetRequestResult(PasswordResetStatus.ACCOUNT_NOT_ELIGIBLE, null);
         }
         String otp;
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 otp = otpService.issue(connection, user.userId(), user.email(), OtpPurpose.PASSWORD_RESET);
@@ -183,8 +195,13 @@ public class AuthService {
             emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
         } catch (EmailServiceException exception) {
             invalidateFailedDelivery(user.userId());
-            PasswordResetStatus status = exception.getMessage() != null && exception.getMessage().startsWith("Required email configuration is missing:")
-                    ? PasswordResetStatus.CONFIGURATION_ERROR : PasswordResetStatus.EMAIL_PROVIDER_FAILED;
+            PasswordResetStatus status = switch (exception.reason()) {
+                case CONFIGURATION -> PasswordResetStatus.BREVO_CONFIGURATION_MISSING;
+                case UNAUTHORIZED -> PasswordResetStatus.BREVO_UNAUTHORIZED;
+                case NETWORK -> PasswordResetStatus.NETWORK_ERROR;
+                case INTERRUPTED -> PasswordResetStatus.INTERRUPTED_REQUEST;
+                default -> PasswordResetStatus.BREVO_PROVIDER_ERROR;
+            };
             String causeType = exception.getCause() == null ? "none" : exception.getCause().getClass().getName();
             LOGGER.severe("Password reset " + status + ": " + exception.getMessage() + ", cause=" + causeType);
             return new PasswordResetRequestResult(status, null);
@@ -204,7 +221,7 @@ public class AuthService {
     }
 
     private void invalidateFailedDelivery(long userId) {
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             otpService.invalidate(connection, userId, OtpPurpose.PASSWORD_RESET);
         } catch (SQLException exception) { logSqlFailure("FAILED_DELIVERY_OTP_INVALIDATION_FAILED", exception); }
     }
@@ -221,7 +238,7 @@ public class AuthService {
     }
 
     public OtpService.VerificationResult verifyPasswordReset(long userId, String code) throws SQLException {
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 OtpService.VerificationResult result = otpService.verify(
@@ -244,7 +261,7 @@ public class AuthService {
         if (!password.equals(confirmation)) {
             return "Password confirmation does not match.";
         }
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionProvider.get()) {
             userDAO.updatePassword(connection, userId, PasswordUtil.hash(password));
         }
         return null;
