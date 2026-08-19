@@ -1,7 +1,10 @@
 package com.studenthub.util;
 
+import com.studenthub.dao.UserDAO;
+import com.studenthub.model.Role;
 import jakarta.servlet.http.*;
 import java.io.IOException;
+import java.sql.SQLException;
 
 public final class AdminRequest {
     private AdminRequest() {}
@@ -9,8 +12,14 @@ public final class AdminRequest {
         if (!Authorization.isAuthenticated(request.getSession(false))) {
             response.sendRedirect(request.getContextPath() + "/login"); return false;
         }
-        if (!Authorization.isAdmin(request.getSession().getAttribute("role"))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN); return false;
+        Long userId = (Long) request.getSession().getAttribute("userId");
+        try {
+            if (userId == null || new UserDAO().findVerifiedRoleById(userId).orElse(null) != Role.ADMIN) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN); return false;
+            }
+        } catch (SQLException exception) {
+            request.getServletContext().log("Admin authorization failed: " + exception.getClass().getName());
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE); return false;
         }
         return true;
     }
