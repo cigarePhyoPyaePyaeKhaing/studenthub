@@ -11,6 +11,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import com.studenthub.model.User;
+import java.util.Optional;
 
 @WebServlet(name = "ForgotPasswordServlet", urlPatterns = "/forgot-password")
 public class ForgotPasswordServlet extends HttpServlet {
@@ -26,14 +28,30 @@ public class ForgotPasswordServlet extends HttpServlet {
             throws ServletException, IOException {
         if (!CsrfToken.isValid(request)) { response.sendError(403); return; }
         String login = request.getParameter("login");
+        Optional<User> found = Optional.empty();
         try {
-            authService.requestPasswordReset(login);
-            authService.resolveUserId(login).ifPresent(id -> request.getSession().setAttribute("pendingResetUserId", id));
+            found = authService.requestPasswordReset(login);
         } catch (SQLException | EmailServiceException | IllegalStateException exception) {
             getServletContext().log("Password reset request failed: " + exception.getClass().getName());
         }
-        request.setAttribute("message", "If an account matches the information provided, a verification code has been sent.");
-        request.setAttribute("showVerifyLink", true);
-        doGet(request, response);
+        clearRecovery(request);
+        request.getSession().setAttribute("passwordRecoveryInitiated", Boolean.TRUE);
+        request.getSession().setAttribute("passwordResetSentAt", java.time.Instant.now());
+        if (found.isPresent()) {
+            User user = found.get();
+            request.getSession().setAttribute("pendingResetUserId", user.userId());
+            request.getSession().setAttribute("pendingResetMaskedEmail", maskEmail(user.email()));
+        }
+        response.sendRedirect(request.getContextPath() + "/verify-reset-code");
+    }
+
+    private void clearRecovery(HttpServletRequest request) {
+        if (request.getSession(false) == null) return;
+        for (String name : new String[]{"passwordRecoveryInitiated","pendingResetUserId","pendingResetMaskedEmail","passwordResetSentAt","passwordResetAuthorizedAt","passwordResetComplete"}) request.getSession().removeAttribute(name);
+    }
+    private String maskEmail(String email) {
+        int at = email == null ? -1 : email.indexOf('@');
+        if (at < 1) return "your email address";
+        return email.substring(0, 1) + "*".repeat(Math.max(3, at - 1)) + email.substring(at);
     }
 }

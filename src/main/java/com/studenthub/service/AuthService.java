@@ -126,12 +126,12 @@ public class AuthService {
         return new LoginResult(LoginStatus.SUCCESS, found.get());
     }
 
-    public void requestPasswordReset(String loginInput) throws SQLException, EmailServiceException {
+    public Optional<User> requestPasswordReset(String loginInput) throws SQLException, EmailServiceException {
         String login = loginInput != null && loginInput.trim().toUpperCase().startsWith("TNT-")
                 ? AuthValidation.normalizeStudentId(loginInput) : AuthValidation.normalizeEmail(loginInput);
         Optional<User> found = userDAO.findByLogin(login);
         if (found.isEmpty() || !found.get().emailVerified()) {
-            return;
+            return Optional.empty();
         }
         User user = found.get();
         String otp;
@@ -146,6 +146,25 @@ public class AuthService {
             } finally {
                 connection.setAutoCommit(true);
             }
+        }
+        emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
+        return Optional.of(user);
+    }
+
+    public void resendPasswordReset(long userId) throws SQLException, EmailServiceException {
+        Optional<User> found = userDAO.findById(userId);
+        if (found.isEmpty() || !found.get().emailVerified()) return;
+        User user = found.get();
+        String otp;
+        try (Connection connection = DBConnection.getConnection()) {
+            connection.setAutoCommit(false);
+            try {
+                otp = otpService.issue(connection, userId, user.email(), OtpPurpose.PASSWORD_RESET);
+                connection.commit();
+            } catch (SQLException | RuntimeException exception) {
+                connection.rollback();
+                throw exception;
+            } finally { connection.setAutoCommit(true); }
         }
         emailService.sendPasswordResetOtp(user.email(), user.fullName(), otp);
     }
