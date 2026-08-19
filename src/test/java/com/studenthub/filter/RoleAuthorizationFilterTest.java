@@ -15,4 +15,14 @@ class RoleAuthorizationFilterTest {
     @Test void similarPrefixIsNotAnAdminRoute() {
         assertFalse(RoleAuthorizationFilter.isAdminPath("/studenthub", "/studenthub/administrator"));
     }
+
+    @Test void unreadCountIsSkippedForMutationsAndNonSidebarForms() {
+        assertFalse(AuthenticationFilter.needsUnreadCount("POST", "/studenthub", "/studenthub/discussions/messages"));
+        assertFalse(AuthenticationFilter.needsUnreadCount("GET", "/studenthub", "/studenthub/posts/create"));
+    }
+
+    @Test void unreadCountIsLoadedOnceForSidebarPages() {
+        assertTrue(AuthenticationFilter.needsUnreadCount("GET", "/studenthub", "/studenthub/home"));
+        assertTrue(AuthenticationFilter.needsUnreadCount("GET", "/studenthub", "/studenthub/admin/users"));
+    }
 }

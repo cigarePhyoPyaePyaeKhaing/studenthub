@@ -48,7 +48,6 @@ public class PostDAO {
             }
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
-                    Timestamp created = result.getTimestamp("created_at");
                     posts.add(map(result));
                 }
             }

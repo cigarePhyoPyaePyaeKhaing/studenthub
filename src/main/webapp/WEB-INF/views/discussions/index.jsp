@@ -23,7 +23,11 @@
         <nav class="room-tabs" aria-label="Discussion rooms">
             <a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a>
             <a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a>
-            <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All</a>
+            <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
+            <c:if test="${not empty room and room.crRoomsVisible}">
+                <a class="${room.scope eq 'CR_SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_SEMESTER">CR – Same Semester</a>
+                <a class="${room.scope eq 'CR_ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_ALL">CR – All</a>
+            </c:if>
         </nav>
         <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}" /></div></c:if>
         <c:if test="${not empty error}"><div class="alert alert-warning"><c:out value="${error}" /></div></c:if>
@@ -33,7 +37,7 @@
                 <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p></div></c:when>
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
                 <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><article class="chat-message ${sessionScope.userId eq chatMessage.senderId ? 'own-message' : ''}">
-                    <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div><div class="message-bubble"><header><strong><c:out value="${chatMessage.authorName}" /></strong><span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span><time><c:out value="${chatMessage.createdLabel}" /></time></header><p><c:out value="${chatMessage.message}" /></p>
+                    <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div><div class="message-bubble"><header><strong><c:out value="${chatMessage.authorName}" /></strong><span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span><c:if test="${room.scope eq 'CR_SEMESTER' or room.scope eq 'CR_ALL'}"><span class="message-scope"><c:if test="${not empty chatMessage.authorSemester}">Sem <c:out value="${chatMessage.authorSemester}" /></c:if><c:if test="${not empty chatMessage.authorSection}"> · <c:out value="${chatMessage.authorSection}" /></c:if></span></c:if><time><c:out value="${chatMessage.createdLabel}" /></time></header><p><c:out value="${chatMessage.message}" /></p>
                     <c:if test="${sessionScope.role eq 'ADMIN' or sessionScope.userId eq chatMessage.senderId}"><form method="post" action="${pageContext.request.contextPath}/discussions/messages/delete" onsubmit="return confirm('Delete this message?');"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><input type="hidden" name="id" value="${chatMessage.messageId}"><button type="submit">Delete</button></form></c:if>
                     </div></article></c:forEach></div></c:otherwise>
             </c:choose>

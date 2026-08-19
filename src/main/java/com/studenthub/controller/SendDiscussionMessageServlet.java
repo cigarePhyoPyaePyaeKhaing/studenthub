@@ -20,6 +20,9 @@ public class SendDiscussionMessageServlet extends HttpServlet {
             DiscussionService.OperationResult result = service.send(
                     (Long) request.getSession().getAttribute("userId"), scope, request.getParameter("message"));
             request.getSession().setAttribute(result.successful() ? "flash" : "flashError", result.message());
+        } catch (SecurityException exception) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
         } catch (SQLException exception) {
             getServletContext().log("Discussion message send failed: " + exception.getClass().getName());
             request.getSession().setAttribute("flashError", "The message could not be sent right now.");

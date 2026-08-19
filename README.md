@@ -29,19 +29,22 @@ For an older existing StudentHub database, apply migrations in this order:
 
 1. `database/migrations/V2__authentication.sql`
 2. `database/migrations/V3__notifications.sql`
+3. `database/migrations/V4__cr_discussion_rooms_and_chat_indexes.sql`
 
 PowerShell examples:
 
 ```powershell
 mysql --host=localhost --port=3307 --user=root --password --execute="SOURCE C:/StudentHub/database/migrations/V2__authentication.sql"
 mysql --host=localhost --port=3307 --user=root --password --execute="SOURCE C:/StudentHub/database/migrations/V3__notifications.sql"
+mysql --host=localhost --port=3307 --user=root --password --database=studenthub_db --execute="SOURCE C:/StudentHub/database/migrations/V4__cr_discussion_rooms_and_chat_indexes.sql"
 ```
 
-V2 and V3 are additive and preserve existing application data. V3 creates scoped notifications and per-user read receipts. If a Windows `mysql.exe` build cannot authenticate because of an authentication-plugin compatibility issue, connect with a compatible authenticated MySQL client first, then run:
+V2 through V4 are additive and preserve existing application data. V3 creates scoped notifications and per-user read receipts. V4 adds CR discussion scopes and indexes the existing bounded room-message queries. If a Windows `mysql.exe` build cannot authenticate because of an authentication-plugin compatibility issue, connect with a compatible authenticated MySQL client first, then run:
 
 ```sql
 SOURCE C:/StudentHub/database/migrations/V2__authentication.sql;
 SOURCE C:/StudentHub/database/migrations/V3__notifications.sql;
+SOURCE C:/StudentHub/database/migrations/V4__cr_discussion_rooms_and_chat_indexes.sql;
 ```
 
 Do not apply a migration again when the environment has already been migrated unless its idempotency and current schema have been checked.

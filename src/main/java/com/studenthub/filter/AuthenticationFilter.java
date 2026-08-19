@@ -21,8 +21,18 @@ public class AuthenticationFilter implements Filter {
         HttpServletRequest http = (HttpServletRequest) request; HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
         request.setAttribute("csrfToken",CsrfToken.getOrCreate(session));
-        try{request.setAttribute("unreadNotificationCount",notificationDAO.countUnread((Long)session.getAttribute("userId")));}
-        catch(SQLException exception){request.getServletContext().log("Unread notification count failed: "+exception.getClass().getName());request.setAttribute("unreadNotificationCount",0L);}
+        if (needsUnreadCount(http.getMethod(), http.getContextPath(), http.getRequestURI())) {
+            try{request.setAttribute("unreadNotificationCount",notificationDAO.countUnread((Long)session.getAttribute("userId")));}
+            catch(SQLException exception){request.getServletContext().log("Unread notification count failed: "+exception.getClass().getName());request.setAttribute("unreadNotificationCount",0L);}
+        }
         chain.doFilter(request, response);
+    }
+
+    static boolean needsUnreadCount(String method, String contextPath, String requestUri) {
+        if (!"GET".equalsIgnoreCase(method)) return false;
+        String path = requestUri.substring(Math.min(contextPath.length(), requestUri.length()));
+        return path.equals("/home") || path.equals("/announcements") || path.equals("/notifications")
+                || path.equals("/deadlines") || path.equals("/discussions") || path.equals("/profile")
+                || path.equals("/posts/comments") || path.equals("/admin") || path.startsWith("/admin/users");
     }
 }
