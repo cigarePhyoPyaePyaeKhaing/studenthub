@@ -20,8 +20,10 @@ public class UserDAO {
         String sql = """
                 INSERT INTO users
                     (username, student_id, email, password_hash, full_name, role, email_verified,
-                     semester, section_name)
-                VALUES (?, ?, ?, ?, ?, ?, FALSE, NULL, NULL)
+                     university_id, university_locked, semester, section_name, academic_info_locked)
+                VALUES (?, ?, ?, ?, ?, ?, FALSE,
+                        (SELECT university_id FROM universities WHERE short_name='UIT' AND status='APPROVED' LIMIT 1),
+                        TRUE, NULL, NULL, FALSE)
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, studentId);
@@ -78,9 +80,10 @@ public class UserDAO {
 
     public Optional<UserProfile> findProfileById(long userId) throws SQLException {
         String sql = """
-                SELECT user_id, student_id, full_name, email, role, email_verified,
-                       semester, section_name
-                FROM users WHERE user_id = ?
+                SELECT u.user_id,u.student_id,u.full_name,u.email,u.role,u.email_verified,
+                       u.semester,u.section_name,u.university_id,u.university_locked,u.academic_info_locked,
+                       v.name university_name,v.short_name university_short_name
+                FROM users u LEFT JOIN universities v ON v.university_id=u.university_id WHERE u.user_id = ?
                 """;
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -93,13 +96,17 @@ public class UserDAO {
                         results.getString("student_id"), results.getString("full_name"),
                         results.getString("email"), Role.valueOf(results.getString("role")),
                         results.getBoolean("email_verified"), nullableSemester,
-                        results.getString("section_name")));
+                        results.getString("section_name"),nullableLong(results,"university_id"),
+                        results.getString("university_name"),results.getString("university_short_name"),
+                        results.getBoolean("university_locked"),results.getBoolean("academic_info_locked")));
             }
         }
     }
 
     public int updateProfile(long authenticatedUserId, ProfileUpdate update) throws SQLException {
-        String sql = "UPDATE users SET full_name = ?, semester = ?, section_name = ? WHERE user_id = ?";
+        String sql = "UPDATE users SET full_name=?,semester=?,section_name=?,"
+                + "academic_info_locked=(? IS NOT NULL AND ? IS NOT NULL) "
+                + "WHERE user_id=? AND academic_info_locked=FALSE";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, update.fullName());
@@ -107,10 +114,25 @@ public class UserDAO {
             else statement.setInt(2, update.semester());
             if (update.sectionName() == null) statement.setNull(3, java.sql.Types.VARCHAR);
             else statement.setString(3, update.sectionName());
-            statement.setLong(4, authenticatedUserId);
+            if(update.semester()==null)statement.setNull(4,java.sql.Types.INTEGER);else statement.setInt(4,update.semester());
+            if(update.sectionName()==null)statement.setNull(5,java.sql.Types.VARCHAR);else statement.setString(5,update.sectionName());
+            statement.setLong(6, authenticatedUserId);
             return statement.executeUpdate();
         }
     }
+
+    public Optional<Role> findVerifiedRoleById(long userId) throws SQLException {
+        String sql = "SELECT role FROM users WHERE user_id = ? AND email_verified = TRUE";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? Optional.of(Role.valueOf(results.getString("role"))) : Optional.empty();
+            }
+        }
+    }
+    public int updateFullName(long userId,String fullName)throws SQLException{try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("UPDATE users SET full_name=? WHERE user_id=?")){s.setString(1,fullName);s.setLong(2,userId);return s.executeUpdate();}}
+    private Long nullableLong(ResultSet r,String column)throws SQLException{long value=r.getLong(column);return r.wasNull()?null:value;}
 
     public void markEmailVerified(Connection connection, long userId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
