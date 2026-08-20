@@ -8,7 +8,15 @@ import java.util.Optional;
 
 public class ProfileService {
     public record UpdateResult(boolean successful, String message, UserProfile profile) {}
-    private final UserDAO userDAO = new UserDAO();
+    private final UserDAO userDAO;
+
+    public ProfileService() {
+        this(new UserDAO());
+    }
+
+    public ProfileService(UserDAO userDAO) {
+        this.userDAO = userDAO;
+    }
 
     public Optional<UserProfile> findOwnProfile(long authenticatedUserId) throws SQLException {
         return userDAO.findProfileById(authenticatedUserId);
