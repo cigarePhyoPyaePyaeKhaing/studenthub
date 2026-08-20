@@ -191,7 +191,7 @@ CREATE TABLE IF NOT EXISTS academic_change_requests (
     pending_user_id BIGINT GENERATED ALWAYS AS(CASE WHEN status='PENDING' THEN user_id ELSE NULL END) STORED,
     reviewed_by BIGINT NULL,admin_note VARCHAR(1000) NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,reviewed_at DATETIME NULL,
-    CONSTRAINT fk_academic_user FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    CONSTRAINT fk_academic_user FOREIGN KEY(user_id) REFERENCES users(user_id),
     CONSTRAINT fk_academic_reviewer FOREIGN KEY(reviewed_by) REFERENCES users(user_id) ON DELETE SET NULL,
     UNIQUE KEY uq_academic_one_pending(pending_user_id),
     INDEX idx_academic_status(status,created_at),INDEX idx_academic_user(user_id,status)
