@@ -1,5 +1,6 @@
 package com.studenthub.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -46,14 +47,25 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
     public String getTimeRemainingLabel() {
         if (deadlineDate == null) return "";
         if (isExpired()) return "Expired";
-        long hours = java.time.Duration.between(LocalDateTime.now(), deadlineDate).toHours();
-        if (hours < 24) {
-            long mins = java.time.Duration.between(LocalDateTime.now(), deadlineDate).toMinutes();
-            if (hours <= 0) return Math.max(1, mins) + " mins left";
+        LocalDateTime now = LocalDateTime.now();
+        LocalDate today = now.toLocalDate();
+        LocalDate dueDay = deadlineDate.toLocalDate();
+        long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(today, dueDay);
+        if (daysBetween == 0) {
+            long hours = java.time.Duration.between(now, deadlineDate).toHours();
+            if (hours <= 0) {
+                long mins = java.time.Duration.between(now, deadlineDate).toMinutes();
+                return mins <= 1 ? "Due now" : mins + " mins left";
+            }
             return hours + "h left";
+        } else if (daysBetween == 1) {
+            return "Due tomorrow";
+        } else {
+            return daysBetween + " days left";
         }
-        long days = hours / 24;
-        return days == 1 ? "1 day left" : days + " days left";
+    }
+    public String getRelativeDueLabel() {
+        return getTimeRemainingLabel();
     }
     public String getScopeLabel() {
         if ("ALL".equalsIgnoreCase(visibility)) return "All Students";
