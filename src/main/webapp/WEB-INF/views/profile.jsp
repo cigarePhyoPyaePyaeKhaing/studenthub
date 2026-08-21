@@ -154,18 +154,16 @@
                                 </div>
                                 <div>
                                     <dt>University</dt>
-                                    <dd class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                    <dd>
                                         <c:choose>
                                             <c:when test="${not empty profile.universityName}">
-                                                <span>
-                                                    <strong><c:out value="${profile.universityName}" /></strong>
-                                                    <c:if test="${not empty profile.universityShortName}"> (<c:out value="${profile.universityShortName}" />)</c:if>
-                                                </span>
-                                                <span class="badge bg-secondary small">Locked</span>
+                                                <c:out value="${profile.universityName}" /><c:if test="${not empty profile.universityShortName}"> (<c:out value="${profile.universityShortName}" />)</c:if>
                                             </c:when>
                                             <c:otherwise>
-                                                <span class="text-secondary">Not assigned</span>
-                                                <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a>
+                                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                                    <span class="text-secondary">Not assigned</span>
+                                                    <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a>
+                                                </div>
                                             </c:otherwise>
                                         </c:choose>
                                     </dd>
