@@ -10,7 +10,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDAO {
+    private static volatile List<Category> cachedCategories = null;
+    private static volatile long lastFetchTime = 0;
+    private static final long CACHE_TTL_MS = 300_000; // 5 minutes
+
     public List<Category> findAll() throws SQLException {
+        List<Category> local = cachedCategories;
+        long now = System.currentTimeMillis();
+        if (local != null && (now - lastFetchTime < CACHE_TTL_MS)) {
+            return local;
+        }
+
         List<Category> categories = new ArrayList<>();
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(
@@ -20,7 +30,14 @@ public class CategoryDAO {
                 categories.add(new Category(results.getLong("category_id"), results.getString("category_name")));
             }
         }
+        cachedCategories = categories;
+        lastFetchTime = now;
         return categories;
+    }
+
+    public static void invalidateCache() {
+        cachedCategories = null;
+        lastFetchTime = 0;
     }
 
     public boolean exists(Connection connection, long categoryId) throws SQLException {

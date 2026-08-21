@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Academic Change Requests | StudentHub Administration</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/main.js"></script>
+    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script>
     <link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css" rel="stylesheet">
 </head>

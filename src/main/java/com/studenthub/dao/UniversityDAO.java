@@ -14,10 +14,27 @@ import java.util.Optional;
 
 public class UniversityDAO {
 
+    private static volatile List<University> cachedApproved = null;
+    private static volatile long lastFetchTime = 0;
+    private static final long CACHE_TTL_MS = 300_000; // 5 minutes
+
     public List<University> listApprovedUniversities() throws SQLException {
-        try (Connection connection = DBConnection.getConnection()) {
-            return listApprovedUniversities(connection);
+        List<University> local = cachedApproved;
+        long now = System.currentTimeMillis();
+        if (local != null && (now - lastFetchTime < CACHE_TTL_MS)) {
+            return local;
         }
+        try (Connection connection = DBConnection.getConnection()) {
+            List<University> list = listApprovedUniversities(connection);
+            cachedApproved = list;
+            lastFetchTime = now;
+            return list;
+        }
+    }
+
+    public static void invalidateCache() {
+        cachedApproved = null;
+        lastFetchTime = 0;
     }
 
     public List<University> listApprovedUniversities(Connection connection) throws SQLException {

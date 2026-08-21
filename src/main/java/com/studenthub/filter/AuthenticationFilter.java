@@ -34,7 +34,7 @@ public class AuthenticationFilter implements Filter {
             Long cachedTime = (Long) session.getAttribute("cachedUnreadTime");
             long now = System.currentTimeMillis();
 
-            if (cachedCount != null && cachedTime != null && (now - cachedTime < 5000)) {
+            if (cachedCount != null && cachedTime != null && (now - cachedTime < 10000)) {
                 request.setAttribute("unreadNotificationCount", cachedCount);
             } else {
                 try {

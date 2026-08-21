@@ -69,8 +69,10 @@ public final class DBConnection {
                             config.setDriverClassName(MYSQL_DRIVER_CLASS);
                             config.setPoolName("StudentHubHikariPool");
                             config.setMaximumPoolSize(10);
-                            config.setMinimumIdle(2);
+                            config.setMinimumIdle(3);
                             config.setConnectionTimeout(10000);
+                            config.setValidationTimeout(3000);
+                            config.setKeepaliveTime(60000);
                             config.setIdleTimeout(300000);
                             config.setMaxLifetime(1800000);
                             config.addDataSourceProperty("cachePrepStmts", "true");
