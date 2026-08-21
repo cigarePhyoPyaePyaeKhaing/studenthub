@@ -55,6 +55,7 @@ public class ProfileServlet extends HttpServlet {
             }
             request.setAttribute("profile", found.get());
             request.setAttribute("editing", "true".equalsIgnoreCase(request.getParameter("edit")));
+            request.setAttribute("availableUniversities", profileService.listAvailableUniversities());
             if (academicChangeDAO != null) {
                 try {
                     request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
@@ -99,8 +100,10 @@ public class ProfileServlet extends HttpServlet {
             long authenticatedUserId = (Long) session.getAttribute("userId");
             ProfileService.UpdateResult result = profileService.updateOwnProfile(
                     ProfileAuthorization.updateTarget(authenticatedUserId),
-                    request.getParameter("fullName"), request.getParameter("semester"),
-                    request.getParameter("sectionName"));
+                    request.getParameter("fullName"),
+                    request.getParameter("semester"),
+                    request.getParameter("sectionName"),
+                    request.getParameter("universityId"));
             if ("NOT_FOUND".equals(result.message())) {
                 session.invalidate();
                 response.sendRedirect(request.getContextPath() + "/login");

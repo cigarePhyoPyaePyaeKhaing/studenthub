@@ -104,11 +104,15 @@ public class UserDAO {
     }
 
     public Optional<UserProfile> findProfileById(Connection connection, long userId) throws SQLException {
-        String sql = """
-                SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name
-                FROM users WHERE user_id = ?
+        String sqlWithJoin = """
+                SELECT u.user_id, u.student_id, u.full_name, u.email, u.role, u.email_verified,
+                       u.semester, u.section_name, u.university_id,
+                       v.name AS university_name, v.short_name AS university_short_name
+                FROM users u
+                LEFT JOIN universities v ON v.university_id = u.university_id
+                WHERE u.user_id = ?
                 """;
-        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+        try (PreparedStatement statement = connection.prepareStatement(sqlWithJoin)) {
             statement.setLong(1, userId);
             try (ResultSet results = statement.executeQuery()) {
                 if (!results.next()) return Optional.empty();
@@ -118,6 +122,12 @@ public class UserDAO {
                 boolean academicInfoLocked = (nullableSemester != null && sectionName != null && !sectionName.isBlank());
                 String roleStr = results.getString("role");
                 Role role = roleStr != null ? Role.valueOf(roleStr) : Role.STUDENT;
+                long univId = results.getLong("university_id");
+                Long nullableUnivId = results.wasNull() ? null : univId;
+                String univName = results.getString("university_name");
+                String univShort = results.getString("university_short_name");
+                boolean univLocked = (nullableUnivId != null && nullableUnivId > 0);
+
                 return Optional.of(new UserProfile(
                         results.getLong("user_id"),
                         results.getString("student_id"),
@@ -132,12 +142,63 @@ public class UserDAO {
                         null,
                         null,
                         null,
-                        null,
-                        null,
-                        null,
-                        false,
+                        nullableUnivId,
+                        univName,
+                        univShort,
+                        univLocked,
                         academicInfoLocked));
             }
+        } catch (SQLException ex) {
+            String fallbackSql = """
+                    SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name
+                    FROM users WHERE user_id = ?
+                    """;
+            try (PreparedStatement fallbackStmt = connection.prepareStatement(fallbackSql)) {
+                fallbackStmt.setLong(1, userId);
+                try (ResultSet results = fallbackStmt.executeQuery()) {
+                    if (!results.next()) return Optional.empty();
+                    int semester = results.getInt("semester");
+                    Integer nullableSemester = results.wasNull() ? null : semester;
+                    String sectionName = results.getString("section_name");
+                    boolean academicInfoLocked = (nullableSemester != null && sectionName != null && !sectionName.isBlank());
+                    String roleStr = results.getString("role");
+                    Role role = roleStr != null ? Role.valueOf(roleStr) : Role.STUDENT;
+                    return Optional.of(new UserProfile(
+                            results.getLong("user_id"),
+                            results.getString("student_id"),
+                            results.getString("full_name"),
+                            results.getString("email"),
+                            role,
+                            results.getBoolean("email_verified"),
+                            nullableSemester,
+                            sectionName,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            null,
+                            false,
+                            academicInfoLocked));
+                }
+            }
+        }
+    }
+
+    public int updateUniversityIfUnset(long userId, long universityId) throws SQLException {
+        try (Connection connection = DBConnection.getConnection()) {
+            return updateUniversityIfUnset(connection, userId, universityId);
+        }
+    }
+
+    public int updateUniversityIfUnset(Connection connection, long userId, long universityId) throws SQLException {
+        String sql = "UPDATE users SET university_id = ? WHERE user_id = ? AND (university_id IS NULL OR university_id = 0)";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, universityId);
+            statement.setLong(2, userId);
+            return statement.executeUpdate();
         }
     }
 

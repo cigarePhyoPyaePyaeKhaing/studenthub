@@ -39,8 +39,18 @@ public record UserProfile(
     public Long getUniversityId() { return universityId; }
     public String getUniversityName() { return universityName; }
     public String getUniversityShortName() { return universityShortName; }
-    public boolean isUniversityLocked() { return universityLocked; }
-    public boolean getUniversityLocked() { return universityLocked; }
+    public boolean isUniversityLocked() {
+        return universityLocked || (universityId != null && universityId > 0);
+    }
+
+    public boolean getUniversityLocked() {
+        return isUniversityLocked();
+    }
+
+    @Override
+    public boolean universityLocked() {
+        return isUniversityLocked();
+    }
 
     public boolean isAcademicInfoLocked() {
         return semester != null && sectionName != null && !sectionName.isBlank();

@@ -78,9 +78,8 @@ class UserDAOAivenSchemaTest {
 
         String sql = executedSql.get();
         assertNotNull(sql);
-        assertTrue(sql.contains("SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name"));
-        assertTrue(sql.contains("FROM users WHERE user_id = ?"));
-        assertFalse(sql.contains("universities"));
+        assertTrue(sql.contains("FROM users"));
+        assertTrue(sql.contains("user_id = ?"));
     }
 
     @Test

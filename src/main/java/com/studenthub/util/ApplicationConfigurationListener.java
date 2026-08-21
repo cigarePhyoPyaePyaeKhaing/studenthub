@@ -28,7 +28,7 @@ public class ApplicationConfigurationListener implements ServletContextListener 
     }
 
     private void ensureTablesExist(ServletContext context) {
-        String createSql = """
+        String createAcademicRequestsSql = """
                 CREATE TABLE IF NOT EXISTS academic_change_requests (
                     request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
                     user_id BIGINT NOT NULL,
@@ -50,13 +50,59 @@ public class ApplicationConfigurationListener implements ServletContextListener 
                     INDEX idx_academic_user(user_id,status)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """;
+
+        String createUniversitiesSql = """
+                CREATE TABLE IF NOT EXISTS universities (
+                    university_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+                    name VARCHAR(180) NOT NULL UNIQUE,
+                    short_name VARCHAR(30) NULL UNIQUE,
+                    status ENUM('PENDING','APPROVED','REJECTED','INACTIVE') NOT NULL DEFAULT 'APPROVED',
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    INDEX idx_university_status(status, name)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """;
+
+        String insertDefaultUniversitySql = """
+                INSERT INTO universities (name, short_name, status)
+                VALUES ('University of Information Technology', 'UIT', 'APPROVED')
+                ON DUPLICATE KEY UPDATE name = VALUES(name)
+                """;
+
         try (Connection connection = DBConnection.getConnection();
              Statement statement = connection.createStatement()) {
-            statement.execute(createSql);
+
+            statement.execute(createAcademicRequestsSql);
             context.log("Database tables verified/initialized: academic_change_requests");
+
+            statement.execute(createUniversitiesSql);
+            statement.execute(insertDefaultUniversitySql);
+            context.log("Database tables verified/initialized: universities (UIT)");
+
+            ensureUserUniversityColumn(connection, context);
+
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
             LOGGER.log(Level.INFO, "Database table initialization check: {0}", e.getMessage());
+        }
+    }
+
+    private void ensureUserUniversityColumn(Connection connection, ServletContext context) {
+        try {
+            boolean hasColumn = false;
+            var metaData = connection.getMetaData();
+            try (var rs = metaData.getColumns(null, null, "users", "university_id")) {
+                if (rs.next()) {
+                    hasColumn = true;
+                }
+            }
+            if (!hasColumn) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("ALTER TABLE users ADD COLUMN university_id BIGINT NULL");
+                    context.log("Added column users.university_id");
+                }
+            }
+        } catch (Exception e) {
+            context.log("ensureUserUniversityColumn check: " + e.getMessage());
         }
     }
 }

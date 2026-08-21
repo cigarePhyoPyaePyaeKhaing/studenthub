@@ -63,6 +63,32 @@
                                 <input class="form-control" id="fullName" name="fullName" maxlength="100" value="<c:out value='${profile.fullName}' />" required>
                             </div>
                             <c:choose>
+                                <c:when test="${profile.universityLocked}">
+                                    <div class="locked-field">
+                                        <span>University</span>
+                                        <strong>
+                                            <c:out value="${profile.universityName}" />
+                                            <c:if test="${not empty profile.universityShortName}"> (<c:out value="${profile.universityShortName}" />)</c:if>
+                                        </strong>
+                                    </div>
+                                    <p class="profile-security-note">University is locked and cannot be changed.</p>
+                                </c:when>
+                                <c:otherwise>
+                                    <div>
+                                        <label for="universityId">University</label>
+                                        <select class="form-select" id="universityId" name="universityId">
+                                            <option value="">Select your university</option>
+                                            <c:forEach var="u" items="${availableUniversities}">
+                                                <option value="${u.universityId}" <c:if test="${profile.universityId eq u.universityId}">selected</c:if>>
+                                                    <c:out value="${u.displayName}" />
+                                                </option>
+                                            </c:forEach>
+                                        </select>
+                                        <p class="profile-security-note">You can choose your University once. Once saved, it will be locked.</p>
+                                    </div>
+                                </c:otherwise>
+                            </c:choose>
+                            <c:choose>
                                 <c:when test="${profile.academicInfoLocked}">
                                     <div class="locked-field">
                                         <span>Semester</span>
@@ -128,12 +154,19 @@
                                 </div>
                                 <div>
                                     <dt>University</dt>
-                                    <dd>
+                                    <dd class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                         <c:choose>
                                             <c:when test="${not empty profile.universityName}">
-                                                <c:out value="${profile.universityName}" /> <c:if test="${not empty profile.universityShortName}">(<c:out value="${profile.universityShortName}" />)</c:if>
+                                                <span>
+                                                    <strong><c:out value="${profile.universityName}" /></strong>
+                                                    <c:if test="${not empty profile.universityShortName}"> (<c:out value="${profile.universityShortName}" />)</c:if>
+                                                </span>
+                                                <span class="badge bg-secondary small">Locked</span>
                                             </c:when>
-                                            <c:otherwise>Not assigned</c:otherwise>
+                                            <c:otherwise>
+                                                <span class="text-secondary">Not assigned</span>
+                                                <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a>
+                                            </c:otherwise>
                                         </c:choose>
                                     </dd>
                                 </div>
