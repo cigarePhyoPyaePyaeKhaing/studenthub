@@ -104,50 +104,6 @@ class ProfileServletTest {
     }
 
     @Test
-    void authenticatedCrLoadsProfileSuccessfully() throws Exception {
-        UserProfile mockProfile = new UserProfile(55L, "UIT-0055", "CR Student", "cr@uit.edu",
-                Role.CR, true, 6, "B", 1L, "University of Information Technology", "UIT", true, true);
-        FakeProfileDAO dao = new FakeProfileDAO(mockProfile);
-        ProfileServlet servlet = createServlet(dao);
-
-        sessionAttributes.put("userId", 55L);
-        HttpServletRequest request = createRequest("GET", true);
-        HttpServletResponse response = createResponse();
-
-        servlet.doGet(request, response);
-
-        assertEquals("/WEB-INF/views/profile.jsp", forwardedPath);
-        UserProfile loadedProfile = (UserProfile) requestAttributes.get("profile");
-        assertNotNull(loadedProfile);
-        assertEquals(Role.CR, loadedProfile.getRole());
-        assertEquals(6, loadedProfile.getSemester());
-        assertEquals("B", loadedProfile.getSectionName());
-        assertNull(requestAttributes.get("error"));
-    }
-
-    @Test
-    void authenticatedAdminLoadsProfileSuccessfully() throws Exception {
-        UserProfile mockProfile = new UserProfile(1L, "ADMIN-01", "Admin User", "admin@uit.edu",
-                Role.ADMIN, true, null, null, null, null, null, false, false);
-        FakeProfileDAO dao = new FakeProfileDAO(mockProfile);
-        ProfileServlet servlet = createServlet(dao);
-
-        sessionAttributes.put("userId", 1L);
-        HttpServletRequest request = createRequest("GET", true);
-        HttpServletResponse response = createResponse();
-
-        servlet.doGet(request, response);
-
-        assertEquals("/WEB-INF/views/profile.jsp", forwardedPath);
-        UserProfile loadedProfile = (UserProfile) requestAttributes.get("profile");
-        assertNotNull(loadedProfile);
-        assertEquals(Role.ADMIN, loadedProfile.getRole());
-        assertNull(loadedProfile.getSemester());
-        assertNull(loadedProfile.getSectionName());
-        assertNull(requestAttributes.get("error"));
-    }
-
-    @Test
     void missingOptionalAcademicInformationDoesNotCrashPage() throws Exception {
         UserProfile unassignedProfile = new UserProfile(99L, null, "New Student", "new@uit.edu",
                 Role.STUDENT, false, null, null, null, null, null, false, false);

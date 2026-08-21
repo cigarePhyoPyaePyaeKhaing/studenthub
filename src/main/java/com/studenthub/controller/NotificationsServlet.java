@@ -14,17 +14,8 @@ public class NotificationsServlet extends HttpServlet {
     private final NotificationDAO dao=new NotificationDAO();
     @Override protected void doGet(HttpServletRequest request,HttpServletResponse response)throws ServletException,IOException{
         long userId=(Long)request.getSession().getAttribute("userId");
-        try {
-            request.setAttribute("notifications", dao.findVisible(userId, 100));
-        } catch (SQLException e) {
-            Throwable rootCause = e.getCause();
-            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
-            getServletContext().log("Notification load failed: " + e.getClass().getName()
-                    + ", SQLState=" + e.getSQLState() + ", code=" + e.getErrorCode()
-                    + ", message=" + e.getMessage() + rootCauseInfo, e);
-            request.setAttribute("notifications", List.of());
-            request.setAttribute("error", "Notifications are temporarily unavailable.");
-        }
+        try{request.setAttribute("notifications",dao.findVisible(userId,100));}
+        catch(SQLException e){getServletContext().log("Notification load failed: "+e.getClass().getName());request.setAttribute("notifications",List.of());request.setAttribute("error","Notifications are temporarily unavailable.");}
         request.setAttribute("csrfToken",CsrfToken.getOrCreate(request.getSession()));
         request.getRequestDispatcher("/WEB-INF/views/notifications.jsp").forward(request,response);
     }

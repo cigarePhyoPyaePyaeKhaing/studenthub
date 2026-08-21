@@ -27,8 +27,8 @@ public class PostEngagementDAO {
     public List<PostComment> findComments(long postId, int limit) throws SQLException {
         String sql = """
                 SELECT cm.comment_id,cm.post_id,cm.user_id,cm.content,cm.created_at,
-                       author.name AS full_name,author.role
-                FROM comments cm JOIN users author ON author.id=cm.user_id
+                       author.full_name,author.role
+                FROM comments cm JOIN users author ON author.user_id=cm.user_id
                 WHERE cm.post_id=? ORDER BY cm.created_at ASC,cm.comment_id ASC LIMIT ?
                 """;
         List<PostComment> comments = new ArrayList<>();

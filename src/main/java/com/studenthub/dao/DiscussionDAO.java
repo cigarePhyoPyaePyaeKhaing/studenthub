@@ -16,7 +16,7 @@ public class DiscussionDAO {
                                 Integer semester, String sectionName) {}
 
     public AcademicProfile findAcademicProfile(long userId) throws SQLException {
-        String sql = "SELECT role, semester, section AS section_name FROM users WHERE id = ?";
+        String sql = "SELECT role, semester, section_name FROM users WHERE user_id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
@@ -33,11 +33,11 @@ public class DiscussionDAO {
     public List<DiscussionMessage> findRecent(DiscussionTarget target, int limit) throws SQLException {
         StringBuilder sql = new StringBuilder("""
                 SELECT m.message_id, m.sender_id, m.message, m.created_at,
-                       u.name AS full_name, u.role, u.semester AS author_semester,
-                       u.section AS author_section
+                       u.full_name, u.role, u.semester AS author_semester,
+                       u.section_name AS author_section
                 FROM messages m
                 JOIN chat_rooms r ON r.room_id = m.room_id
-                JOIN users u ON u.id = m.sender_id
+                JOIN users u ON u.user_id = m.sender_id
                 WHERE r.room_type = ?
                 """);
         if (target.scope() == DiscussionScope.SEMESTER || target.scope() == DiscussionScope.CR_SEMESTER) sql.append(" AND r.semester = ? AND r.section_name IS NULL");

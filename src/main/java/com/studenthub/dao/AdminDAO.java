@@ -20,8 +20,8 @@ public class AdminDAO {
                   (SELECT COUNT(*) FROM messages) discussion_messages,
                   (SELECT COUNT(*) FROM comments) comments,
                   (SELECT COUNT(*) FROM reactions) reactions,
-                  (SELECT COUNT(*) FROM users WHERE is_verified=TRUE) verified_users,
-                  (SELECT COUNT(*) FROM users WHERE is_verified=FALSE) unverified_users
+                  (SELECT COUNT(*) FROM users WHERE email_verified=TRUE) verified_users,
+                  (SELECT COUNT(*) FROM users WHERE email_verified=FALSE) unverified_users
                 """;
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -36,7 +36,7 @@ public class AdminDAO {
     }
 
     public List<AdminUserSummary> findRecentUsers(int limit) throws SQLException {
-        String sql = baseUserSelect() + " ORDER BY created_at DESC, id DESC LIMIT ?";
+        String sql = baseUserSelect() + " ORDER BY created_at DESC,user_id DESC LIMIT ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, Math.max(1, Math.min(limit, 10)));
@@ -45,7 +45,7 @@ public class AdminDAO {
     }
 
     public List<AdminUserSummary> findUsers(String search, int limit, int offset) throws SQLException {
-        String sql = baseUserSelect() + searchClause(search) + " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?";
+        String sql = baseUserSelect() + searchClause(search) + " ORDER BY created_at DESC,user_id DESC LIMIT ? OFFSET ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             int index = bindSearch(statement, search);
@@ -65,7 +65,7 @@ public class AdminDAO {
 
     public Optional<AdminUserSummary> findUser(long userId) throws SQLException {
         try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(baseUserSelect() + " WHERE id=?")) {
+             PreparedStatement statement = connection.prepareStatement(baseUserSelect() + " WHERE user_id=?")) {
             statement.setLong(1, userId);
             try (ResultSet result = statement.executeQuery()) {
                 return result.next() ? Optional.of(map(result)) : Optional.empty();
@@ -76,7 +76,7 @@ public class AdminDAO {
     public List<Long> lockAdminIds(Connection connection) throws SQLException {
         List<Long> ids = new ArrayList<>();
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT id AS user_id FROM users WHERE role='ADMIN' ORDER BY id FOR UPDATE");
+                "SELECT user_id FROM users WHERE role='ADMIN' ORDER BY user_id FOR UPDATE");
              ResultSet result = statement.executeQuery()) {
             while (result.next()) ids.add(result.getLong(1));
         }
@@ -85,7 +85,7 @@ public class AdminDAO {
 
     public Role lockUserRole(Connection connection, long userId) throws SQLException {
         try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT role FROM users WHERE id=? FOR UPDATE")) {
+                "SELECT role FROM users WHERE user_id=? FOR UPDATE")) {
             statement.setLong(1, userId);
             try (ResultSet result = statement.executeQuery()) {
                 return result.next() ? Role.valueOf(result.getString(1)) : null;
@@ -94,17 +94,17 @@ public class AdminDAO {
     }
 
     public int updateRole(Connection connection, long userId, Role role) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("UPDATE users SET role=? WHERE id=?")) {
+        try (PreparedStatement statement = connection.prepareStatement("UPDATE users SET role=? WHERE user_id=?")) {
             statement.setString(1, role.name()); statement.setLong(2, userId);
             return statement.executeUpdate();
         }
     }
 
     private String baseUserSelect() {
-        return "SELECT id AS user_id, tnt_no AS student_id, name AS full_name, email, role, is_verified AS email_verified, semester, section AS section_name, created_at FROM users";
+        return "SELECT user_id,student_id,full_name,email,role,email_verified,semester,section_name,created_at FROM users";
     }
     private String searchClause(String search) {
-        return search == null ? "" : " WHERE tnt_no LIKE ? OR name LIKE ? OR email LIKE ?";
+        return search == null ? "" : " WHERE student_id LIKE ? OR full_name LIKE ? OR email LIKE ?";
     }
     private int bindSearch(PreparedStatement statement, String search) throws SQLException {
         if (search == null) return 1;

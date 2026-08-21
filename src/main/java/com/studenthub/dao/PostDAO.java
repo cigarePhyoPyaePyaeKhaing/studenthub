@@ -16,20 +16,20 @@ public class PostDAO {
     public List<Post> findVisibleForUser(long viewerId, Long categoryId) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
-                       author.name AS author_name, author.role AS author_role,
+                       author.full_name AS author_name, author.role AS author_role,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
                        EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id = p.post_id
                               AND mine.user_id = ? AND mine.reaction_type = 'LIKE') AS current_user_reacted
                 FROM posts p
-                JOIN users author ON author.id = p.user_id
-                JOIN users viewer ON viewer.id = ?
+                JOIN users author ON author.user_id = p.user_id
+                JOIN users viewer ON viewer.user_id = ?
                 LEFT JOIN categories c ON c.category_id = p.category_id
                 WHERE (p.visibility = 'ALL'
                        OR (p.visibility = 'SEMESTER' AND author.semester = viewer.semester)
                        OR (p.visibility = 'SECTION' AND author.semester = viewer.semester
-                           AND (author.section COLLATE utf8mb4_unicode_ci) = (viewer.section COLLATE utf8mb4_unicode_ci)))
+                           AND author.section_name = viewer.section_name))
                   AND (? IS NULL OR p.category_id = ?)
                 ORDER BY p.created_at DESC, p.post_id DESC
                 LIMIT 100
@@ -77,12 +77,12 @@ public class PostDAO {
     public java.util.Optional<Post> findById(long postId) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
-                       p.visibility, p.created_at, author.name AS author_name,
+                       p.visibility, p.created_at, author.full_name AS author_name,
                        author.role AS author_role, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        FALSE AS current_user_reacted
-                FROM posts p JOIN users author ON author.id=p.user_id
+                FROM posts p JOIN users author ON author.user_id=p.user_id
                 LEFT JOIN categories c ON c.category_id=p.category_id WHERE p.post_id=?
                 """;
         try (Connection connection = DBConnection.getConnection();
@@ -97,20 +97,20 @@ public class PostDAO {
     public java.util.Optional<Post> findVisibleById(long postId, long viewerId) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
-                       p.visibility, p.created_at, author.name AS author_name,
+                       p.visibility, p.created_at, author.full_name AS author_name,
                        author.role AS author_role, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.post_id
                               AND mine.user_id=? AND mine.reaction_type='LIKE') current_user_reacted
                 FROM posts p
-                JOIN users author ON author.id=p.user_id
-                JOIN users viewer ON viewer.id=?
+                JOIN users author ON author.user_id=p.user_id
+                JOIN users viewer ON viewer.user_id=?
                 LEFT JOIN categories c ON c.category_id=p.category_id
                 WHERE p.post_id=? AND (p.visibility='ALL'
                     OR (p.visibility='SEMESTER' AND author.semester=viewer.semester)
                     OR (p.visibility='SECTION' AND author.semester=viewer.semester
-                        AND (author.section COLLATE utf8mb4_unicode_ci)=(viewer.section COLLATE utf8mb4_unicode_ci)))
+                        AND author.section_name=viewer.section_name))
                 """;
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -139,8 +139,8 @@ public class PostDAO {
     public boolean authorHasScope(Connection connection, long userId, String visibility) throws SQLException {
         if ("ALL".equals(visibility)) return true;
         String sql = "SECTION".equals(visibility)
-                ? "SELECT 1 FROM users WHERE id=? AND semester IS NOT NULL AND section IS NOT NULL"
-                : "SELECT 1 FROM users WHERE id=? AND semester IS NOT NULL";
+                ? "SELECT 1 FROM users WHERE user_id=? AND semester IS NOT NULL AND section_name IS NOT NULL"
+                : "SELECT 1 FROM users WHERE user_id=? AND semester IS NOT NULL";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
             try (ResultSet result = statement.executeQuery()) { return result.next(); }
