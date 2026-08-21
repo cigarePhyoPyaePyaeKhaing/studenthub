@@ -114,6 +114,8 @@ public class UserDAO {
                 if (!results.next()) return Optional.empty();
                 int semester = results.getInt("semester");
                 Integer nullableSemester = results.wasNull() ? null : semester;
+                String sectionName = results.getString("section_name");
+                boolean academicInfoLocked = (nullableSemester != null && sectionName != null && !sectionName.isBlank());
                 String roleStr = results.getString("role");
                 Role role = roleStr != null ? Role.valueOf(roleStr) : Role.STUDENT;
                 return Optional.of(new UserProfile(
@@ -124,7 +126,7 @@ public class UserDAO {
                         role,
                         results.getBoolean("email_verified"),
                         nullableSemester,
-                        results.getString("section_name"),
+                        sectionName,
                         null,
                         null,
                         null,
@@ -134,7 +136,7 @@ public class UserDAO {
                         null,
                         null,
                         false,
-                        false));
+                        academicInfoLocked));
             }
         }
     }

@@ -41,13 +41,25 @@ public record UserProfile(
     public String getUniversityShortName() { return universityShortName; }
     public boolean isUniversityLocked() { return universityLocked; }
     public boolean getUniversityLocked() { return universityLocked; }
-    public boolean isAcademicInfoLocked() { return academicInfoLocked; }
-    public boolean getAcademicInfoLocked() { return academicInfoLocked; }
+
+    public boolean isAcademicInfoLocked() {
+        return semester != null && sectionName != null && !sectionName.isBlank();
+    }
+
+    public boolean getAcademicInfoLocked() {
+        return isAcademicInfoLocked();
+    }
+
+    @Override
+    public boolean academicInfoLocked() {
+        return isAcademicInfoLocked();
+    }
 
     public UserProfile(long userId, String studentId, String fullName, String email,
                        Role role, boolean emailVerified, Integer semester, String sectionName) {
         this(userId, studentId, fullName, email, role, emailVerified, semester, sectionName,
-                null, null, null, null, null, null, null, null, false, false);
+                null, null, null, null, null, null, null, null, false,
+                semester != null && sectionName != null && !sectionName.isBlank());
     }
 
     public UserProfile(long userId, String studentId, String fullName, String email,
@@ -56,7 +68,8 @@ public record UserProfile(
                        boolean universityLocked, boolean academicInfoLocked) {
         this(userId, studentId, fullName, email, role, emailVerified, semester, sectionName,
                 null, null, null, null, null,
-                universityId, universityName, universityShortName, universityLocked, academicInfoLocked);
+                universityId, universityName, universityShortName, universityLocked,
+                semester != null && sectionName != null && !sectionName.isBlank());
     }
 
     public String getInitial() {
