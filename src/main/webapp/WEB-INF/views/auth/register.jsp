@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Register | StudentHub</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="${pageContext.request.contextPath}/assets/js/main.js?v=2" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=2" rel="stylesheet"></head>
+<script src="${pageContext.request.contextPath}/assets/js/main.js?v=3" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=3" rel="stylesheet"></head>
 <body class="auth-page"><main class="container py-5"><div class="auth-card card border-0 shadow-lg mx-auto"><div class="card-body p-4 p-md-5">
 <a class="text-decoration-none" href="${pageContext.request.contextPath}/home">StudentHub</a><h1 class="h2 mt-3">Create your student account</h1><p class="text-secondary">Use your UIT student ID and an email you can verify.</p>
 <c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}"/></div></c:if>
@@ -11,28 +11,32 @@
 <div class="mb-3"><label class="form-label" for="studentId">Student ID</label><input class="form-control" id="studentId" name="studentId" maxlength="8" pattern="TNT-[0-9]{4}" placeholder="TNT-0001" required></div>
 <div class="mb-3"><label class="form-label" for="fullName">Full name</label><input class="form-control" id="fullName" name="fullName" maxlength="100" autocomplete="name" required></div>
 <div class="mb-3"><label class="form-label" for="email">Email</label><input class="form-control" type="email" id="email" name="email" maxlength="120" autocomplete="email" required></div>
-<div class="mb-3"><label class="form-label" for="registerPassword">Password</label><div class="password-wrapper"><input class="form-control" type="password" id="registerPassword" name="password" minlength="8" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-input="registerPassword" aria-label="Toggle password visibility">👁</button></div><div class="form-text">At least 8 characters with uppercase, lowercase, and a number.</div></div>
-<div class="mb-4"><label class="form-label" for="confirmPassword">Confirm password</label><div class="password-wrapper"><input class="form-control" type="password" id="confirmPassword" name="confirmPassword" maxlength="128" autocomplete="new-password" required><button type="button" class="toggle-password" data-input="confirmPassword" aria-label="Toggle password visibility">👁</button></div></div>
+<div class="mb-3"><label class="form-label" for="registerPassword">Password</label><div class="password-wrapper"><input class="form-control" type="password" id="registerPassword" name="password" minlength="8" maxlength="128" autocomplete="new-password" required><button type="button" id="toggleRegisterPassword" class="toggle-password" data-input="registerPassword" aria-label="Toggle password visibility" onclick="var inp=document.getElementById('registerPassword'); if(inp){ var isP=(inp.type==='password'); inp.type=isP?'text':'password'; var eye=this.querySelector('.eye-icon'), eyeOff=this.querySelector('.eye-off-icon'); if(eye&&eyeOff){eye.style.display=isP?'none':'block'; eyeOff.style.display=isP?'block':'none';} }"><svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg></button></div><div class="form-text">At least 8 characters with uppercase, lowercase, and a number.</div></div>
+<div class="mb-4"><label class="form-label" for="confirmPassword">Confirm password</label><div class="password-wrapper"><input class="form-control" type="password" id="confirmPassword" name="confirmPassword" maxlength="128" autocomplete="new-password" required><button type="button" id="toggleConfirmPassword" class="toggle-password" data-input="confirmPassword" aria-label="Toggle password visibility" onclick="var inp=document.getElementById('confirmPassword'); if(inp){ var isP=(inp.type==='password'); inp.type=isP?'text':'password'; var eye=this.querySelector('.eye-icon'), eyeOff=this.querySelector('.eye-off-icon'); if(eye&&eyeOff){eye.style.display=isP?'none':'block'; eyeOff.style.display=isP?'block':'none';} }"><svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none;"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg></button></div></div>
 <button class="btn btn-primary w-100" type="submit">Create account</button></form><p class="mt-4 mb-0 text-center">Already registered? <a href="${pageContext.request.contextPath}/login">Sign in</a></p>
 </div></div></main>
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    document.querySelectorAll(".toggle-password").forEach(function(button) {
-        button.addEventListener("click", function(e) {
-            e.preventDefault();
-            var input = document.getElementById(button.dataset.input);
-            if (!input) return;
-            if (input.type === "password") {
-                input.type = "text";
-                button.textContent = "🙈";
-                button.setAttribute("aria-label", "Hide password");
-            } else {
-                input.type = "password";
-                button.textContent = "👁";
-                button.setAttribute("aria-label", "Show password");
-            }
-        });
-    });
+document.addEventListener("DOMContentLoaded", function(){
+    console.log("password toggle loaded");
+    function bindToggle(btnId, inputId){
+        const button = document.getElementById(btnId);
+        const input = document.getElementById(inputId);
+        if(button && input){
+            button.addEventListener("click", function(e){
+                e.preventDefault();
+                const isPassword = input.type === "password";
+                input.type = isPassword ? "text" : "password";
+                const eye = button.querySelector(".eye-icon");
+                const eyeOff = button.querySelector(".eye-off-icon");
+                if(eye && eyeOff){
+                    eye.style.display = isPassword ? "none" : "block";
+                    eyeOff.style.display = isPassword ? "block" : "none";
+                }
+            });
+        }
+    }
+    bindToggle("toggleRegisterPassword", "registerPassword");
+    bindToggle("toggleConfirmPassword", "confirmPassword");
 });
 </script>
 </body></html>
