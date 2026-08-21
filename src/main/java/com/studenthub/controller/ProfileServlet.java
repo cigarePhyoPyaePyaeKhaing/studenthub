@@ -1,5 +1,6 @@
 package com.studenthub.controller;
 
+import com.studenthub.dao.AcademicChangeDAO;
 import com.studenthub.model.UserProfile;
 import com.studenthub.service.ProfileService;
 import com.studenthub.util.Authorization;
@@ -20,13 +21,19 @@ import java.util.Optional;
 @WebServlet(name = "ProfileServlet", urlPatterns = "/profile")
 public class ProfileServlet extends HttpServlet {
     private final ProfileService profileService;
+    private final AcademicChangeDAO academicChangeDAO;
 
     public ProfileServlet() {
-        this(new ProfileService());
+        this(new ProfileService(), new AcademicChangeDAO());
     }
 
     public ProfileServlet(ProfileService profileService) {
+        this(profileService, new AcademicChangeDAO());
+    }
+
+    public ProfileServlet(ProfileService profileService, AcademicChangeDAO academicChangeDAO) {
         this.profileService = profileService;
+        this.academicChangeDAO = academicChangeDAO;
     }
 
     @Override
@@ -48,6 +55,13 @@ public class ProfileServlet extends HttpServlet {
             }
             request.setAttribute("profile", found.get());
             request.setAttribute("editing", "true".equalsIgnoreCase(request.getParameter("edit")));
+            if (academicChangeDAO != null) {
+                try {
+                    request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
+                } catch (SQLException ignored) {
+                    // Non-blocking lookup
+                }
+            }
         } catch (SQLException exception) {
             getServletContext().log("Profile load failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState()

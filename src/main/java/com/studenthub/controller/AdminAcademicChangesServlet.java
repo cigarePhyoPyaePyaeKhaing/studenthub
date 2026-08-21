@@ -1,3 +1,87 @@
 package com.studenthub.controller;
-import com.studenthub.dao.AcademicChangeDAO;import com.studenthub.util.*;import jakarta.servlet.*;import jakarta.servlet.annotation.WebServlet;import jakarta.servlet.http.*;import java.io.*;import java.sql.*;
-@WebServlet("/admin/academic-changes") public class AdminAcademicChangesServlet extends HttpServlet{private final AcademicChangeDAO dao=new AcademicChangeDAO();protected void doGet(HttpServletRequest q,HttpServletResponse p)throws ServletException,IOException{if(!AdminRequest.requireAdmin(q,p))return;try{q.setAttribute("requests",dao.pending());}catch(SQLException e){q.setAttribute("error","Requests are temporarily unavailable.");}q.getRequestDispatcher("/WEB-INF/views/admin/academic-changes.jsp").forward(q,p);}protected void doPost(HttpServletRequest q,HttpServletResponse p)throws IOException{if(!AdminRequest.requireAdmin(q,p))return;if(!CsrfToken.isValid(q)){p.sendError(403);return;}String decision=q.getParameter("decision");if(!"approve".equals(decision)&&!"reject".equals(decision)){p.sendError(400);return;}try{long id=Long.parseLong(q.getParameter("id"));if(!dao.review(id,(Long)q.getSession().getAttribute("userId"),"approve".equals(decision),q.getParameter("adminNote"))){p.sendError(404);return;}}catch(SQLException|NumberFormatException e){p.sendError(400);return;}p.sendRedirect(q.getContextPath()+"/admin/academic-changes");}}
+
+import com.studenthub.dao.AcademicChangeDAO;
+import com.studenthub.dao.UserDAO;
+import com.studenthub.util.AdminRequest;
+import com.studenthub.util.CsrfToken;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.io.IOException;
+import java.sql.SQLException;
+
+@WebServlet(name = "AdminAcademicChangesServlet", urlPatterns = "/admin/academic-changes")
+public class AdminAcademicChangesServlet extends HttpServlet {
+    private final AcademicChangeDAO dao;
+    private final UserDAO userDAO;
+
+    public AdminAcademicChangesServlet() {
+        this(new AcademicChangeDAO(), new UserDAO());
+    }
+
+    public AdminAcademicChangesServlet(AcademicChangeDAO dao) {
+        this(dao, new UserDAO());
+    }
+
+    public AdminAcademicChangesServlet(AcademicChangeDAO dao, UserDAO userDAO) {
+        this.dao = dao;
+        this.userDAO = userDAO;
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        if (!AdminRequest.requireAdmin(request, response, userDAO)) {
+            return;
+        }
+        String status = request.getParameter("status");
+        try {
+            request.setAttribute("requests", dao.listByStatus(status));
+            request.setAttribute("currentStatus", status != null && !status.isBlank() ? status.toUpperCase() : "PENDING");
+        } catch (SQLException e) {
+            getServletContext().log("Admin academic changes load failed: " + e.getClass().getName());
+            request.setAttribute("error", "Requests are temporarily unavailable.");
+        }
+        request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
+        request.getRequestDispatcher("/WEB-INF/views/admin/academic-changes.jsp").forward(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        if (!AdminRequest.requireAdmin(request, response, userDAO)) {
+            return;
+        }
+        if (!CsrfToken.isValid(request)) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
+        }
+
+        String decision = request.getParameter("decision");
+        if (!"approve".equalsIgnoreCase(decision) && !"reject".equalsIgnoreCase(decision)) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return;
+        }
+
+        try {
+            long id = Long.parseLong(request.getParameter("id"));
+            long adminId = (Long) request.getSession().getAttribute("userId");
+            boolean approved = "approve".equalsIgnoreCase(decision);
+            String note = request.getParameter("adminNote");
+
+            boolean success = dao.review(id, adminId, approved, note);
+            if (!success) {
+                request.getSession().setAttribute("flashError", "Request was already reviewed or not found.");
+            } else {
+                request.getSession().setAttribute("flash", "Academic change request " + (approved ? "approved." : "rejected."));
+            }
+        } catch (SQLException | NumberFormatException e) {
+            getServletContext().log("Admin academic change review failed: " + e.getClass().getName());
+            request.getSession().setAttribute("flashError", "Unable to complete review action.");
+        }
+        response.sendRedirect(request.getContextPath() + "/admin/academic-changes");
+    }
+}

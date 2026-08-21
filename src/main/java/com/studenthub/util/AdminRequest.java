@@ -9,12 +9,16 @@ import java.sql.SQLException;
 public final class AdminRequest {
     private AdminRequest() {}
     public static boolean requireAdmin(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        return requireAdmin(request, response, new UserDAO());
+    }
+
+    public static boolean requireAdmin(HttpServletRequest request, HttpServletResponse response, UserDAO userDAO) throws IOException {
         if (!Authorization.isAuthenticated(request.getSession(false))) {
             response.sendRedirect(request.getContextPath() + "/login"); return false;
         }
         Long userId = (Long) request.getSession().getAttribute("userId");
         try {
-            if (userId == null || new UserDAO().findVerifiedRoleById(userId).orElse(null) != Role.ADMIN) {
+            if (userId == null || userDAO.findVerifiedRoleById(userId).orElse(null) != Role.ADMIN) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN); return false;
             }
         } catch (SQLException exception) {
