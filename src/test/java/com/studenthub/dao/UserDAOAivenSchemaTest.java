@@ -20,23 +20,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class UserDAOAivenSchemaTest {
 
     @Test
-    void findProfileByIdQueriesAivenColumns() throws Exception {
+    void findProfileByIdQueriesProductionColumns() throws Exception {
         UserDAO dao = new UserDAO();
         AtomicReference<String> executedSql = new AtomicReference<>();
         Map<String, Object> row = new HashMap<>();
-        row.put("id", 42L);
-        row.put("tnt_no", "TNT-0042");
-        row.put("name", "Mg Mg");
+        row.put("user_id", 42L);
+        row.put("student_id", "TNT-0042");
+        row.put("full_name", "Mg Mg");
         row.put("email", "mgmg@uit.edu");
         row.put("role", "STUDENT");
-        row.put("is_verified", true);
+        row.put("email_verified", true);
         row.put("semester", 4);
-        row.put("section", "A");
-        row.put("major", "CS");
-        row.put("phone", "+95900000000");
-        row.put("address", "Yangon");
-        row.put("bio", "Student bio");
-        row.put("avatar_url", "https://img.example.com/avatar.jpg");
+        row.put("section_name", "A");
 
         Connection connection = createMockConnection(executedSql, row, true);
 
@@ -52,19 +47,12 @@ class UserDAOAivenSchemaTest {
         assertTrue(p.isEmailVerified());
         assertEquals(4, p.getSemester());
         assertEquals("A", p.getSectionName());
-        assertEquals("CS", p.getMajor());
-        assertEquals("+95900000000", p.getPhone());
-        assertEquals("Yangon", p.getAddress());
-        assertEquals("Student bio", p.getBio());
-        assertEquals("https://img.example.com/avatar.jpg", p.getAvatarUrl());
 
         String sql = executedSql.get();
         assertNotNull(sql);
-        assertTrue(sql.contains("SELECT id, tnt_no, name, email, role, is_verified"));
-        assertTrue(sql.contains("FROM users WHERE id = ?"));
+        assertTrue(sql.contains("SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name"));
+        assertTrue(sql.contains("FROM users WHERE user_id = ?"));
         assertFalse(sql.contains("universities"));
-        assertFalse(sql.contains("user_id"));
-        assertFalse(sql.contains("full_name"));
     }
 
     @Test
@@ -72,19 +60,14 @@ class UserDAOAivenSchemaTest {
         UserDAO dao = new UserDAO();
         AtomicReference<String> executedSql = new AtomicReference<>();
         Map<String, Object> row = new HashMap<>();
-        row.put("id", 99L);
-        row.put("tnt_no", null);
-        row.put("name", "New Student");
+        row.put("user_id", 99L);
+        row.put("student_id", null);
+        row.put("full_name", "New Student");
         row.put("email", "new@uit.edu");
         row.put("role", "STUDENT");
-        row.put("is_verified", false);
+        row.put("email_verified", false);
         row.put("semester", null);
-        row.put("section", null);
-        row.put("major", null);
-        row.put("phone", null);
-        row.put("address", null);
-        row.put("bio", null);
-        row.put("avatar_url", null);
+        row.put("section_name", null);
 
         Connection connection = createMockConnection(executedSql, row, true);
 
@@ -99,11 +82,6 @@ class UserDAOAivenSchemaTest {
         assertFalse(p.isEmailVerified());
         assertNull(p.getSemester());
         assertNull(p.getSectionName());
-        assertNull(p.getMajor());
-        assertNull(p.getPhone());
-        assertNull(p.getAddress());
-        assertNull(p.getBio());
-        assertNull(p.getAvatarUrl());
         assertEquals("N", p.getInitial());
     }
 
@@ -120,7 +98,7 @@ class UserDAOAivenSchemaTest {
     }
 
     @Test
-    void updateProfileTargetsAivenColumns() throws Exception {
+    void updateProfileTargetsProductionColumns() throws Exception {
         UserDAO dao = new UserDAO();
         AtomicReference<String> executedSql = new AtomicReference<>();
         Map<Integer, Object> boundParams = new HashMap<>();
@@ -131,7 +109,7 @@ class UserDAOAivenSchemaTest {
 
         assertEquals(1, rows);
         String sql = executedSql.get();
-        assertTrue(sql.contains("UPDATE users SET name=?, semester=?, section=? WHERE id=?"));
+        assertTrue(sql.contains("UPDATE users SET full_name=?, semester=?, section_name=? WHERE user_id=?"));
         assertEquals("Updated Name", boundParams.get(1));
         assertEquals(4, boundParams.get(2));
         assertEquals("B", boundParams.get(3));
@@ -150,7 +128,7 @@ class UserDAOAivenSchemaTest {
 
         assertEquals(1, rows);
         String sql = executedSql.get();
-        assertTrue(sql.contains("UPDATE users SET name=?, semester=?, section=? WHERE id=?"));
+        assertTrue(sql.contains("UPDATE users SET full_name=?, semester=?, section_name=? WHERE user_id=?"));
         assertEquals("Name Only", boundParams.get(1));
         assertNull(boundParams.get(2));
         assertNull(boundParams.get(3));

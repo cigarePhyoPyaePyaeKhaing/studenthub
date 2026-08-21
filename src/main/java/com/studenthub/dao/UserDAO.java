@@ -108,9 +108,8 @@ public class UserDAO {
 
     public Optional<UserProfile> findProfileById(Connection connection, long userId) throws SQLException {
         String sql = """
-                SELECT id, tnt_no, name, email, role, is_verified,
-                       semester, section, major, phone, address, bio, avatar_url
-                FROM users WHERE id = ?
+                SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name
+                FROM users WHERE user_id = ?
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
@@ -121,19 +120,19 @@ public class UserDAO {
                 String roleStr = results.getString("role");
                 Role role = roleStr != null ? Role.valueOf(roleStr) : Role.STUDENT;
                 return Optional.of(new UserProfile(
-                        results.getLong("id"),
-                        results.getString("tnt_no"),
-                        results.getString("name"),
+                        results.getLong("user_id"),
+                        results.getString("student_id"),
+                        results.getString("full_name"),
                         results.getString("email"),
                         role,
-                        results.getBoolean("is_verified"),
+                        results.getBoolean("email_verified"),
                         nullableSemester,
-                        results.getString("section"),
-                        results.getString("major"),
-                        results.getString("phone"),
-                        results.getString("address"),
-                        results.getString("bio"),
-                        results.getString("avatar_url"),
+                        results.getString("section_name"),
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
                         null,
                         null,
                         null,
@@ -150,7 +149,7 @@ public class UserDAO {
     }
 
     public int updateProfile(Connection connection, long authenticatedUserId, ProfileUpdate update) throws SQLException {
-        String sql = "UPDATE users SET name=?, semester=?, section=? WHERE id=?";
+        String sql = "UPDATE users SET full_name=?, semester=?, section_name=? WHERE user_id=?";
         try (PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setString(1, update.fullName());
             if (update.semester() == null) statement.setNull(2, java.sql.Types.INTEGER);
@@ -175,7 +174,7 @@ public class UserDAO {
 
     public int updateFullName(long userId, String fullName) throws SQLException {
         try (Connection c = DBConnection.getConnection();
-             PreparedStatement s = c.prepareStatement("UPDATE users SET name=? WHERE id=?")) {
+             PreparedStatement s = c.prepareStatement("UPDATE users SET full_name=? WHERE user_id=?")) {
             s.setString(1, fullName);
             s.setLong(2, userId);
             return s.executeUpdate();
