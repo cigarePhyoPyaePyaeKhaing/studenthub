@@ -160,6 +160,9 @@ public class AttachmentStorageService {
         if (storedFilename == null || storedFilename.isBlank()) {
             return null;
         }
+        if (storedFilename.contains("\\") || storedFilename.contains("/")) {
+            throw new SecurityException("Path traversal prohibited.");
+        }
         Path targetPath = storageDirectory.resolve(storedFilename).normalize();
         if (!targetPath.startsWith(storageDirectory)) {
             throw new SecurityException("Path traversal prohibited.");
@@ -170,6 +173,9 @@ public class AttachmentStorageService {
 
     public boolean deleteFile(String storedFilename) {
         if (storedFilename == null || storedFilename.isBlank()) {
+            return false;
+        }
+        if (storedFilename.contains("\\") || storedFilename.contains("/")) {
             return false;
         }
         Path targetPath = storageDirectory.resolve(storedFilename).normalize();
