@@ -27,10 +27,26 @@ public class AuthenticationFilter implements Filter {
         if (isPublicPath(path) || !isProtectedPath(path)) { chain.doFilter(request, response); return; }
         HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
-        request.setAttribute("csrfToken",CsrfToken.getOrCreate(session));
+        request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
         if (needsUnreadCount(http.getMethod(), http.getContextPath(), http.getRequestURI())) {
-            try{request.setAttribute("unreadNotificationCount",notificationDAO.countUnread((Long)session.getAttribute("userId")));}
-            catch(SQLException exception){request.getServletContext().log("Unread notification count failed: "+exception.getClass().getName());request.setAttribute("unreadNotificationCount",0L);}
+            long userId = (Long) session.getAttribute("userId");
+            Long cachedCount = (Long) session.getAttribute("cachedUnreadCount");
+            Long cachedTime = (Long) session.getAttribute("cachedUnreadTime");
+            long now = System.currentTimeMillis();
+
+            if (cachedCount != null && cachedTime != null && (now - cachedTime < 5000)) {
+                request.setAttribute("unreadNotificationCount", cachedCount);
+            } else {
+                try {
+                    long count = notificationDAO.countUnread(userId);
+                    session.setAttribute("cachedUnreadCount", count);
+                    session.setAttribute("cachedUnreadTime", now);
+                    request.setAttribute("unreadNotificationCount", count);
+                } catch (SQLException exception) {
+                    request.getServletContext().log("Unread notification count failed: " + exception.getClass().getName());
+                    request.setAttribute("unreadNotificationCount", cachedCount != null ? cachedCount : 0L);
+                }
+            }
         }
         chain.doFilter(request, response);
     }

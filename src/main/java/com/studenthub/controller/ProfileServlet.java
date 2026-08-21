@@ -45,6 +45,7 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
+        long startTime = System.currentTimeMillis();
         long userId = (Long) session.getAttribute("userId");
         try {
             Optional<UserProfile> found = profileService.findOwnProfile(userId);
@@ -53,9 +54,17 @@ public class ProfileServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/login");
                 return;
             }
-            request.setAttribute("profile", found.get());
-            request.setAttribute("editing", "true".equalsIgnoreCase(request.getParameter("edit")));
-            request.setAttribute("availableUniversities", profileService.listAvailableUniversities());
+            UserProfile profile = found.get();
+            boolean editing = "true".equalsIgnoreCase(request.getParameter("edit"));
+            request.setAttribute("profile", profile);
+            request.setAttribute("editing", editing);
+
+            if (editing && !profile.isUniversityLocked()) {
+                request.setAttribute("availableUniversities", profileService.listAvailableUniversities());
+            } else {
+                request.setAttribute("availableUniversities", java.util.Collections.emptyList());
+            }
+
             if (academicChangeDAO != null) {
                 try {
                     request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
@@ -80,6 +89,9 @@ public class ProfileServlet extends HttpServlet {
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
         moveFlash(request, "flash", "message");
         moveFlash(request, "flashError", "error");
+        if (request.getAttribute("error") == null) {
+            logSafe("Profile load completed in " + (System.currentTimeMillis() - startTime) + " ms");
+        }
         request.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(request, response);
     }
 

@@ -24,6 +24,7 @@ public class HomeServlet extends HttpServlet {
             response.sendRedirect(request.getContextPath() + "/login");
             return;
         }
+        long startTime = System.currentTimeMillis();
         long userId = (Long) request.getSession().getAttribute("userId");
         Long categoryId = parseCategory(request.getParameter("category"));
         try {
@@ -32,7 +33,7 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("categories", data.categories());
             request.setAttribute("deadlines", data.deadlines());
         } catch (SQLException exception) {
-            getServletContext().log("Dashboard load failed: " + exception.getClass().getName()
+            logSafe("Dashboard load failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode());
             request.setAttribute("posts", List.of());
             request.setAttribute("categories", List.of());
@@ -52,7 +53,17 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("dashboardError", flashError);
             request.getSession().removeAttribute("flashError");
         }
+        logSafe("Home dashboard load completed in " + (System.currentTimeMillis() - startTime) + " ms");
         request.getRequestDispatcher("/WEB-INF/views/home.jsp").forward(request, response);
+    }
+
+    private void logSafe(String message) {
+        try {
+            if (getServletConfig() != null && getServletContext() != null) {
+                getServletContext().log(message);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     private Long parseCategory(String value) {

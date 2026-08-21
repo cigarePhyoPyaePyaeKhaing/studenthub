@@ -27,6 +27,11 @@ public class ApplicationConfigurationListener implements ServletContextListener 
         ensureTablesExist(context);
     }
 
+    @Override
+    public void contextDestroyed(ServletContextEvent event) {
+        DBConnection.closeDataSource();
+    }
+
     private void ensureTablesExist(ServletContext context) {
         String createAcademicRequestsSql = """
                 CREATE TABLE IF NOT EXISTS academic_change_requests (

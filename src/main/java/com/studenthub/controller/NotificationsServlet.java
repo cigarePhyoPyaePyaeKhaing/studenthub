@@ -22,7 +22,11 @@ public class NotificationsServlet extends HttpServlet {
     @Override protected void doPost(HttpServletRequest request,HttpServletResponse response)throws IOException{
         if(!CsrfToken.isValid(request)){response.sendError(403);return;}
         Long id=positiveId(request.getParameter("id"));if(id==null){response.sendError(400);return;}
-        try{if(!dao.markRead(id,(Long)request.getSession().getAttribute("userId"))){response.sendError(404);return;}}
+        try{
+            if(!dao.markRead(id,(Long)request.getSession().getAttribute("userId"))){response.sendError(404);return;}
+            request.getSession().removeAttribute("cachedUnreadTime");
+            request.getSession().removeAttribute("cachedUnreadCount");
+        }
         catch(SQLException e){getServletContext().log("Mark notification read failed: "+e.getClass().getName());response.sendError(500);return;}
         response.sendRedirect(request.getContextPath()+"/notifications");
     }

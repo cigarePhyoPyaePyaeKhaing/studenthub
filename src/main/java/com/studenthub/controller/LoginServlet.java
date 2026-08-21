@@ -15,7 +15,15 @@ import java.sql.SQLException;
 
 @WebServlet(name = "LoginServlet", urlPatterns = "/login")
 public class LoginServlet extends HttpServlet {
-    private final AuthService authService = new AuthService();
+    private final AuthService authService;
+
+    public LoginServlet() {
+        this(new AuthService());
+    }
+
+    public LoginServlet(AuthService authService) {
+        this.authService = authService != null ? authService : new AuthService();
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -37,9 +45,11 @@ public class LoginServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
+        long startTime = System.currentTimeMillis();
         try {
             AuthService.LoginResult result = authService.login(request.getParameter("login"),
                     request.getParameter("password"));
+            logSafe("Authentication processed in " + (System.currentTimeMillis() - startTime) + " ms");
             if (result.status() == AuthService.LoginStatus.SUCCESS) {
                 User user = result.user();
                 request.getSession().invalidate();
@@ -63,9 +73,18 @@ public class LoginServlet extends HttpServlet {
             }
             request.setAttribute("error", "Invalid student ID/email or password.");
         } catch (SQLException exception) {
-            getServletContext().log("Login database failure: " + exception.getClass().getName());
+            logSafe("Login database failure: " + exception.getClass().getName());
             request.setAttribute("error", "Sign in is temporarily unavailable.");
         }
         doGet(request, response);
+    }
+
+    private void logSafe(String message) {
+        try {
+            if (getServletConfig() != null && getServletContext() != null) {
+                getServletContext().log(message);
+            }
+        } catch (Exception ignored) {
+        }
     }
 }
