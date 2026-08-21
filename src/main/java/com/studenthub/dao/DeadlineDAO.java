@@ -24,11 +24,11 @@ public class DeadlineDAO {
         String comparison = past ? "<" : ">=";
         String order = past ? "DESC" : "ASC";
         String sql = "SELECT d.deadline_id,d.post_id,d.title,d.subject_name,d.due_date,d.semester,"
-                + "d.section_name,d.created_by,d.created_at,creator.full_name creator_name,p.title related_post_title "
-                + "FROM deadlines d JOIN users viewer ON viewer.user_id=? "
-                + "JOIN users creator ON creator.user_id=d.created_by LEFT JOIN posts p ON p.post_id=d.post_id "
+                + "d.section_name,d.created_by,d.created_at,creator.name creator_name,p.title related_post_title "
+                + "FROM deadlines d JOIN users viewer ON viewer.id=? "
+                + "JOIN users creator ON creator.id=d.created_by LEFT JOIN posts p ON p.post_id=d.post_id "
                 + "WHERE viewer.semester IS NOT NULL AND d.semester=viewer.semester "
-                + "AND (d.section_name IS NULL OR d.section_name=viewer.section_name) "
+                + "AND (d.section_name IS NULL OR (d.section_name COLLATE utf8mb4_unicode_ci)=(viewer.section COLLATE utf8mb4_unicode_ci)) "
                 + "AND d.due_date " + comparison + " CURRENT_TIMESTAMP "
                 + "ORDER BY d.due_date " + order + ",d.deadline_id " + order + " LIMIT ?";
         List<Deadline> deadlines = new ArrayList<>();
@@ -42,14 +42,14 @@ public class DeadlineDAO {
 
     public Optional<Deadline> findById(long id) throws SQLException {
         String sql="SELECT d.deadline_id,d.post_id,d.title,d.subject_name,d.due_date,d.semester,"
-                +"d.section_name,d.created_by,d.created_at,creator.full_name creator_name,p.title related_post_title "
-                +"FROM deadlines d JOIN users creator ON creator.user_id=d.created_by "
+                +"d.section_name,d.created_by,d.created_at,creator.name creator_name,p.title related_post_title "
+                +"FROM deadlines d JOIN users creator ON creator.id=d.created_by "
                 +"LEFT JOIN posts p ON p.post_id=d.post_id WHERE d.deadline_id=?";
         try(Connection connection=DBConnection.getConnection();PreparedStatement statement=connection.prepareStatement(sql)){statement.setLong(1,id);try(ResultSet result=statement.executeQuery()){return result.next()?Optional.of(map(result)):Optional.empty();}}
     }
 
     public AcademicScope findScope(Connection connection,long userId)throws SQLException{
-        try(PreparedStatement statement=connection.prepareStatement("SELECT semester,section_name FROM users WHERE user_id=?")){statement.setLong(1,userId);try(ResultSet result=statement.executeQuery()){if(!result.next())return new AcademicScope(null,null);int semester=result.getInt("semester");return new AcademicScope(result.wasNull()?null:semester,result.getString("section_name"));}}
+        try(PreparedStatement statement=connection.prepareStatement("SELECT semester, section AS section_name FROM users WHERE id=?")){statement.setLong(1,userId);try(ResultSet result=statement.executeQuery()){if(!result.next())return new AcademicScope(null,null);int semester=result.getInt("semester");return new AcademicScope(result.wasNull()?null:semester,result.getString("section_name"));}}
     }
 
     public long create(Connection connection,Long postId,String title,String subject,LocalDateTime due,

@@ -52,8 +52,16 @@ public class LoginServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;
             }
-            request.setAttribute("error", result.status() == AuthService.LoginStatus.EMAIL_NOT_VERIFIED
-                    ? "Verify your email before signing in." : "Invalid student ID/email or password.");
+            if (result.status() == AuthService.LoginStatus.EMAIL_NOT_VERIFIED) {
+                User user = result.user();
+                HttpSession session = request.getSession(true);
+                session.setAttribute("pendingVerificationUserId", user.userId());
+                session.setAttribute("pendingVerificationEmail", user.email());
+                session.setAttribute("pendingVerificationName", user.fullName());
+                response.sendRedirect(request.getContextPath() + "/verify-email");
+                return;
+            }
+            request.setAttribute("error", "Invalid student ID/email or password.");
         } catch (SQLException exception) {
             getServletContext().log("Login database failure: " + exception.getClass().getName());
             request.setAttribute("error", "Sign in is temporarily unavailable.");

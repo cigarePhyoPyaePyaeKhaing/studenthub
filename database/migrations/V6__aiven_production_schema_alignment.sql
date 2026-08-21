@@ -1,0 +1,177 @@
+-- =============================================================================
+-- Migration: V6__aiven_production_schema_alignment.sql
+-- Purpose: Additive, safe migration to provide missing tables for StudentHub
+--          features on top of the existing Aiven MySQL production database.
+-- Target Database: defaultdb (MySQL 8.4+)
+-- Foreign Keys: Reference users(id) which is INT in the actual Aiven database.
+-- Safety: Non-destructive. Uses CREATE TABLE IF NOT EXISTS. No drops/truncations.
+-- =============================================================================
+
+-- 1. Verification codes for email verification and password reset OTPs
+CREATE TABLE IF NOT EXISTS verification_codes (
+    code_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    email VARCHAR(120) NOT NULL,
+    purpose ENUM('EMAIL_VERIFICATION', 'PASSWORD_RESET') NOT NULL,
+    code_hash VARCHAR(255) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    used_at DATETIME NULL,
+    attempt_count INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_verification_codes_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_verification_codes_lookup (user_id, purpose, used_at, expires_at),
+    INDEX idx_verification_codes_email_created (email, purpose, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 2. Post categories
+CREATE TABLE IF NOT EXISTS categories (
+    category_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    category_name VARCHAR(50) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+INSERT INTO categories (category_name) VALUES
+    ('Assignment'), ('Exam'), ('General News'), ('Lecture Material'), ('Event')
+ON DUPLICATE KEY UPDATE category_name = VALUES(category_name);
+
+-- 3. Posts (announcements and student posts)
+CREATE TABLE IF NOT EXISTS posts (
+    post_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    category_id BIGINT NULL,
+    title VARCHAR(200) NULL,
+    content TEXT NOT NULL,
+    image_url VARCHAR(500) NULL,
+    visibility ENUM('SECTION', 'SEMESTER', 'ALL') NOT NULL DEFAULT 'ALL',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT fk_posts_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_posts_category FOREIGN KEY (category_id) REFERENCES categories (category_id) ON DELETE SET NULL,
+    INDEX idx_posts_user_id (user_id),
+    INDEX idx_posts_category_id (category_id),
+    INDEX idx_posts_created_at (created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 4. Academic deadlines
+CREATE TABLE IF NOT EXISTS deadlines (
+    deadline_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NULL,
+    title VARCHAR(200) NOT NULL,
+    subject_name VARCHAR(100) NOT NULL,
+    due_date DATETIME NOT NULL,
+    semester INT NOT NULL,
+    section_name VARCHAR(20) NULL,
+    created_by INT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_deadlines_post FOREIGN KEY (post_id) REFERENCES posts (post_id) ON DELETE SET NULL,
+    CONSTRAINT fk_deadlines_created_by FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_deadlines_due_date (due_date),
+    INDEX idx_deadlines_semester (semester),
+    INDEX idx_deadlines_post_id (post_id),
+    INDEX idx_deadlines_created_by (created_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 5. Post comments
+CREATE TABLE IF NOT EXISTS comments (
+    comment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comments_post FOREIGN KEY (post_id) REFERENCES posts (post_id) ON DELETE CASCADE,
+    CONSTRAINT fk_comments_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_comments_post_id (post_id),
+    INDEX idx_comments_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 6. Post reactions
+CREATE TABLE IF NOT EXISTS reactions (
+    reaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    reaction_type ENUM('LIKE', 'LOVE', 'HELPFUL') NOT NULL DEFAULT 'LIKE',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_reactions_post FOREIGN KEY (post_id) REFERENCES posts (post_id) ON DELETE CASCADE,
+    CONSTRAINT fk_reactions_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT uq_reactions_post_user_type UNIQUE (post_id, user_id, reaction_type),
+    INDEX idx_reactions_user_id (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 7. Chat rooms
+CREATE TABLE IF NOT EXISTS chat_rooms (
+    room_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_name VARCHAR(100) NOT NULL,
+    room_type ENUM('SECTION', 'SEMESTER', 'ALL', 'CR_SEMESTER', 'CR_ALL') NOT NULL,
+    semester INT NULL,
+    section_name VARCHAR(20) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_chat_rooms_scope (room_type, semester, section_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 8. Chat messages
+CREATE TABLE IF NOT EXISTS messages (
+    message_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id BIGINT NOT NULL,
+    sender_id INT NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_messages_room FOREIGN KEY (room_id) REFERENCES chat_rooms (room_id) ON DELETE CASCADE,
+    CONSTRAINT fk_messages_sender FOREIGN KEY (sender_id) REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_messages_room_id (room_id),
+    INDEX idx_messages_created_at (created_at),
+    INDEX idx_messages_sender_id (sender_id),
+    INDEX idx_messages_room_recent (room_id, created_at, message_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 9. Notifications
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    notification_type ENUM('ANNOUNCEMENT','DEADLINE','COMMENT','REACTION') NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    message VARCHAR(500) NOT NULL,
+    link_url VARCHAR(500) NOT NULL,
+    actor_id INT NOT NULL,
+    target_user_id INT NULL,
+    visibility ENUM('ALL','SEMESTER','SECTION') NOT NULL,
+    semester INT NULL,
+    section_name VARCHAR(20) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notifications_actor FOREIGN KEY (actor_id) REFERENCES users (id) ON DELETE CASCADE,
+    CONSTRAINT fk_notifications_target FOREIGN KEY (target_user_id) REFERENCES users (id) ON DELETE SET NULL,
+    INDEX idx_notifications_created (created_at),
+    INDEX idx_notifications_target (target_user_id, created_at),
+    INDEX idx_notifications_scope (visibility, semester, section_name, created_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 10. Notification read receipts
+CREATE TABLE IF NOT EXISTS notification_reads (
+    notification_id BIGINT NOT NULL,
+    user_id INT NOT NULL,
+    read_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (notification_id, user_id),
+    CONSTRAINT fk_notification_reads_notification FOREIGN KEY (notification_id) REFERENCES notifications (notification_id) ON DELETE CASCADE,
+    CONSTRAINT fk_notification_reads_user FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    INDEX idx_notification_reads_user (user_id, read_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 11. Academic change requests
+CREATE TABLE IF NOT EXISTS academic_change_requests (
+    request_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    old_semester INT NULL,
+    old_section VARCHAR(20) NULL,
+    requested_semester INT NOT NULL,
+    requested_section VARCHAR(20) NOT NULL,
+    reason VARCHAR(1000) NOT NULL,
+    status ENUM('PENDING','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING',
+    pending_user_id INT GENERATED ALWAYS AS (CASE WHEN status='PENDING' THEN user_id ELSE NULL END) STORED,
+    reviewed_by INT NULL,
+    admin_note VARCHAR(1000) NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    reviewed_at DATETIME NULL,
+    CONSTRAINT fk_academic_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT fk_academic_reviewer FOREIGN KEY (reviewed_by) REFERENCES users (id) ON DELETE SET NULL,
+    UNIQUE KEY uq_academic_one_pending (pending_user_id),
+    INDEX idx_academic_status (status, created_at),
+    INDEX idx_academic_user (user_id, status),
+    INDEX idx_academic_reviewer (reviewed_by)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

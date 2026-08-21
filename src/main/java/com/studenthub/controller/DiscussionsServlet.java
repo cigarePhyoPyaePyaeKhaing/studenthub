@@ -21,7 +21,11 @@ public class DiscussionsServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         } catch (SQLException exception) {
-            getServletContext().log("Discussion load failed: " + exception.getClass().getName());
+            Throwable rootCause = exception.getCause();
+            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
+            getServletContext().log("Discussion load failed: " + exception.getClass().getName()
+                    + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode()
+                    + ", message=" + exception.getMessage() + rootCauseInfo, exception);
             request.setAttribute("error", "Discussions are temporarily unavailable.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));

@@ -49,10 +49,13 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("profile", found.get());
             request.setAttribute("editing", "true".equalsIgnoreCase(request.getParameter("edit")));
         } catch (SQLException exception) {
+            Throwable rootCause = exception.getCause();
+            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
             getServletContext().log("Profile load failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState()
                     + ", errorCode=" + exception.getErrorCode()
-                    + ", message=" + exception.getMessage(), exception);
+                    + ", message=" + exception.getMessage()
+                    + rootCauseInfo, exception);
             request.setAttribute("error", "Your profile is temporarily unavailable.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
@@ -94,10 +97,13 @@ public class ProfileServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/profile?edit=true");
             }
         } catch (SQLException exception) {
+            Throwable rootCause = exception.getCause();
+            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
             getServletContext().log("Profile update failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState()
                     + ", errorCode=" + exception.getErrorCode()
-                    + ", message=" + exception.getMessage(), exception);
+                    + ", message=" + exception.getMessage()
+                    + rootCauseInfo, exception);
             request.getSession().setAttribute("flashError", "Your profile could not be updated right now.");
             response.sendRedirect(request.getContextPath() + "/profile?edit=true");
         }

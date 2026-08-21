@@ -67,7 +67,7 @@ public class BrevoEmailService implements EmailService {
     private void send(String recipient, String subject, String textContent) throws EmailServiceException {
         String apiKey = required("BREVO_API_KEY");
         String fromEmail = required("BREVO_FROM_EMAIL");
-        String configuredName = configuration.value("BREVO_FROM_NAME");
+        String configuredName = cleanConfigValue(configuration.value("BREVO_FROM_NAME"));
         String fromName = configuredName == null || configuredName.isBlank() ? "StudentHub" : configuredName.trim();
 
         HttpRequest request = HttpRequest.newBuilder(API_ENDPOINT)
@@ -81,11 +81,14 @@ public class BrevoEmailService implements EmailService {
             DeliveryResponse response = transport.send(request);
             int status = response.statusCode();
             if (status < 200 || status >= 300) {
+                String errorDetail = extractProviderErrorDetails(response.responseBody());
                 LOGGER.warning("Brevo email delivery failed. status=" + status
-                        + ", response=" + sanitizeProviderResponse(response.responseBody()));
+                        + ", response=" + errorDetail);
                 EmailServiceException.Reason reason = status == 401 || status == 403
                         ? EmailServiceException.Reason.UNAUTHORIZED : EmailServiceException.Reason.PROVIDER;
-                throw new EmailServiceException("Brevo email API rejected the request with HTTP " + status + ".", null, reason, status);
+                throw new EmailServiceException(
+                        "Brevo email API rejected the request with HTTP " + status + ": " + errorDetail,
+                        null, reason, status);
             }
             LOGGER.info((subject.startsWith("Reset") ? "Password reset" : "Verification")
                     + " email request accepted by provider (HTTP " + status + ").");
@@ -99,13 +102,49 @@ public class BrevoEmailService implements EmailService {
         }
     }
 
+    String extractProviderErrorDetails(String responseBody) {
+        if (responseBody == null || responseBody.isBlank()) {
+            return "[empty response]";
+        }
+        try {
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(responseBody);
+            if (node.isObject()) {
+                String code = node.hasNonNull("code") ? node.get("code").asText() : null;
+                String message = node.hasNonNull("message") ? node.get("message").asText() : null;
+                if (code != null || message != null) {
+                    StringBuilder sb = new StringBuilder();
+                    if (code != null) sb.append("code=").append(code);
+                    if (message != null) {
+                        if (!sb.isEmpty()) sb.append(", ");
+                        sb.append("message=").append(message);
+                    }
+                    return sanitizeProviderResponse(sb.toString());
+                }
+            }
+        } catch (Exception ignored) {
+            // Fallback to raw sanitized body if not JSON
+        }
+        return sanitizeProviderResponse(responseBody);
+    }
+
     static String sanitizeProviderResponse(String responseBody) {
-        if (responseBody == null || responseBody.isBlank()) return "[empty]";
+        if (responseBody == null || responseBody.isBlank()) return "[empty response]";
         String sanitized = responseBody.replaceAll("[\\r\\n]", " ")
                 .replaceAll("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+", "[redacted-email]")
                 .replaceAll("(?<!\\d)\\d{6}(?!\\d)", "[redacted-code]")
                 .replaceAll("(?i)(api[-_ ]?key|password|authorization)\\s*[:=]\\s*[^,} ]+", "$1=[redacted]");
         return sanitized.length() > 500 ? sanitized.substring(0, 500) : sanitized;
+    }
+
+    static String cleanConfigValue(String raw) {
+        if (raw == null) return null;
+        String trimmed = raw.trim();
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+            if (trimmed.length() >= 2) {
+                trimmed = trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+        }
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private String json(String fromEmail, String fromName, String recipient, String subject, String textContent)
@@ -124,12 +163,12 @@ public class BrevoEmailService implements EmailService {
     }
 
     private String required(String name) throws EmailServiceException {
-        String value = configuration.value(name);
+        String value = cleanConfigValue(configuration.value(name));
         if (value == null || value.isBlank()) {
             throw new EmailServiceException("Required email configuration is missing: " + name, null,
                     EmailServiceException.Reason.CONFIGURATION, null);
         }
-        return value.trim();
+        return value;
     }
 
     private static final class JavaHttpTransport implements Transport {

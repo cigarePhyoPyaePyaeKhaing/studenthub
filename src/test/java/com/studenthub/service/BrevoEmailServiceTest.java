@@ -126,6 +126,28 @@ class BrevoEmailServiceTest {
         assertEquals("StudentHub", JSON.readTree(body(transport.request)).at("/sender/name").asText());
     }
 
+    @Test void cleanConfigValueStripsQuotesAndWhitespace() {
+        assertEquals("xkeysib-abc", BrevoEmailService.cleanConfigValue("  \"xkeysib-abc\"  "));
+        assertEquals("xkeysib-xyz", BrevoEmailService.cleanConfigValue(" 'xkeysib-xyz' "));
+        assertEquals("simple-val", BrevoEmailService.cleanConfigValue("simple-val"));
+        assertNull(BrevoEmailService.cleanConfigValue(null));
+        assertNull(BrevoEmailService.cleanConfigValue("   "));
+        assertNull(BrevoEmailService.cleanConfigValue("\"\""));
+    }
+
+    @Test void errorDetailExtractsCodeMessageAndPreservesIp() {
+        BrevoEmailService service = service(new CapturingTransport(401));
+        String jsonWithIp = "{\"code\":\"unauthorized\",\"message\":\"unauthorised IP address: 203.0.113.195\"}";
+        String details = service.extractProviderErrorDetails(jsonWithIp);
+        assertTrue(details.contains("code=unauthorized"));
+        assertTrue(details.contains("unauthorised IP address: 203.0.113.195"));
+
+        String jsonKeyNotFound = "{\"code\":\"unauthorized\",\"message\":\"Key not found\"}";
+        String details2 = service.extractProviderErrorDetails(jsonKeyNotFound);
+        assertTrue(details2.contains("code=unauthorized"));
+        assertTrue(details2.contains("Key not found"));
+    }
+
     private BrevoEmailService service(BrevoEmailService.Transport transport) {
         Map<String,String> values = Map.of("BREVO_API_KEY", SECRET, "BREVO_FROM_EMAIL", "sender@example.com");
         return new BrevoEmailService(transport, values::get, JSON);

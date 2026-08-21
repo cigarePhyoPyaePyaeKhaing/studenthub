@@ -24,7 +24,7 @@ public class ResendOtpServlet extends HttpServlet {
         } catch (IllegalStateException exception) {
             request.setAttribute("error", exception.getMessage());
         } catch (SQLException | EmailServiceException exception) {
-            getServletContext().log("Verification resend failed: " + exception.getClass().getName());
+            getServletContext().log("Verification resend failed: " + exception.getClass().getName() + ", message=" + exception.getMessage());
             request.setAttribute("error", "A new code could not be sent right now.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));

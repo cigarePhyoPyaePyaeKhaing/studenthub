@@ -29,8 +29,16 @@ public class AuthenticationFilter implements Filter {
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
         request.setAttribute("csrfToken",CsrfToken.getOrCreate(session));
         if (needsUnreadCount(http.getMethod(), http.getContextPath(), http.getRequestURI())) {
-            try{request.setAttribute("unreadNotificationCount",notificationDAO.countUnread((Long)session.getAttribute("userId")));}
-            catch(SQLException exception){request.getServletContext().log("Unread notification count failed: "+exception.getClass().getName());request.setAttribute("unreadNotificationCount",0L);}
+            try {
+                request.setAttribute("unreadNotificationCount", notificationDAO.countUnread((Long) session.getAttribute("userId")));
+            } catch (SQLException exception) {
+                Throwable rootCause = exception.getCause();
+                String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
+                request.getServletContext().log("Unread notification count failed: " + exception.getClass().getName()
+                        + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode()
+                        + ", message=" + exception.getMessage() + rootCauseInfo, exception);
+                request.setAttribute("unreadNotificationCount", 0L);
+            }
         }
         chain.doFilter(request, response);
     }

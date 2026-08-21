@@ -32,8 +32,11 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("categories", data.categories());
             request.setAttribute("deadlines", data.deadlines());
         } catch (SQLException exception) {
+            Throwable rootCause = exception.getCause();
+            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
             getServletContext().log("Dashboard load failed: " + exception.getClass().getName()
-                    + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode());
+                    + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode()
+                    + ", message=" + exception.getMessage() + rootCauseInfo, exception);
             request.setAttribute("posts", List.of());
             request.setAttribute("categories", List.of());
             request.setAttribute("deadlines", List.of());

@@ -28,7 +28,11 @@ public class AnnouncementsServlet extends HttpServlet {
             request.setAttribute("posts", postDAO.findVisibleForUser((Long) request.getSession().getAttribute("userId"), categoryId));
             request.setAttribute("categories", categoryDAO.findAll());
         } catch (SQLException exception) {
-            getServletContext().log("Announcements load failed: " + exception.getClass().getName());
+            Throwable rootCause = exception.getCause();
+            String rootCauseInfo = rootCause != null ? (", rootCause=" + rootCause.getClass().getName() + ": " + rootCause.getMessage()) : "";
+            getServletContext().log("Announcements load failed: " + exception.getClass().getName()
+                    + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode()
+                    + ", message=" + exception.getMessage() + rootCauseInfo, exception);
             request.setAttribute("posts", List.of()); request.setAttribute("categories", List.of());
             request.setAttribute("error", "Announcements are temporarily unavailable.");
         }
