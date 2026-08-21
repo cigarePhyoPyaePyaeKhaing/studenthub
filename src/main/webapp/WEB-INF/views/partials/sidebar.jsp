@@ -6,7 +6,6 @@
     <div class="sidebar-links">
         <a class="${currentPath eq pageContext.request.contextPath.concat('/home') ? 'active' : ''}" href="${pageContext.request.contextPath}/home">Home</a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/announcements') ? 'active' : ''}" href="${pageContext.request.contextPath}/announcements">Announcements</a>
-        <a class="${currentPath eq pageContext.request.contextPath.concat('/deadlines') ? 'active' : ''}" href="${pageContext.request.contextPath}/deadlines">Deadlines</a>
         <a class="notification-link ${currentPath eq pageContext.request.contextPath.concat('/notifications') ? 'active' : ''}" href="${pageContext.request.contextPath}/notifications">Notifications<c:if test="${unreadNotificationCount gt 0}"><span class="notification-badge" aria-label="${unreadNotificationCount} unread"><c:out value="${unreadNotificationCount gt 99 ? '99+' : unreadNotificationCount}" /></span></c:if></a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/discussions') ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions">Discussions / Chat</a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/profile') ? 'active' : ''}" href="${pageContext.request.contextPath}/profile">Profile</a>
