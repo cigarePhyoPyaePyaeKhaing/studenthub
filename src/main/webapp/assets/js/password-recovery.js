@@ -6,11 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     document.querySelectorAll("[data-password-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
-            const input = document.getElementById(button.dataset.passwordToggle);
-            const reveal = input.type === "password";
-            input.type = reveal ? "text" : "password";
-            button.textContent = reveal ? "Hide" : "Show";
-            button.setAttribute("aria-label", `${reveal ? "Hide" : "Show"} ${input.id === "password" ? "new" : "confirmed"} password`);
+            if (typeof window.togglePasswordVisibility === "function") {
+                window.togglePasswordVisibility(button.dataset.passwordToggle, button);
+            }
         });
     });
 
