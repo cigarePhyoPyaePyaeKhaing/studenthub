@@ -36,14 +36,17 @@
                 <c:when test="${empty room}"><div class="chat-empty"><p>Discussions are temporarily unavailable.</p></div></c:when>
                 <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p></div></c:when>
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
-                <c:otherwise><div class="message-list"><div class="message-list-inner"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><article class="chat-message ${isOwn ? 'own-message' : ''}">
+                <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><article class="message-row ${isOwn ? 'outgoing' : 'incoming'}">
                     <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div>
                     <div class="message-bubble">
                         <header>
                             <strong><c:out value="${chatMessage.authorName}" /></strong>
                             <span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span>
                             <c:if test="${room.scope eq 'CR_SEMESTER' or room.scope eq 'CR_ALL'}">
-                                <span class="message-scope"><c:if test="${not empty chatMessage.authorSemester}">Sem <c:out value="${chatMessage.authorSemester}" /></c:if><c:if test="${not empty chatMessage.authorSection}"> · <c:out value="${chatMessage.authorSection}" /></c:if></span>
+                                <span class="message-scope">
+                                    <c:if test="${not empty chatMessage.authorSemester}">Sem <c:out value="${chatMessage.authorSemester}" /></c:if>
+                                    <c:if test="${not empty chatMessage.authorSection}"> · <c:out value="${chatMessage.authorSection}" /></c:if>
+                                </span>
                             </c:if>
                             <time><c:out value="${chatMessage.createdLabel}" /></time>
                         </header>
@@ -57,7 +60,7 @@
                             </form>
                         </c:if>
                     </div>
-                </article></c:forEach></div></div></c:otherwise>
+                </article></c:forEach></div></c:otherwise>
             </c:choose>
             <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" required placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
         </section>
