@@ -5,8 +5,8 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Discussions | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-2" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-2" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-3" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-3" rel="stylesheet">
 </head><body class="dashboard-body">
 <header class="mobile-header d-lg-none">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
@@ -36,7 +36,7 @@
                 <c:when test="${empty room}"><div class="chat-empty"><p>Discussions are temporarily unavailable.</p></div></c:when>
                 <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p></div></c:when>
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
-                <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><article class="message-row ${isOwn ? 'outgoing' : 'incoming'}">
+                <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><div class="message-row ${isOwn ? 'outgoing' : 'incoming'}">
                     <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div>
                     <div class="message-bubble">
                         <header>
@@ -56,11 +56,11 @@
                                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
                                 <input type="hidden" name="scope" value="<c:out value='${room.scope}' />">
                                 <input type="hidden" name="id" value="${chatMessage.messageId}">
-                                <button type="submit">Delete</button>
+                                <button type="submit" title="Delete message">Delete</button>
                             </form>
                         </c:if>
                     </div>
-                </article></c:forEach></div></c:otherwise>
+                </div></c:forEach></div></c:otherwise>
             </c:choose>
             <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" required placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
         </section>
