@@ -4,14 +4,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const otpForm = document.querySelector("[data-otp-form]");
     if (otpForm) initializeOtpForm(otpForm);
 
-    document.querySelectorAll("[data-password-toggle]").forEach((button) => {
-        button.addEventListener("click", () => {
-            if (typeof window.togglePasswordVisibility === "function") {
-                window.togglePasswordVisibility(button.dataset.passwordToggle, button);
-            }
-        });
-    });
-
     const resendForm = document.querySelector("[data-resend-form]");
     if (resendForm) initializeResend(resendForm);
 });
