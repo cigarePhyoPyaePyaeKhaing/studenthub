@@ -190,6 +190,16 @@
                                                 <summary class="btn btn-outline-primary btn-sm">Request Academic Info Change</summary>
                                                 <form method="post" action="${pageContext.request.contextPath}/profile/academic-change" class="profile-form mt-3">
                                                     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
+                                                    <div class="row g-2 mb-3">
+                                                        <div class="col-sm-6">
+                                                            <label class="form-label text-muted small">Current semester</label>
+                                                            <input class="form-control" type="text" value="Semester <c:out value='${profile.semester}' />" disabled readonly>
+                                                        </div>
+                                                        <div class="col-sm-6">
+                                                            <label class="form-label text-muted small">Current section</label>
+                                                            <input class="form-control" type="text" value="<c:out value='${profile.sectionName}' />" disabled readonly>
+                                                        </div>
+                                                    </div>
                                                     <div class="mb-3">
                                                         <label class="form-label" for="reqSemester">Requested semester</label>
                                                         <select class="form-select" id="reqSemester" name="semester" required>

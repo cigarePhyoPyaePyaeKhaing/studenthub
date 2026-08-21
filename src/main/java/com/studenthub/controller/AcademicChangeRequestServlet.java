@@ -1,6 +1,8 @@
 package com.studenthub.controller;
 
 import com.studenthub.dao.AcademicChangeDAO;
+import com.studenthub.model.UserProfile;
+import com.studenthub.service.ProfileService;
 import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.ServletException;
@@ -13,17 +15,24 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Locale;
+import java.util.Optional;
 
 @WebServlet(name = "AcademicChangeRequestServlet", urlPatterns = "/profile/academic-change")
 public class AcademicChangeRequestServlet extends HttpServlet {
     private final AcademicChangeDAO dao;
+    private final ProfileService profileService;
 
     public AcademicChangeRequestServlet() {
-        this(new AcademicChangeDAO());
+        this(new AcademicChangeDAO(), new ProfileService());
     }
 
     public AcademicChangeRequestServlet(AcademicChangeDAO dao) {
+        this(dao, new ProfileService());
+    }
+
+    public AcademicChangeRequestServlet(AcademicChangeDAO dao, ProfileService profileService) {
         this.dao = dao;
+        this.profileService = profileService;
     }
 
     @Override
@@ -54,6 +63,15 @@ public class AcademicChangeRequestServlet extends HttpServlet {
                 throw new IllegalArgumentException("Enter a valid semester (1-10), section, and reason between 10 and 1000 characters.");
             }
 
+            Optional<UserProfile> currentProfile = profileService.findOwnProfile(userId);
+            if (currentProfile.isPresent()) {
+                UserProfile profile = currentProfile.get();
+                if (profile.getSemester() != null && profile.getSemester().equals(semester)
+                        && profile.getSectionName() != null && profile.getSectionName().trim().equalsIgnoreCase(section)) {
+                    throw new IllegalArgumentException("Requested semester and section must be different from your current semester and section.");
+                }
+            }
+
             dao.create(userId, semester, section, reason);
             session.setAttribute("flash", "Academic change request submitted for administrator review.");
         } catch (IllegalStateException e) {
@@ -61,7 +79,10 @@ public class AcademicChangeRequestServlet extends HttpServlet {
         } catch (IllegalArgumentException e) {
             session.setAttribute("flashError", e.getMessage());
         } catch (SQLException e) {
-            getServletContext().log("Academic change request failed: " + e.getClass().getName());
+            getServletContext().log("Academic change request failed: " + e.getClass().getName()
+                    + ", SQLState=" + e.getSQLState()
+                    + ", errorCode=" + e.getErrorCode()
+                    + ", message=" + e.getMessage(), e);
             session.setAttribute("flashError", "The request service is temporarily unavailable.");
         }
         response.sendRedirect(request.getContextPath() + "/profile");

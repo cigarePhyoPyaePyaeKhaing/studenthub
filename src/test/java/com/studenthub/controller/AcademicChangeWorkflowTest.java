@@ -1,8 +1,9 @@
 package com.studenthub.controller;
 
 import com.studenthub.dao.AcademicChangeDAO;
-import com.studenthub.dao.UserDAO;
 import com.studenthub.model.Role;
+import com.studenthub.model.UserProfile;
+import com.studenthub.service.ProfileService;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,12 +12,8 @@ import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -56,13 +53,22 @@ class AcademicChangeWorkflowTest {
             }
         };
 
-        AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao);
+        UserProfile currentProfile = new UserProfile(55L, "TNT-0055", "Test Student", "test55@uit.edu",
+                Role.STUDENT, true, 4, "C");
+        ProfileService mockProfileService = new ProfileService(null) {
+            @Override
+            public Optional<UserProfile> findOwnProfile(long userId) {
+                return Optional.of(currentProfile);
+            }
+        };
+
+        AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao, mockProfileService);
 
         sessionAttributes.put("userId", 55L);
         sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
         requestParameters.put("csrfToken", "valid-csrf");
         requestParameters.put("semester", "5");
-        requestParameters.put("sectionName", "C");
+        requestParameters.put("sectionName", "B");
         requestParameters.put("reason", "Transferred to new major and section");
 
         HttpServletRequest request = createMockRequest();
@@ -73,9 +79,39 @@ class AcademicChangeWorkflowTest {
         assertEquals("/context/profile", redirectedUrl);
         assertEquals(55L, capturedUserId.get());
         assertEquals(5, capturedSemester.get());
-        assertEquals("C", capturedSection.get());
+        assertEquals("B", capturedSection.get());
         assertEquals("Transferred to new major and section", capturedReason.get());
         assertEquals("Academic change request submitted for administrator review.", sessionAttributes.get("flash"));
+    }
+
+    @Test
+    void requestWithExactSameSemesterAndSectionIsRejected() throws Exception {
+        AcademicChangeDAO mockDao = new AcademicChangeDAO();
+        UserProfile currentProfile = new UserProfile(55L, "TNT-0055", "Test Student", "test55@uit.edu",
+                Role.STUDENT, true, 4, "C");
+        ProfileService mockProfileService = new ProfileService(null) {
+            @Override
+            public Optional<UserProfile> findOwnProfile(long userId) {
+                return Optional.of(currentProfile);
+            }
+        };
+
+        AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao, mockProfileService);
+
+        sessionAttributes.put("userId", 55L);
+        sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
+        requestParameters.put("csrfToken", "valid-csrf");
+        requestParameters.put("semester", "4");
+        requestParameters.put("sectionName", "C");
+        requestParameters.put("reason", "Trying to request same values");
+
+        HttpServletRequest request = createMockRequest();
+        HttpServletResponse response = createMockResponse();
+
+        servlet.doPost(request, response);
+
+        assertEquals("/context/profile", redirectedUrl);
+        assertEquals("Requested semester and section must be different from your current semester and section.", sessionAttributes.get("flashError"));
     }
 
     @Test
@@ -87,7 +123,12 @@ class AcademicChangeWorkflowTest {
             }
         };
 
-        AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao);
+        AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao, new ProfileService(null) {
+            @Override
+            public Optional<UserProfile> findOwnProfile(long userId) {
+                return Optional.empty();
+            }
+        });
 
         sessionAttributes.put("userId", 55L);
         sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
@@ -131,7 +172,6 @@ class AcademicChangeWorkflowTest {
         AcademicChangeDAO mockDao = new AcademicChangeDAO();
         AcademicChangeRequestServlet servlet = new AcademicChangeRequestServlet(mockDao);
 
-        // No session attributes (unauthenticated)
         HttpServletRequest request = createMockRequest();
         HttpServletResponse response = createMockResponse();
 
@@ -172,7 +212,7 @@ class AcademicChangeWorkflowTest {
                 new Class[]{HttpServletRequest.class},
                 (proxy, method, args) -> switch (method.getName()) {
                     case "getSession" -> {
-                        boolean create = args.length == 0 || Boolean.TRUE.equals(args[0]);
+                        boolean create = args == null || args.length == 0 || Boolean.TRUE.equals(args[0]);
                         yield (create || !sessionAttributes.isEmpty()) ? session : null;
                     }
                     case "getParameter" -> requestParameters.get(args[0]);
