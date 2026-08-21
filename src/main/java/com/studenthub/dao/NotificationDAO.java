@@ -68,6 +68,51 @@ public class NotificationDAO {
         try(PreparedStatement s=c.prepareStatement(sql)){s.setString(1,title);s.setLong(2,actor);s.setLong(3,deadlineId);s.executeUpdate();}
     }
 
+    public void createForAdminRole(Connection connection, long actorId, String type, String title, String message, String linkUrl) throws SQLException {
+        String sql = """
+                INSERT INTO notifications (notification_type, title, message, link_url, actor_id, target_user_id, visibility)
+                SELECT ?, ?, ?, ?, ?, user_id, 'ALL'
+                FROM users
+                WHERE role = 'ADMIN'
+                """;
+        try (PreparedStatement s = connection.prepareStatement(sql)) {
+            s.setString(1, type);
+            s.setString(2, title);
+            s.setString(3, message);
+            s.setString(4, linkUrl);
+            s.setLong(5, actorId);
+            s.executeUpdate();
+        }
+    }
+
+    public void createForAdminRole(long actorId, String type, String title, String message, String linkUrl) throws SQLException {
+        try (Connection connection = DBConnection.getConnection()) {
+            createForAdminRole(connection, actorId, type, title, message, linkUrl);
+        }
+    }
+
+    public void createDirect(Connection connection, long targetUserId, long actorId, String type, String title, String message, String linkUrl) throws SQLException {
+        String sql = """
+                INSERT INTO notifications (notification_type, title, message, link_url, actor_id, target_user_id, visibility)
+                VALUES (?, ?, ?, ?, ?, ?, 'ALL')
+                """;
+        try (PreparedStatement s = connection.prepareStatement(sql)) {
+            s.setString(1, type);
+            s.setString(2, title);
+            s.setString(3, message);
+            s.setString(4, linkUrl);
+            s.setLong(5, actorId);
+            s.setLong(6, targetUserId);
+            s.executeUpdate();
+        }
+    }
+
+    public void createDirect(long targetUserId, long actorId, String type, String title, String message, String linkUrl) throws SQLException {
+        try (Connection connection = DBConnection.getConnection()) {
+            createDirect(connection, targetUserId, actorId, type, title, message, linkUrl);
+        }
+    }
+
     private Notification map(ResultSet r)throws SQLException{return new Notification(r.getLong("notification_id"),r.getString("notification_type"),
             r.getString("title"),r.getString("message"),r.getString("link_url"),r.getBoolean("is_read"),r.getTimestamp("created_at").toLocalDateTime());}
 }

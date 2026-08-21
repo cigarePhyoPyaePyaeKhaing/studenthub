@@ -56,10 +56,25 @@ public class AcademicChangeDAO {
         }
     }
 
+    private final NotificationDAO notificationDAO;
+
+    public AcademicChangeDAO() {
+        this(new NotificationDAO());
+    }
+
+    public AcademicChangeDAO(NotificationDAO notificationDAO) {
+        this.notificationDAO = notificationDAO != null ? notificationDAO : new NotificationDAO();
+    }
+
     public boolean hasPending(long userId) throws SQLException {
+        try (Connection c = DBConnection.getConnection()) {
+            return hasPending(c, userId);
+        }
+    }
+
+    public boolean hasPending(Connection c, long userId) throws SQLException {
         String sql = "SELECT 1 FROM academic_change_requests WHERE user_id = ? AND status = 'PENDING'";
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement s = c.prepareStatement(sql)) {
+        try (PreparedStatement s = c.prepareStatement(sql)) {
             s.setLong(1, userId);
             try (ResultSet r = s.executeQuery()) {
                 return r.next();
@@ -87,7 +102,13 @@ public class AcademicChangeDAO {
     }
 
     public void create(long userId, int semester, String section, String reason) throws SQLException {
-        if (hasPending(userId)) {
+        try (Connection c = DBConnection.getConnection()) {
+            create(c, userId, semester, section, reason);
+        }
+    }
+
+    public void create(Connection c, long userId, int semester, String section, String reason) throws SQLException {
+        if (hasPending(c, userId)) {
             throw new IllegalStateException("You already have a pending academic change request.");
         }
         String sql = """
@@ -96,8 +117,7 @@ public class AcademicChangeDAO {
                 SELECT user_id, semester, section_name, ?, ?, ?
                 FROM users WHERE user_id = ?
                 """;
-        try (Connection c = DBConnection.getConnection();
-             PreparedStatement s = c.prepareStatement(sql)) {
+        try (PreparedStatement s = c.prepareStatement(sql)) {
             s.setInt(1, semester);
             s.setString(2, section);
             s.setString(3, reason);
@@ -112,6 +132,51 @@ public class AcademicChangeDAO {
                 }
                 throw e;
             }
+        }
+
+        // Notify admins after request is safely created
+        try {
+            String userQuery = "SELECT full_name, student_id, semester, section_name FROM users WHERE user_id = ?";
+            String fullName = null;
+            String studentId = null;
+            Integer oldSem = null;
+            String oldSec = null;
+            try (PreparedStatement userStmt = c.prepareStatement(userQuery)) {
+                userStmt.setLong(1, userId);
+                try (ResultSet userRs = userStmt.executeQuery()) {
+                    if (userRs.next()) {
+                        fullName = userRs.getString("full_name");
+                        studentId = userRs.getString("student_id");
+                        int os = userRs.getInt("semester");
+                        oldSem = userRs.wasNull() ? null : os;
+                        oldSec = userRs.getString("section_name");
+                    }
+                }
+            }
+
+            StringBuilder msg = new StringBuilder();
+            if (fullName != null && !fullName.isBlank()) {
+                msg.append(fullName.trim());
+                if (studentId != null && !studentId.isBlank()) {
+                    msg.append(" (").append(studentId.trim()).append(")");
+                }
+            } else if (studentId != null && !studentId.isBlank()) {
+                msg.append(studentId.trim());
+            } else {
+                msg.append("A student");
+            }
+
+            if (oldSem != null && oldSec != null && !oldSec.isBlank()) {
+                msg.append(" requested to change Semester ").append(oldSem).append(" / Section ").append(oldSec)
+                        .append(" to Semester ").append(semester).append(" / Section ").append(section).append(".");
+            } else {
+                msg.append(" requested Semester ").append(semester).append(" / Section ").append(section).append(".");
+            }
+
+            notificationDAO.createForAdminRole(c, userId, "ACADEMIC_CHANGE_REQUEST", "Academic Change Request",
+                    msg.toString(), "/admin/academic-changes?status=PENDING");
+        } catch (Exception notifEx) {
+            System.err.println("Admin notification creation skipped: " + notifEx.getMessage());
         }
     }
 
@@ -190,6 +255,26 @@ public class AcademicChangeDAO {
                 s.setLong(4, requestId);
                 s.executeUpdate();
             }
+
+            // Create notification for requesting student
+            String title = approve ? "Academic Change Request Approved" : "Academic Change Request Rejected";
+            String type = approve ? "ACADEMIC_CHANGE_APPROVED" : "ACADEMIC_CHANGE_REJECTED";
+            String message;
+            if (approve) {
+                message = "Your academic information change request was approved. Your Semester and Section have been updated.";
+            } else {
+                if (note != null && !note.isBlank()) {
+                    message = "Your academic information change request was rejected. Admin note: " + note.trim();
+                } else {
+                    message = "Your academic information change request was rejected.";
+                }
+            }
+            try {
+                notificationDAO.createDirect(c, userId, adminId, type, title, message, "/profile");
+            } catch (Exception notifEx) {
+                System.err.println("Student notification creation skipped: " + notifEx.getMessage());
+            }
+
             c.commit();
             return true;
         } catch (SQLException e) {

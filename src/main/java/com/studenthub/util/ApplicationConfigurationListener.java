@@ -79,6 +79,7 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             context.log("Database tables verified/initialized: universities (UIT)");
 
             ensureUserUniversityColumn(connection, context);
+            ensureNotificationTypeColumn(connection, context);
 
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
@@ -103,6 +104,17 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             }
         } catch (Exception e) {
             context.log("ensureUserUniversityColumn check: " + e.getMessage());
+        }
+    }
+
+    private void ensureNotificationTypeColumn(Connection connection, ServletContext context) {
+        try {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.execute("ALTER TABLE notifications MODIFY COLUMN notification_type VARCHAR(50) NOT NULL");
+                context.log("Ensured notifications.notification_type is VARCHAR(50)");
+            }
+        } catch (Exception e) {
+            context.log("ensureNotificationTypeColumn check: " + e.getMessage());
         }
     }
 }

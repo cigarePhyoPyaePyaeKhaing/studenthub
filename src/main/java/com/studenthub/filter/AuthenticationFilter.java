@@ -59,6 +59,6 @@ public class AuthenticationFilter implements Filter {
         String path = requestUri.substring(Math.min(contextPath.length(), requestUri.length()));
         return path.equals("/home") || path.equals("/announcements") || path.equals("/notifications")
                 || path.equals("/deadlines") || path.equals("/discussions") || path.equals("/profile")
-                || path.equals("/posts/comments") || path.equals("/admin") || path.startsWith("/admin/users");
+                || path.equals("/posts/comments") || path.equals("/admin") || path.startsWith("/admin/");
     }
 }
