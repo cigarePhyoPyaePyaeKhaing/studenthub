@@ -223,7 +223,7 @@
                                         </c:when>
                                         <c:otherwise>
                                             <details class="request-panel mt-3">
-                                                <summary class="btn btn-outline-primary btn-sm">Request Academic Info Change</summary>
+                                                <summary class="btn btn-primary btn-sm">Request Academic Info Change</summary>
                                                 <form method="post" action="${pageContext.request.contextPath}/profile/academic-change" class="profile-form mt-3">
                                                     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
                                                     <div class="student-current-academic-card">
