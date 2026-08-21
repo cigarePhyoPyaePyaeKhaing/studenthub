@@ -79,12 +79,30 @@ public class AcademicChangeRequestServlet extends HttpServlet {
         } catch (IllegalArgumentException e) {
             session.setAttribute("flashError", e.getMessage());
         } catch (SQLException e) {
-            getServletContext().log("Academic change request failed: " + e.getClass().getName()
+            logSafe("Academic change request failed: " + e.getClass().getName()
                     + ", SQLState=" + e.getSQLState()
                     + ", errorCode=" + e.getErrorCode()
                     + ", message=" + e.getMessage(), e);
             session.setAttribute("flashError", "The request service is temporarily unavailable.");
         }
         response.sendRedirect(request.getContextPath() + "/profile");
+    }
+
+    private void logSafe(String message, Throwable throwable) {
+        try {
+            if (getServletConfig() != null && getServletContext() != null) {
+                if (throwable != null) {
+                    getServletContext().log(message, throwable);
+                } else {
+                    getServletContext().log(message);
+                }
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        System.err.println(message);
+        if (throwable != null) {
+            throwable.printStackTrace(System.err);
+        }
     }
 }

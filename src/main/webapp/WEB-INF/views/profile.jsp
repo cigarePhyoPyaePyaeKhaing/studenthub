@@ -185,6 +185,11 @@
                                                 <div class="small text-secondary mt-1">Submitted on <c:out value="${pendingAcademicRequest.createdLabel}" /></div>
                                             </div>
                                         </c:when>
+                                        <c:when test="${academicRequestUnavailable}">
+                                             <div class="alert alert-warning mt-3">
+                                                 Academic change request service is temporarily unavailable. Please try again later.
+                                             </div>
+                                        </c:when>
                                         <c:otherwise>
                                             <details class="request-panel mt-3">
                                                 <summary class="btn btn-outline-primary btn-sm">Request Academic Info Change</summary>

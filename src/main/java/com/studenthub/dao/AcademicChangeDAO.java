@@ -32,6 +32,21 @@ public class AcademicChangeDAO {
             LocalDateTime createdAt,
             LocalDateTime reviewedAt) {
 
+        public long getRequestId() { return requestId; }
+        public long getUserId() { return userId; }
+        public String getStudentId() { return studentId; }
+        public String getFullName() { return fullName; }
+        public String getEmail() { return email; }
+        public Integer getOldSemester() { return oldSemester; }
+        public String getOldSection() { return oldSection; }
+        public int getRequestedSemester() { return requestedSemester; }
+        public String getRequestedSection() { return requestedSection; }
+        public String getReason() { return reason; }
+        public String getStatus() { return status; }
+        public String getAdminNote() { return adminNote; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
+        public LocalDateTime getReviewedAt() { return reviewedAt; }
+
         public String getCreatedLabel() {
             return createdAt == null ? "" : createdAt.format(FORMATTER);
         }

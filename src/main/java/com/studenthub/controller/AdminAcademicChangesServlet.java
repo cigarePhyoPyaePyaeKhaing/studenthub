@@ -42,7 +42,7 @@ public class AdminAcademicChangesServlet extends HttpServlet {
             request.setAttribute("requests", dao.listByStatus(status));
             request.setAttribute("currentStatus", status != null && !status.isBlank() ? status.toUpperCase() : "PENDING");
         } catch (SQLException e) {
-            getServletContext().log("Admin academic changes load failed: " + e.getClass().getName());
+            logSafe("Admin academic changes load failed: " + e.getClass().getName());
             request.setAttribute("error", "Requests are temporarily unavailable.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
@@ -79,9 +79,20 @@ public class AdminAcademicChangesServlet extends HttpServlet {
                 request.getSession().setAttribute("flash", "Academic change request " + (approved ? "approved." : "rejected."));
             }
         } catch (SQLException | NumberFormatException e) {
-            getServletContext().log("Admin academic change review failed: " + e.getClass().getName());
+            logSafe("Admin academic change review failed: " + e.getClass().getName());
             request.getSession().setAttribute("flashError", "Unable to complete review action.");
         }
         response.sendRedirect(request.getContextPath() + "/admin/academic-changes");
+    }
+
+    private void logSafe(String message) {
+        try {
+            if (getServletConfig() != null && getServletContext() != null) {
+                getServletContext().log(message);
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        System.err.println(message);
     }
 }

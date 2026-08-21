@@ -58,15 +58,22 @@ public class ProfileServlet extends HttpServlet {
             if (academicChangeDAO != null) {
                 try {
                     request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
-                } catch (SQLException ignored) {
-                    // Non-blocking lookup
+                } catch (Exception academicException) {
+                    logSafe("Pending academic request lookup degraded gracefully: "
+                            + academicException.getClass().getName() + " - " + academicException.getMessage());
+                    request.setAttribute("pendingAcademicRequest", null);
+                    request.setAttribute("academicRequestUnavailable", true);
                 }
             }
         } catch (SQLException exception) {
-            getServletContext().log("Profile load failed: " + exception.getClass().getName()
+            logSafe("Profile load failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState()
                     + ", errorCode=" + exception.getErrorCode()
                     + ", message=" + exception.getMessage(), exception);
+            request.setAttribute("error", "Your profile is temporarily unavailable.");
+        } catch (Exception exception) {
+            logSafe("Unexpected profile error: " + exception.getClass().getName()
+                    + " - " + exception.getMessage(), exception);
             request.setAttribute("error", "Your profile is temporarily unavailable.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
@@ -108,12 +115,34 @@ public class ProfileServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/profile?edit=true");
             }
         } catch (SQLException exception) {
-            getServletContext().log("Profile update failed: " + exception.getClass().getName()
+            logSafe("Profile update failed: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState()
                     + ", errorCode=" + exception.getErrorCode()
                     + ", message=" + exception.getMessage(), exception);
             request.getSession().setAttribute("flashError", "Your profile could not be updated right now.");
             response.sendRedirect(request.getContextPath() + "/profile?edit=true");
+        }
+    }
+
+    private void logSafe(String message) {
+        logSafe(message, null);
+    }
+
+    private void logSafe(String message, Throwable throwable) {
+        try {
+            if (getServletConfig() != null && getServletContext() != null) {
+                if (throwable != null) {
+                    getServletContext().log(message, throwable);
+                } else {
+                    getServletContext().log(message);
+                }
+                return;
+            }
+        } catch (Exception ignored) {
+        }
+        System.err.println(message);
+        if (throwable != null) {
+            throwable.printStackTrace(System.err);
         }
     }
 
