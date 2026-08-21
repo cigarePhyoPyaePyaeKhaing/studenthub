@@ -7,6 +7,9 @@
 <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}"/></div></c:if><c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}"/></div></c:if>
 <form method="post" action="${pageContext.request.contextPath}/login"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>">
 <div class="mb-3"><label class="form-label" for="login">Student ID or email</label><input class="form-control" id="login" name="login" maxlength="120" autocomplete="username" required></div>
-<div class="mb-2"><label class="form-label" for="password">Password</label><input class="form-control" type="password" id="password" name="password" maxlength="128" autocomplete="current-password" required></div><div class="text-end mb-4"><a href="${pageContext.request.contextPath}/forgot-password">Forgot password?</a></div>
+<div class="mb-2"><label class="form-label" for="password">Password</label>
+<div class="password-field"><input class="form-control" type="password" id="password" name="password" maxlength="128" autocomplete="current-password" required>
+<button type="button" class="password-toggle" data-password-toggle="password" aria-label="Show password"></button></div></div>
+<div class="text-end mb-4"><a href="${pageContext.request.contextPath}/forgot-password">Forgot password?</a></div>
 <button class="btn btn-primary w-100" type="submit">Sign in</button></form><p class="mt-4 mb-0 text-center">New to StudentHub? <a href="${pageContext.request.contextPath}/register">Register</a></p>
 </div></div></main></body></html>

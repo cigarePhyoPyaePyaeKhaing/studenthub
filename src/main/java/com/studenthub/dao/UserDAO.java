@@ -17,13 +17,19 @@ import java.util.Optional;
 public class UserDAO {
     public long createPendingStudent(Connection connection, String studentId, String fullName,
                                      String email, String passwordHash) throws SQLException {
+        return createPendingStudent(connection, studentId, fullName, email, passwordHash, null, null, null);
+    }
+
+    public long createPendingStudent(Connection connection, String studentId, String fullName,
+                                     String email, String passwordHash, Long universityId,
+                                     Integer semester, String sectionName) throws SQLException {
         String sql = """
                 INSERT INTO users
                     (username, student_id, email, password_hash, full_name, role, email_verified,
                      university_id, university_locked, semester, section_name, academic_info_locked)
                 VALUES (?, ?, ?, ?, ?, ?, FALSE,
-                        (SELECT university_id FROM universities WHERE short_name='UIT' AND status='APPROVED' LIMIT 1),
-                        TRUE, NULL, NULL, FALSE)
+                        COALESCE(?, (SELECT university_id FROM universities WHERE short_name='UIT' AND status='APPROVED' LIMIT 1)),
+                        TRUE, ?, ?, (? IS NOT NULL AND ? IS NOT NULL))
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, studentId);
@@ -32,6 +38,25 @@ public class UserDAO {
             statement.setString(4, passwordHash);
             statement.setString(5, fullName);
             statement.setString(6, RegistrationPolicy.initialRole().name());
+            if (universityId == null) {
+                statement.setNull(7, java.sql.Types.BIGINT);
+            } else {
+                statement.setLong(7, universityId);
+            }
+            if (semester == null) {
+                statement.setNull(8, java.sql.Types.INTEGER);
+                statement.setNull(10, java.sql.Types.INTEGER);
+            } else {
+                statement.setInt(8, semester);
+                statement.setInt(10, semester);
+            }
+            if (sectionName == null || sectionName.isBlank()) {
+                statement.setNull(9, java.sql.Types.VARCHAR);
+                statement.setNull(11, java.sql.Types.VARCHAR);
+            } else {
+                statement.setString(9, sectionName.trim());
+                statement.setString(11, sectionName.trim());
+            }
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {
@@ -47,6 +72,33 @@ public class UserDAO {
             }
         }
         throw new SQLException("Account insert completed but the generated user identifier was unavailable.");
+    }
+
+    public int deleteExpiredUnverifiedUsers(Connection connection, java.time.Instant cutoff) throws SQLException {
+        String selectSql = "SELECT user_id FROM users WHERE email_verified = FALSE AND created_at < ?";
+        java.util.List<Long> unverifiedIds = new java.util.ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(selectSql)) {
+            stmt.setTimestamp(1, java.sql.Timestamp.from(cutoff));
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    unverifiedIds.add(rs.getLong(1));
+                }
+            }
+        }
+        if (unverifiedIds.isEmpty()) {
+            return 0;
+        }
+        for (Long uid : unverifiedIds) {
+            try (PreparedStatement delCodes = connection.prepareStatement("DELETE FROM verification_codes WHERE user_id = ?")) {
+                delCodes.setLong(1, uid);
+                delCodes.executeUpdate();
+            }
+            try (PreparedStatement delUser = connection.prepareStatement("DELETE FROM users WHERE user_id = ? AND email_verified = FALSE")) {
+                delUser.setLong(1, uid);
+                delUser.executeUpdate();
+            }
+        }
+        return unverifiedIds.size();
     }
 
     public Optional<User> findByLogin(String normalizedLogin) throws SQLException {

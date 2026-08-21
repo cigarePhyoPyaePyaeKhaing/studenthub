@@ -13,6 +13,7 @@
         <c:if test="${sessionScope.role eq 'ADMIN'}">
             <a class="${currentPath eq pageContext.request.contextPath.concat('/admin') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin">Admin Dashboard</a>
             <a class="${currentPath.startsWith(pageContext.request.contextPath.concat('/admin/users')) ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/users">Users</a>
+            <a class="${currentPath.startsWith(pageContext.request.contextPath.concat('/admin/universities')) ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/universities">Universities</a>
             <a class="${currentPath.startsWith(pageContext.request.contextPath.concat('/admin/academic-changes')) ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes">Academic Requests</a>
         </c:if>
     </div>

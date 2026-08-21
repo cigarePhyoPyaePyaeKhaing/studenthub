@@ -29,6 +29,10 @@ public record Notification(long notificationId, String type, String title, Strin
         return read;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
     public String getCreatedLabel() {
         return createdAt == null ? "" : createdAt.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"));
     }

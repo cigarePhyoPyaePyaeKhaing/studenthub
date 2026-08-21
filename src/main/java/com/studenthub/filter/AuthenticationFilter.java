@@ -47,6 +47,7 @@ public class AuthenticationFilter implements Filter {
                 || path.equals("/admin") || path.startsWith("/admin/")
                 || path.equals("/users") || path.startsWith("/users/")
                 || path.equals("/academic-requests") || path.startsWith("/academic-requests/")
+                || path.startsWith("/attachments/")
                 || path.startsWith("/posts/") || path.startsWith("/app/") || path.startsWith("/feed/");
     }
 
