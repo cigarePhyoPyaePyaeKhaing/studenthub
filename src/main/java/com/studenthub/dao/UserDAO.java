@@ -19,11 +19,8 @@ public class UserDAO {
                                      String email, String passwordHash) throws SQLException {
         String sql = """
                 INSERT INTO users
-                    (username, student_id, email, password_hash, full_name, role, email_verified,
-                     university_id, university_locked, semester, section_name, academic_info_locked)
-                VALUES (?, ?, ?, ?, ?, ?, FALSE,
-                        (SELECT university_id FROM universities WHERE short_name='UIT' AND status='APPROVED' LIMIT 1),
-                        TRUE, NULL, NULL, FALSE)
+                    (username, student_id, email, password_hash, full_name, role, email_verified)
+                VALUES (?, ?, ?, ?, ?, ?, FALSE)
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, studentId);

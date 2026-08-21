@@ -10,6 +10,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -18,6 +19,33 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserDAOAivenSchemaTest {
+
+    @Test
+    void createPendingStudentInsertsProductionColumns() throws Exception {
+        UserDAO dao = new UserDAO();
+        AtomicReference<String> executedSql = new AtomicReference<>();
+        Map<Integer, Object> boundParams = new HashMap<>();
+
+        Connection connection = createMockInsertConnection(executedSql, boundParams, 123L);
+
+        long generatedId = dao.createPendingStudent(connection, "TNT-1234", "Mg Ba", "mgba@uit.edu", "hashed_pw");
+
+        assertEquals(123L, generatedId);
+        String sql = executedSql.get();
+        assertNotNull(sql);
+        assertTrue(sql.contains("INSERT INTO users"));
+        assertTrue(sql.contains("(username, student_id, email, password_hash, full_name, role, email_verified)"));
+        assertFalse(sql.contains("universities"));
+        assertFalse(sql.contains("university_id"));
+        assertFalse(sql.contains("academic_info_locked"));
+
+        assertEquals("TNT-1234", boundParams.get(1));
+        assertEquals("TNT-1234", boundParams.get(2));
+        assertEquals("mgba@uit.edu", boundParams.get(3));
+        assertEquals("hashed_pw", boundParams.get(4));
+        assertEquals("Mg Ba", boundParams.get(5));
+        assertEquals("STUDENT", boundParams.get(6));
+    }
 
     @Test
     void findProfileByIdQueriesProductionColumns() throws Exception {
@@ -133,6 +161,43 @@ class UserDAOAivenSchemaTest {
         assertNull(boundParams.get(2));
         assertNull(boundParams.get(3));
         assertEquals(50L, boundParams.get(4));
+    }
+
+    private Connection createMockInsertConnection(AtomicReference<String> sqlRef, Map<Integer, Object> boundParams, long generatedKey) {
+        ResultSet keysRs = (ResultSet) Proxy.newProxyInstance(
+                ResultSet.class.getClassLoader(),
+                new Class[]{ResultSet.class},
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "next" -> true;
+                    case "getLong" -> generatedKey;
+                    case "close" -> null;
+                    default -> null;
+                });
+
+        PreparedStatement ps = (PreparedStatement) Proxy.newProxyInstance(
+                PreparedStatement.class.getClassLoader(),
+                new Class[]{PreparedStatement.class},
+                (proxy, method, args) -> switch (method.getName()) {
+                    case "executeUpdate" -> 1;
+                    case "setString" -> {
+                        boundParams.put((Integer) args[0], args[1]);
+                        yield null;
+                    }
+                    case "getGeneratedKeys" -> keysRs;
+                    case "close" -> null;
+                    default -> null;
+                });
+
+        return (Connection) Proxy.newProxyInstance(
+                Connection.class.getClassLoader(),
+                new Class[]{Connection.class},
+                (proxy, method, args) -> {
+                    if ("prepareStatement".equals(method.getName())) {
+                        sqlRef.set((String) args[0]);
+                        return ps;
+                    }
+                    return null;
+                });
     }
 
     private Connection createMockConnection(AtomicReference<String> sqlRef, Map<String, Object> row, boolean hasRow) {
