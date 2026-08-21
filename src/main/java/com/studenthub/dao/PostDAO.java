@@ -14,6 +14,10 @@ import com.studenthub.util.PostDeletionPlan;
 
 public class PostDAO {
     public List<Post> findVisibleForUser(long viewerId, Long categoryId) throws SQLException {
+        return findVisibleForUser(viewerId, categoryId, 30);
+    }
+
+    public List<Post> findVisibleForUser(long viewerId, Long categoryId, int limit) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
@@ -33,7 +37,7 @@ public class PostDAO {
                            AND author.section_name = viewer.section_name))
                   AND (? IS NULL OR p.category_id = ?)
                 ORDER BY p.created_at DESC, p.post_id DESC
-                LIMIT 100
+                LIMIT ?
                 """;
         List<Post> posts = new ArrayList<>();
         try (Connection connection = DBConnection.getConnection();
@@ -47,6 +51,7 @@ public class PostDAO {
                 statement.setLong(3, categoryId);
                 statement.setLong(4, categoryId);
             }
+            statement.setInt(5, Math.max(1, limit));
             try (ResultSet result = statement.executeQuery()) {
                 while (result.next()) {
                     posts.add(map(result));

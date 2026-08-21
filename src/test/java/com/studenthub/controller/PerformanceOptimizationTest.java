@@ -152,6 +152,69 @@ class PerformanceOptimizationTest {
         assertEquals(1, list.size());
     }
 
+    @Test
+    void authenticationFilterUsesCachedUnreadCountWhenFresh() throws Exception {
+        AtomicInteger countQueryCount = new AtomicInteger(0);
+
+        NotificationDAO mockNotificationDAO = new NotificationDAO() {
+            @Override
+            public long countUnread(long userId) {
+                countQueryCount.incrementAndGet();
+                return 5L;
+            }
+        };
+
+        AuthenticationFilter filter = new AuthenticationFilter();
+        java.lang.reflect.Field daoField = AuthenticationFilter.class.getDeclaredField("notificationDAO");
+        daoField.setAccessible(true);
+        daoField.set(filter, mockNotificationDAO);
+
+        sessionAttributes.put("userId", 42L);
+        sessionAttributes.put("cachedUnreadCount", 3L);
+        sessionAttributes.put("cachedUnreadTime", System.currentTimeMillis() - 5000L); // 5s ago (fresh)
+
+        HttpServletRequest request = createMockRequest("/home");
+        HttpServletResponse response = createMockResponse();
+        FilterChain chain = (req, res) -> {};
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(0, countQueryCount.get(), "Should use cached unread count when fresh");
+        assertEquals(3L, requestAttributes.get("unreadNotificationCount"));
+    }
+
+    @Test
+    void authenticationFilterQueriesUnreadCountWhenCacheExpired() throws Exception {
+        AtomicInteger countQueryCount = new AtomicInteger(0);
+
+        NotificationDAO mockNotificationDAO = new NotificationDAO() {
+            @Override
+            public long countUnread(long userId) {
+                countQueryCount.incrementAndGet();
+                return 7L;
+            }
+        };
+
+        AuthenticationFilter filter = new AuthenticationFilter();
+        java.lang.reflect.Field daoField = AuthenticationFilter.class.getDeclaredField("notificationDAO");
+        daoField.setAccessible(true);
+        daoField.set(filter, mockNotificationDAO);
+
+        sessionAttributes.put("userId", 42L);
+        sessionAttributes.put("cachedUnreadCount", 3L);
+        sessionAttributes.put("cachedUnreadTime", System.currentTimeMillis() - 40000L); // 40s ago (expired)
+
+        HttpServletRequest request = createMockRequest("/home");
+        HttpServletResponse response = createMockResponse();
+        FilterChain chain = (req, res) -> {};
+
+        filter.doFilter(request, response, chain);
+
+        assertEquals(1, countQueryCount.get(), "Should query database when unread count cache is expired");
+        assertEquals(7L, requestAttributes.get("unreadNotificationCount"));
+        assertEquals(7L, sessionAttributes.get("cachedUnreadCount"));
+    }
+
     private HttpServletRequest createMockRequest(String uri) {
         HttpSession session = (HttpSession) Proxy.newProxyInstance(
                 HttpSession.class.getClassLoader(),

@@ -20,6 +20,7 @@ public class AuthenticationFilter implements Filter {
     private static final Set<String> PUBLIC_PATHS = Set.of(
             "/", "/login", "/register", "/verify-email", "/resend-verification",
             "/forgot-password", "/verify-reset-code", "/reset-password", "/health");
+    private static final long UNREAD_COUNT_CACHE_TTL_MS = 30000L;
     private final NotificationDAO notificationDAO=new NotificationDAO();
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest http = (HttpServletRequest) request;
@@ -34,7 +35,7 @@ public class AuthenticationFilter implements Filter {
             Long cachedTime = (Long) session.getAttribute("cachedUnreadTime");
             long now = System.currentTimeMillis();
 
-            if (cachedCount != null && cachedTime != null && (now - cachedTime < 10000)) {
+            if (cachedCount != null && cachedTime != null && (now - cachedTime < UNREAD_COUNT_CACHE_TTL_MS)) {
                 request.setAttribute("unreadNotificationCount", cachedCount);
             } else {
                 try {
