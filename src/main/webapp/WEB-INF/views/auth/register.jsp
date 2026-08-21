@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Register | StudentHub</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css" rel="stylesheet"></head>
+<script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-2" rel="stylesheet"></head>
 <body class="auth-page"><main class="container py-5"><div class="auth-card card border-0 shadow-lg mx-auto"><div class="card-body p-4 p-md-5">
 <a class="text-decoration-none" href="${pageContext.request.contextPath}/home">StudentHub</a><h1 class="h2 mt-3">Create your student account</h1><p class="text-secondary">Use your UIT student ID and an email you can verify.</p>
 <c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}"/></div></c:if>
