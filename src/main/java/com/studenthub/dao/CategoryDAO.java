@@ -32,14 +32,4 @@ public class CategoryDAO {
             }
         }
     }
-
-    public java.util.Optional<String> findNameById(Connection connection, long categoryId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(
-                "SELECT category_name FROM categories WHERE category_id = ?")) {
-            statement.setLong(1, categoryId);
-            try (ResultSet result = statement.executeQuery()) {
-                return result.next() ? java.util.Optional.of(result.getString(1)) : java.util.Optional.empty();
-            }
-        }
-    }
 }

@@ -153,19 +153,15 @@ public class PostDAO {
         }
     }
 
-    private final AttachmentDAO attachmentDAO = new AttachmentDAO();
-
     private Post map(ResultSet result) throws SQLException {
         Timestamp created = result.getTimestamp("created_at");
         long categoryValue = result.getLong("category_id");
         Long categoryId = result.wasNull() ? null : categoryValue;
-        long postId = result.getLong("post_id");
-        List<com.studenthub.model.Attachment> attachments = attachmentDAO.findByEntity("POST", postId);
-        return new Post(postId, result.getLong("user_id"), categoryId,
+        return new Post(result.getLong("post_id"), result.getLong("user_id"), categoryId,
                 result.getString("author_name"), Role.valueOf(result.getString("author_role")),
                 result.getString("category_name"), result.getString("title"), result.getString("content"),
                 result.getString("image_url"), result.getString("visibility"),
                 created == null ? null : created.toLocalDateTime(), result.getLong("reaction_count"),
-                result.getLong("comment_count"), result.getBoolean("current_user_reacted"), attachments);
+                result.getLong("comment_count"), result.getBoolean("current_user_reacted"));
     }
 }

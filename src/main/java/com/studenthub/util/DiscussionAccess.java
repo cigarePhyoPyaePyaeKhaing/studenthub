@@ -32,11 +32,4 @@ public final class DiscussionAccess {
         return scope == DiscussionScope.SEMESTER || scope == DiscussionScope.CR_SEMESTER
                 || viewerSection != null && viewerSection.equals(roomSection);
     }
-
-    public static boolean canAccess(Object role, Integer viewerSemester, String viewerSection,
-                                    DiscussionScope scope, Integer roomSemester, String roomSection) {
-        if ("ADMIN".equals(String.valueOf(role))) return true;
-        if (!roleMayAccess(scope, role)) return false;
-        return matches(scope, viewerSemester, viewerSection, roomSemester, roomSection);
-    }
 }

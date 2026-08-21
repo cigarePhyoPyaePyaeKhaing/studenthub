@@ -4,6 +4,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const otpForm = document.querySelector("[data-otp-form]");
     if (otpForm) initializeOtpForm(otpForm);
 
+    document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+            const input = document.getElementById(button.dataset.passwordToggle);
+            const reveal = input.type === "password";
+            input.type = reveal ? "text" : "password";
+            button.textContent = reveal ? "Hide" : "Show";
+            button.setAttribute("aria-label", `${reveal ? "Hide" : "Show"} ${input.id === "password" ? "new" : "confirmed"} password`);
+        });
+    });
+
     const resendForm = document.querySelector("[data-resend-form]");
     if (resendForm) initializeResend(resendForm);
 });

@@ -45,25 +45,10 @@ public class DiscussionService {
                 denial == null ? dao.findRecent(target, 50) : List.of());
     }
 
-    private final com.studenthub.dao.AttachmentDAO attachmentDAO = new com.studenthub.dao.AttachmentDAO();
-
     public OperationResult send(long userId, String requestedScope, String rawMessage) throws SQLException {
-        return send(userId, requestedScope, rawMessage, List.of());
-    }
-
-    public OperationResult send(long userId, String requestedScope, String rawMessage,
-                                List<AttachmentStorageService.StoredFileInfo> files) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
-        boolean hasFiles = files != null && !files.isEmpty();
-        String messageText = rawMessage == null ? "" : rawMessage.trim();
-
-        if (!hasFiles) {
-            String validation = DiscussionValidation.validate(messageText);
-            if (validation != null) return new OperationResult(false, validation);
-        } else if (messageText.length() > 500) {
-            return new OperationResult(false, "Discussion messages cannot exceed 500 characters.");
-        }
-
+        String validation = DiscussionValidation.validate(rawMessage);
+        if (validation != null) return new OperationResult(false, validation);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
         String denial = DiscussionAccess.denialReason(scope, profile.semester(), profile.sectionName());
@@ -73,24 +58,13 @@ public class DiscussionService {
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                String normalizedMsg = messageText.isEmpty() && hasFiles ? "[Attachment]" : DiscussionValidation.normalize(messageText);
-                long id = dao.insert(connection, target, normalizedMsg);
+                long id = dao.insert(connection, target, DiscussionValidation.normalize(rawMessage));
                 if (id <= 0) throw new SQLException("Message identifier was unavailable after insertion.");
-
-                if (hasFiles) {
-                    for (AttachmentStorageService.StoredFileInfo file : files) {
-                        attachmentDAO.create(connection, "MESSAGE", id, file.originalFilename(),
-                                file.storedFilename(), file.fileType(), file.mimeType(), file.fileSize(), userId);
-                    }
-                }
-
                 connection.commit();
                 return new OperationResult(true, "Message sent.");
             } catch (SQLException exception) {
                 connection.rollback();
                 throw exception;
-            } finally {
-                connection.setAutoCommit(true);
             }
         }
     }

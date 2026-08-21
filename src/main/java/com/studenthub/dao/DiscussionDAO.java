@@ -55,21 +55,17 @@ public class DiscussionDAO {
             statement.setInt(index, Math.max(1, Math.min(limit, 100)));
             try (ResultSet results = statement.executeQuery()) {
                 while (results.next()) {
-                    long msgId = results.getLong("message_id");
-                    List<com.studenthub.model.Attachment> attachments = attachmentDAO.findByEntity(connection, "MESSAGE", msgId);
-                    messages.add(new DiscussionMessage(msgId,
+                    messages.add(new DiscussionMessage(results.getLong("message_id"),
                             results.getLong("sender_id"), results.getString("full_name"),
                             results.getString("role"), nullableInteger(results, "author_semester"),
                             results.getString("author_section"), results.getString("message"),
-                            results.getTimestamp("created_at").toLocalDateTime(), attachments));
+                            results.getTimestamp("created_at").toLocalDateTime()));
                 }
             }
         }
         Collections.reverse(messages);
         return messages;
     }
-
-    private final AttachmentDAO attachmentDAO = new AttachmentDAO();
 
     public long insert(Connection connection, DiscussionTarget target, String message) throws SQLException {
         long roomId = findOrCreateRoom(connection, target);
@@ -104,23 +100,10 @@ public class DiscussionDAO {
     }
 
     public int delete(long messageId) throws SQLException {
-        try (Connection connection = DBConnection.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                attachmentDAO.deleteByEntity(connection, "MESSAGE", messageId);
-                int res;
-                try (PreparedStatement statement = connection.prepareStatement("DELETE FROM messages WHERE message_id = ?")) {
-                    statement.setLong(1, messageId);
-                    res = statement.executeUpdate();
-                }
-                connection.commit();
-                return res;
-            } catch (SQLException e) {
-                connection.rollback();
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement("DELETE FROM messages WHERE message_id = ?")) {
+            statement.setLong(1, messageId);
+            return statement.executeUpdate();
         }
     }
 

@@ -18,17 +18,10 @@ import java.util.Set;
 @WebServlet(name = "RegisterServlet", urlPatterns = "/register")
 public class RegisterServlet extends HttpServlet {
     private final AuthService authService = new AuthService();
-    private final com.studenthub.dao.UniversityDAO universityDAO = new com.studenthub.dao.UniversityDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        try {
-            request.setAttribute("universities", universityDAO.findActive());
-        } catch (SQLException exception) {
-            getServletContext().log("Failed to load active universities for registration: " + exception.getClass().getName());
-            request.setAttribute("universities", java.util.List.of());
-        }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession(true)));
         request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
     }
@@ -41,15 +34,10 @@ public class RegisterServlet extends HttpServlet {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
         }
-        Long universityId = parseLong(request.getParameter("universityId"));
-        Integer semester = parseInt(request.getParameter("semester"));
-        String sectionName = request.getParameter("sectionName");
-
         try {
             AuthService.RegistrationResult result = authService.register(request.getParameter("studentId"),
                     request.getParameter("fullName"), request.getParameter("email"),
-                    request.getParameter("password"), request.getParameter("confirmPassword"),
-                    universityId, semester, sectionName);
+                    request.getParameter("password"), request.getParameter("confirmPassword"));
             if (result.successful()) {
                 request.getSession().setAttribute("pendingVerificationUserId", result.userId());
                 response.sendRedirect(request.getContextPath() + "/verify-email");
@@ -64,26 +52,6 @@ public class RegisterServlet extends HttpServlet {
             request.setAttribute("error", "Your account was saved, but email could not be sent. Try again later.");
         }
         doGet(request, response);
-    }
-
-    private Long parseLong(String value) {
-        if (value == null || value.isBlank()) return null;
-        try {
-            long val = Long.parseLong(value.trim());
-            return val > 0 ? val : null;
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
-
-    private Integer parseInt(String value) {
-        if (value == null || value.isBlank()) return null;
-        try {
-            int val = Integer.parseInt(value.trim());
-            return val > 0 ? val : null;
-        } catch (NumberFormatException exception) {
-            return null;
-        }
     }
 
     private void logSQLExceptionChain(SQLException exception) {

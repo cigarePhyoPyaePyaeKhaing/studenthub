@@ -100,81 +100,11 @@ public class AdminDAO {
         }
     }
 
-    public boolean deleteStudent(Connection connection, long targetUserId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM verification_codes WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM notification_reads WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM notifications WHERE target_user_id = ? OR actor_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.setLong(2, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM reactions WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM comments WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM messages WHERE sender_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM academic_change_requests WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM deadlines WHERE created_by = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM reactions WHERE post_id IN (SELECT post_id FROM posts WHERE user_id = ?)")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM comments WHERE post_id IN (SELECT post_id FROM posts WHERE user_id = ?)")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM deadlines WHERE post_id IN (SELECT post_id FROM posts WHERE user_id = ?)")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM attachments WHERE entity_type = 'POST' AND entity_id IN (SELECT post_id FROM posts WHERE user_id = ?)")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM posts WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM attachments WHERE uploader_id = ?")) {
-            statement.setLong(1, targetUserId);
-            statement.executeUpdate();
-        }
-        try (PreparedStatement statement = connection.prepareStatement("DELETE FROM users WHERE user_id = ?")) {
-            statement.setLong(1, targetUserId);
-            return statement.executeUpdate() > 0;
-        }
-    }
-
     private String baseUserSelect() {
-        return """
-                SELECT u.user_id, u.student_id, u.full_name, u.email, u.role, u.email_verified,
-                       u.semester, u.section_name, u.created_at,
-                       v.name AS university_name, v.short_name AS university_short_name
-                FROM users u
-                LEFT JOIN universities v ON v.university_id = u.university_id
-                """;
+        return "SELECT user_id,student_id,full_name,email,role,email_verified,semester,section_name,created_at FROM users";
     }
     private String searchClause(String search) {
-        return search == null ? "" : " WHERE u.student_id LIKE ? OR u.full_name LIKE ? OR u.email LIKE ?";
+        return search == null ? "" : " WHERE student_id LIKE ? OR full_name LIKE ? OR email LIKE ?";
     }
     private int bindSearch(PreparedStatement statement, String search) throws SQLException {
         if (search == null) return 1;
@@ -188,20 +118,11 @@ public class AdminDAO {
         return users;
     }
     private AdminUserSummary map(ResultSet result) throws SQLException {
-        int semesterValue = result.getInt("semester");
-        Integer semester = result.wasNull() ? null : semesterValue;
+        int semesterValue = result.getInt("semester"); Integer semester = result.wasNull() ? null : semesterValue;
         Timestamp created = result.getTimestamp("created_at");
-        return new AdminUserSummary(
-                result.getLong("user_id"),
-                result.getString("student_id"),
-                result.getString("full_name"),
-                result.getString("email"),
-                Role.valueOf(result.getString("role")),
-                result.getBoolean("email_verified"),
-                semester,
-                result.getString("section_name"),
-                created == null ? null : created.toLocalDateTime(),
-                result.getString("university_name"),
-                result.getString("university_short_name"));
+        return new AdminUserSummary(result.getLong("user_id"), result.getString("student_id"),
+                result.getString("full_name"), result.getString("email"), Role.valueOf(result.getString("role")),
+                result.getBoolean("email_verified"), semester, result.getString("section_name"),
+                created == null ? null : created.toLocalDateTime());
     }
 }

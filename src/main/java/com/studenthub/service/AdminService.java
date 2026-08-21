@@ -13,15 +13,7 @@ public class AdminService {
     public record UserPage(List<AdminUserSummary> users, String search, int page,
                            int totalPages, long totalUsers) {}
     public record OperationResult(boolean successful, String message) {}
-    private final AdminDAO dao;
-
-    public AdminService() {
-        this(new AdminDAO());
-    }
-
-    public AdminService(AdminDAO dao) {
-        this.dao = dao;
-    }
+    private final AdminDAO dao = new AdminDAO();
 
     public DashboardData dashboard() throws SQLException {
         return new DashboardData(dao.loadStats(), dao.findRecentUsers(8));
@@ -62,40 +54,6 @@ public class AdminService {
             } catch (SQLException exception) {
                 connection.rollback(); throw exception;
             } finally { connection.setAutoCommit(true); }
-        }
-    }
-
-    public OperationResult deleteStudent(long actingAdminId, Object actingRole, long targetUserId) throws SQLException {
-        if (!Authorization.isAdmin(actingRole)) return new OperationResult(false, "FORBIDDEN");
-        if (actingAdminId == targetUserId) {
-            return new OperationResult(false, "You cannot delete your own active administrator account.");
-        }
-        try (Connection connection = DBConnection.getConnection()) {
-            connection.setAutoCommit(false);
-            try {
-                List<Long> admins = dao.lockAdminIds(connection);
-                Role currentRole = dao.lockUserRole(connection, targetUserId);
-                if (currentRole == null) {
-                    connection.rollback();
-                    return new OperationResult(false, "NOT_FOUND");
-                }
-                if (currentRole == Role.ADMIN && admins.size() <= 1) {
-                    connection.rollback();
-                    return new OperationResult(false, "The final administrator account cannot be deleted.");
-                }
-                boolean deleted = dao.deleteStudent(connection, targetUserId);
-                if (!deleted) {
-                    connection.rollback();
-                    return new OperationResult(false, "NOT_FOUND");
-                }
-                connection.commit();
-                return new OperationResult(true, "User account deleted successfully.");
-            } catch (SQLException exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
         }
     }
     private String message(AdminRolePolicy.Decision decision) {

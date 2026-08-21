@@ -38,44 +38,10 @@
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
                 <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><article class="chat-message ${sessionScope.userId eq chatMessage.senderId ? 'own-message' : ''}">
                     <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div><div class="message-bubble"><header><strong><c:out value="${chatMessage.authorName}" /></strong><span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span><c:if test="${room.scope eq 'CR_SEMESTER' or room.scope eq 'CR_ALL'}"><span class="message-scope"><c:if test="${not empty chatMessage.authorSemester}">Sem <c:out value="${chatMessage.authorSemester}" /></c:if><c:if test="${not empty chatMessage.authorSection}"> · <c:out value="${chatMessage.authorSection}" /></c:if></span></c:if><time><c:out value="${chatMessage.createdLabel}" /></time></header><p><c:out value="${chatMessage.message}" /></p>
-                    <c:if test="${not empty chatMessage.attachments}">
-                        <div class="chat-attachments my-2">
-                            <c:forEach var="att" items="${chatMessage.attachments}">
-                                <div class="attachment-item mb-2">
-                                    <c:choose>
-                                        <c:when test="${att.image}">
-                                            <a href="${pageContext.request.contextPath}/attachments/view?id=${att.attachmentId}" target="_blank"><img src="${pageContext.request.contextPath}/attachments/view?id=${att.attachmentId}" alt="<c:out value='${att.originalFilename}' />" class="img-fluid rounded border" style="max-height:220px; object-fit:contain;"></a>
-                                        </c:when>
-                                        <c:when test="${att.video}">
-                                            <video controls class="w-100 rounded border" style="max-height:240px;"><source src="${pageContext.request.contextPath}/attachments/view?id=${att.attachmentId}" type="${att.mimeType}">Your browser does not support the video tag.</video>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <div class="attachment-file-box p-2 rounded border bg-body-tertiary d-flex align-items-center justify-content-between gap-2"><div class="d-flex align-items-center gap-2"><span>📎</span><div><div class="fw-semibold text-truncate" style="max-width:180px;"><c:out value="${att.originalFilename}" /></div><small class="text-secondary"><c:out value="${att.formattedSize}" /></small></div></div><div class="d-flex gap-1"><a href="${pageContext.request.contextPath}/attachments/view?id=${att.attachmentId}" target="_blank" class="btn btn-sm btn-outline-secondary">View</a><a href="${pageContext.request.contextPath}/attachments/download?id=${att.attachmentId}" class="btn btn-sm btn-primary">Download</a></div></div>
-                                        </c:otherwise>
-                                    </c:choose>
-                                </div>
-                            </c:forEach>
-                        </div>
-                    </c:if>
                     <c:if test="${sessionScope.role eq 'ADMIN' or sessionScope.userId eq chatMessage.senderId}"><form method="post" action="${pageContext.request.contextPath}/discussions/messages/delete" onsubmit="return confirm('Delete this message?');"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><input type="hidden" name="id" value="${chatMessage.messageId}"><button type="submit">Delete</button></form></c:if>
                     </div></article></c:forEach></div></c:otherwise>
             </c:choose>
-            <c:if test="${not empty room and room.available}">
-                <form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages" enctype="multipart/form-data">
-                    <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
-                    <input type="hidden" name="scope" value="<c:out value='${room.scope}' />">
-                    <label class="visually-hidden" for="message">Type a message</label>
-                    <textarea id="message" name="message" rows="2" maxlength="2000" placeholder="Type a message..."></textarea>
-                    <div class="d-flex justify-content-between align-items-center mt-2">
-                        <div class="d-flex align-items-center gap-2">
-                            <label for="chatAttachment" class="btn btn-sm btn-outline-secondary mb-0" style="cursor:pointer;" title="Attach file">📎 Attach</label>
-                            <input type="file" id="chatAttachment" name="attachment" class="d-none" onchange="document.getElementById('attachmentFileName').textContent = this.files[0] ? this.files[0].name : '';">
-                            <small id="attachmentFileName" class="text-truncate text-secondary" style="max-width:180px;"></small>
-                        </div>
-                        <button class="btn btn-primary" type="submit">Send</button>
-                    </div>
-                </form>
-            </c:if>
+            <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" required placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
         </section>
     </main>
 </div>

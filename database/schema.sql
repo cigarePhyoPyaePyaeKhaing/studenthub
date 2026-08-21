@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS categories (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO categories (category_name) VALUES
-    ('General'), ('Assignment'), ('Tutorial'), ('Exam'), ('General News'), ('Lecture Material'), ('Event')
+    ('Assignment'), ('Exam'), ('General News'), ('Lecture Material'), ('Event')
 ON DUPLICATE KEY UPDATE category_name = VALUES(category_name);
 
 CREATE TABLE IF NOT EXISTS posts (
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS messages (
 
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    notification_type ENUM('ANNOUNCEMENT','DEADLINE','COMMENT','REACTION','ACADEMIC_CHANGE') NOT NULL,
+    notification_type ENUM('ANNOUNCEMENT','DEADLINE','COMMENT','REACTION') NOT NULL,
     title VARCHAR(200) NOT NULL, message VARCHAR(500) NOT NULL, link_url VARCHAR(500) NOT NULL,
     actor_id BIGINT NOT NULL, target_user_id BIGINT NULL,
     visibility ENUM('ALL','SEMESTER','SECTION') NOT NULL,
@@ -196,20 +196,3 @@ CREATE TABLE IF NOT EXISTS academic_change_requests (
     UNIQUE KEY uq_academic_one_pending(pending_user_id),
     INDEX idx_academic_status(status,created_at),INDEX idx_academic_user(user_id,status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS attachments (
-    attachment_id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    entity_type ENUM('POST', 'MESSAGE') NOT NULL,
-    entity_id BIGINT NOT NULL,
-    original_filename VARCHAR(255) NOT NULL,
-    stored_filename VARCHAR(255) NOT NULL,
-    file_type ENUM('IMAGE', 'DOCUMENT', 'VIDEO') NOT NULL,
-    mime_type VARCHAR(100) NOT NULL,
-    file_size BIGINT NOT NULL,
-    uploader_id BIGINT NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_attachments_uploader FOREIGN KEY (uploader_id) REFERENCES users (user_id) ON DELETE CASCADE,
-    INDEX idx_attachments_entity (entity_type, entity_id),
-    INDEX idx_attachments_uploader (uploader_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-

@@ -45,13 +45,6 @@ public class AuthService {
     public RegistrationResult register(String studentIdInput, String fullNameInput, String emailInput,
                                        String password, String confirmation)
             throws SQLException, EmailServiceException {
-        return register(studentIdInput, fullNameInput, emailInput, password, confirmation, null, null, null);
-    }
-
-    public RegistrationResult register(String studentIdInput, String fullNameInput, String emailInput,
-                                       String password, String confirmation, Long universityId,
-                                       Integer semester, String sectionName)
-            throws SQLException, EmailServiceException {
         String studentId = AuthValidation.normalizeStudentId(studentIdInput);
         String email = AuthValidation.normalizeEmail(emailInput);
         String fullName = fullNameInput == null ? "" : fullNameInput.trim();
@@ -72,9 +65,6 @@ public class AuthService {
         if (!password.equals(confirmation)) {
             return new RegistrationResult(false, 0, "Password confirmation does not match.");
         }
-        if (semester != null && (semester < 1 || semester > 10)) {
-            return new RegistrationResult(false, 0, "Semester must be between 1 and 10.");
-        }
 
         long userId;
         String otp;
@@ -82,7 +72,7 @@ public class AuthService {
             connection.setAutoCommit(false);
             try {
                 userId = userDAO.createPendingStudent(connection, studentId, fullName, email,
-                        PasswordUtil.hash(password), universityId, semester, sectionName);
+                        PasswordUtil.hash(password));
                 otp = otpService.issue(connection, userId, email, OtpPurpose.EMAIL_VERIFICATION);
                 connection.commit();
             } catch (SQLException exception) {
@@ -97,23 +87,6 @@ public class AuthService {
         }
         emailService.sendVerificationOtp(email, fullName, otp);
         return new RegistrationResult(true, userId, "Enter the verification code sent to your email.");
-    }
-
-    public int cleanupExpiredUnverifiedRegistrations(java.time.Duration threshold) throws SQLException {
-        java.time.Instant cutoff = java.time.Instant.now().minus(threshold);
-        try (Connection connection = connectionProvider.get()) {
-            connection.setAutoCommit(false);
-            try {
-                int cleaned = userDAO.deleteExpiredUnverifiedUsers(connection, cutoff);
-                connection.commit();
-                return cleaned;
-            } catch (SQLException exception) {
-                connection.rollback();
-                throw exception;
-            } finally {
-                connection.setAutoCommit(true);
-            }
-        }
     }
 
     public OtpService.VerificationResult verifyEmail(long userId, String code) throws SQLException {
