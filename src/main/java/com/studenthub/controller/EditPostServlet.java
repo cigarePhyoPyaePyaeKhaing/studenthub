@@ -48,7 +48,7 @@ public class EditPostServlet extends HttpServlet {
             PostService.OperationResult result = postService.update((Long) request.getSession().getAttribute("userId"),
                     request.getSession().getAttribute("role"), id, request.getParameter("title"),
                     request.getParameter("content"), parseId(request.getParameter("categoryId")),
-                    request.getParameter("visibility"));
+                    request.getParameter("visibility"), request.getParameter("deadlineDate"));
             if ("FORBIDDEN".equals(result.message())) { response.sendError(403); return; }
             if ("NOT_FOUND".equals(result.message())) { response.sendError(404); return; }
             if (result.successful()) {

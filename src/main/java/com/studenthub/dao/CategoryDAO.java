@@ -49,4 +49,25 @@ public class CategoryDAO {
             }
         }
     }
+
+    public String findNameById(Connection connection, long categoryId) throws SQLException {
+        try (PreparedStatement statement = connection.prepareStatement(
+                "SELECT category_name FROM categories WHERE category_id = ?")) {
+            statement.setLong(1, categoryId);
+            try (ResultSet result = statement.executeQuery()) {
+                return result.next() ? result.getString("category_name") : null;
+            }
+        }
+    }
+
+    public String findNameById(long categoryId) throws SQLException {
+        for (Category cat : findAll()) {
+            if (cat.getCategoryId() == categoryId) {
+                return cat.getCategoryName();
+            }
+        }
+        try (Connection connection = DBConnection.getConnection()) {
+            return findNameById(connection, categoryId);
+        }
+    }
 }

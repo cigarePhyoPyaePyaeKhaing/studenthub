@@ -39,7 +39,7 @@ public class CreatePostServlet extends HttpServlet {
             PostService.OperationResult result = postService.create((Long) request.getSession().getAttribute("userId"),
                     request.getSession().getAttribute("role"), request.getParameter("title"),
                     request.getParameter("content"), parseCategory(request.getParameter("categoryId")),
-                    request.getParameter("visibility"));
+                    request.getParameter("visibility"), request.getParameter("deadlineDate"));
             if ("FORBIDDEN".equals(result.message())) { response.sendError(403); return; }
             if (result.successful()) {
                 request.getSession().setAttribute("flash", result.message());

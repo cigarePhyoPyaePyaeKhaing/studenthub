@@ -1,5 +1,6 @@
 package com.studenthub.util;
 
+import com.studenthub.dao.CategoryDAO;
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.ServletContextEvent;
 import jakarta.servlet.ServletContextListener;
@@ -85,10 +86,68 @@ public class ApplicationConfigurationListener implements ServletContextListener 
 
             ensureUserUniversityColumn(connection, context);
             ensureNotificationTypeColumn(connection, context);
+            ensurePostDeadlineColumn(connection, context);
+            ensureStandardCategories(connection, context);
 
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
             LOGGER.log(Level.INFO, "Database table initialization check: {0}", e.getMessage());
+        }
+    }
+
+    private void ensurePostDeadlineColumn(Connection connection, ServletContext context) {
+        try {
+            boolean hasColumn = false;
+            var metaData = connection.getMetaData();
+            try (var rs = metaData.getColumns(null, null, "posts", "deadline_date")) {
+                if (rs.next()) {
+                    hasColumn = true;
+                }
+            }
+            if (!hasColumn) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("ALTER TABLE posts ADD COLUMN deadline_date DATETIME NULL");
+                    context.log("Added column posts.deadline_date");
+                }
+            }
+        } catch (Exception e) {
+            context.log("ensurePostDeadlineColumn check: " + e.getMessage());
+        }
+    }
+
+    private void ensureStandardCategories(Connection connection, ServletContext context) {
+        String[] categories = {
+                "Assignment",
+                "Tutorial",
+                "Exam",
+                "Event",
+                "General News",
+                "Lecture Material"
+        };
+        String checkSql = "SELECT category_id FROM categories WHERE category_name = ?";
+        String insertSql = "INSERT INTO categories (category_name) VALUES (?)";
+        try {
+            for (String categoryName : categories) {
+                boolean exists = false;
+                try (java.sql.PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+                    checkStmt.setString(1, categoryName);
+                    try (var rs = checkStmt.executeQuery()) {
+                        if (rs.next()) {
+                            exists = true;
+                        }
+                    }
+                }
+                if (!exists) {
+                    try (java.sql.PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                        insertStmt.setString(1, categoryName);
+                        insertStmt.executeUpdate();
+                        context.log("Inserted standard category: " + categoryName);
+                    }
+                }
+            }
+            CategoryDAO.invalidateCache();
+        } catch (Exception e) {
+            context.log("ensureStandardCategories check: " + e.getMessage());
         }
     }
 
