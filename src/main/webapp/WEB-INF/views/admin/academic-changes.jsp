@@ -38,64 +38,89 @@
             </div>
         </section>
 
-        <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}" /></div></c:if>
-        <c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}" /></div></c:if>
+        <c:if test="${not empty message}"><div class="alert alert-success mb-3"><c:out value="${message}" /></div></c:if>
+        <c:if test="${not empty error}"><div class="alert alert-danger mb-3"><c:out value="${error}" /></div></c:if>
 
-        <div class="d-flex gap-2 mb-3">
-            <a class="btn btn-sm ${currentStatus eq 'PENDING' ? 'btn-primary' : 'btn-outline-primary'}" href="${pageContext.request.contextPath}/admin/academic-changes?status=PENDING">Pending</a>
-            <a class="btn btn-sm ${currentStatus eq 'APPROVED' ? 'btn-primary' : 'btn-outline-primary'}" href="${pageContext.request.contextPath}/admin/academic-changes?status=APPROVED">Approved</a>
-            <a class="btn btn-sm ${currentStatus eq 'REJECTED' ? 'btn-primary' : 'btn-outline-primary'}" href="${pageContext.request.contextPath}/admin/academic-changes?status=REJECTED">Rejected</a>
-            <a class="btn btn-sm ${currentStatus eq 'ALL' ? 'btn-primary' : 'btn-outline-primary'}" href="${pageContext.request.contextPath}/admin/academic-changes?status=ALL">All</a>
+        <div class="academic-filter-group" role="group" aria-label="Filter requests by status">
+            <a class="academic-filter-btn ${currentStatus eq 'PENDING' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes?status=PENDING">Pending</a>
+            <a class="academic-filter-btn ${currentStatus eq 'APPROVED' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes?status=APPROVED">Approved</a>
+            <a class="academic-filter-btn ${currentStatus eq 'REJECTED' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes?status=REJECTED">Rejected</a>
+            <a class="academic-filter-btn ${currentStatus eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes?status=ALL">All</a>
         </div>
 
         <section class="admin-card">
             <c:choose>
                 <c:when test="${not empty requests}">
-                    <div class="d-flex flex-column gap-3">
+                    <div class="academic-requests-list">
                         <c:forEach var="item" items="${requests}">
-                            <article class="p-3 border rounded bg-light">
-                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <article class="academic-request-card">
+                                <header class="academic-request-header">
                                     <div>
-                                        <h2 class="h5 mb-1"><c:out value="${item.fullName}" /> <span class="text-secondary small">(<c:out value="${item.studentId}" />)</span></h2>
-                                        <div class="small text-secondary"><c:out value="${item.email}" /> · Submitted: <c:out value="${item.createdLabel}" /></div>
+                                        <h2 class="academic-student-name"><c:out value="${item.fullName}" /></h2>
+                                        <div class="academic-student-meta">
+                                            <c:if test="${not empty item.studentId}">
+                                                <span class="academic-student-id-badge"><c:out value="${item.studentId}" /></span>
+                                            </c:if>
+                                            <span><c:out value="${item.email}" /></span>
+                                        </div>
                                     </div>
-                                    <span class="badge ${item.status eq 'PENDING' ? 'bg-warning text-dark' : (item.status eq 'APPROVED' ? 'bg-success' : 'bg-danger')}">
+                                    <span class="academic-status-badge status-${item.status.toLowerCase()}">
                                         <c:out value="${item.status}" />
                                     </span>
-                                </div>
-                                <div class="row g-2 mb-2">
-                                    <div class="col-sm-6">
-                                        <div class="p-2 bg-white rounded border small">
-                                            <strong>Current:</strong>
+                                </header>
+
+                                <div class="academic-info-grid">
+                                    <div class="academic-info-box current-info">
+                                        <span class="box-label">Current Academic Info</span>
+                                        <div class="box-values">
                                             <c:choose>
-                                                <c:when test="${empty item.oldSemester and empty item.oldSection}">Not assigned</c:when>
-                                                <c:otherwise>Semester <c:out value="${item.oldSemester}" /> / Section <c:out value="${item.oldSection}" /></c:otherwise>
+                                                <c:when test="${empty item.oldSemester and empty item.oldSection}">
+                                                    <span class="text-secondary">Not assigned</span>
+                                                </c:when>
+                                                <c:otherwise>
+                                                    <div>Semester: <span><c:out value="${empty item.oldSemester ? 'Not assigned' : item.oldSemester}" /></span></div>
+                                                    <div>Section: <span><c:out value="${empty item.oldSection ? 'Not assigned' : item.oldSection}" /></span></div>
+                                                </c:otherwise>
                                             </c:choose>
                                         </div>
                                     </div>
-                                    <div class="col-sm-6">
-                                        <div class="p-2 bg-white rounded border small text-primary">
-                                            <strong>Requested:</strong> Semester <c:out value="${item.requestedSemester}" /> / Section <c:out value="${item.requestedSection}" />
+                                    <div class="academic-info-box requested-info">
+                                        <span class="box-label">Requested Academic Info</span>
+                                        <div class="box-values">
+                                            <div>Semester: <span><c:out value="${item.requestedSemester}" /></span></div>
+                                            <div>Section: <span><c:out value="${item.requestedSection}" /></span></div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="p-2 bg-white rounded border small mb-2">
-                                    <strong>Reason:</strong> <c:out value="${item.reason}" />
+
+                                <div class="academic-reason-box">
+                                    <span class="reason-label">Reason</span>
+                                    <p><c:out value="${item.reason}" /></p>
                                 </div>
+
                                 <c:if test="${not empty item.adminNote}">
-                                    <div class="p-2 bg-white rounded border small mb-2 text-muted">
+                                    <div class="academic-admin-note-box">
                                         <strong>Admin note:</strong> <c:out value="${item.adminNote}" />
-                                        <c:if test="${not empty item.reviewedLabel}"><span class="ms-2">· Reviewed on <c:out value="${item.reviewedLabel}" /></span></c:if>
+                                        <c:if test="${not empty item.reviewedLabel}">
+                                            <span class="text-muted ms-2">· Reviewed: <c:out value="${item.reviewedLabel}" /></span>
+                                        </c:if>
                                     </div>
                                 </c:if>
+
+                                <div class="academic-footer-meta">
+                                    <span>Submitted: <c:out value="${item.createdLabel}" /></span>
+                                </div>
+
                                 <c:if test="${item.status eq 'PENDING'}">
-                                    <form method="post" action="${pageContext.request.contextPath}/admin/academic-changes" class="mt-2 d-flex flex-wrap gap-2 align-items-center">
-                                        <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
-                                        <input type="hidden" name="id" value="${item.requestId}">
-                                        <input class="form-control form-control-sm" style="max-width:300px" name="adminNote" maxlength="1000" placeholder="Optional admin note">
-                                        <button class="btn btn-success btn-sm" type="submit" name="decision" value="approve">Approve</button>
-                                        <button class="btn btn-outline-danger btn-sm" type="submit" name="decision" value="reject">Reject</button>
-                                    </form>
+                                    <div class="academic-actions-bar">
+                                        <form method="post" action="${pageContext.request.contextPath}/admin/academic-changes" class="academic-actions-form">
+                                            <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
+                                            <input type="hidden" name="id" value="${item.requestId}">
+                                            <input class="form-control" name="adminNote" maxlength="1000" placeholder="Optional admin note">
+                                            <button class="btn btn-academic-approve" type="submit" name="decision" value="approve">Approve</button>
+                                            <button class="btn btn-academic-reject" type="submit" name="decision" value="reject">Reject</button>
+                                        </form>
+                                    </div>
                                 </c:if>
                             </article>
                         </c:forEach>
