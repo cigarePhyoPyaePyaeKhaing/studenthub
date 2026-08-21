@@ -195,14 +195,17 @@
                                                 <summary class="btn btn-outline-primary btn-sm">Request Academic Info Change</summary>
                                                 <form method="post" action="${pageContext.request.contextPath}/profile/academic-change" class="profile-form mt-3">
                                                     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
-                                                    <div class="row g-2 mb-3">
-                                                        <div class="col-sm-6">
-                                                            <label class="form-label text-muted small">Current semester</label>
-                                                            <input class="form-control" type="text" value="Semester <c:out value='${profile.semester}' />" disabled readonly>
-                                                        </div>
-                                                        <div class="col-sm-6">
-                                                            <label class="form-label text-muted small">Current section</label>
-                                                            <input class="form-control" type="text" value="<c:out value='${profile.sectionName}' />" disabled readonly>
+                                                    <div class="student-current-academic-card">
+                                                        <span class="card-heading-label">Current academic information</span>
+                                                        <div class="student-current-academic-grid">
+                                                            <div class="student-current-academic-item">
+                                                                <span class="item-label">Current semester</span>
+                                                                <span class="item-value">Semester <c:out value="${profile.semester}" /></span>
+                                                            </div>
+                                                            <div class="student-current-academic-item">
+                                                                <span class="item-label">Current section</span>
+                                                                <span class="item-value"><c:out value="${profile.sectionName}" /></span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                     <div class="mb-3">
