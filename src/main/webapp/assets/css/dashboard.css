@@ -83,3 +83,4 @@
 [data-theme="dark"] .post-deadline-box.upcoming .post-deadline-badge{color:#34d399;background:rgba(16,185,129,.25);border-color:rgba(16,185,129,.45)}
 .post-deadline-box.expired .post-deadline-badge{color:#b91c1c;background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.35)}
 [data-theme="dark"] .post-deadline-box.expired .post-deadline-badge{color:#f87171;background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.45)}
+.sidebar-theme{display:flex;min-height:42px;align-items:center}.sidebar-theme-toggle{display:grid!important;width:42px!important;height:42px!important;padding:0!important;place-items:center;border:1px solid var(--border-glass)!important;border-radius:14px!important;color:var(--text-primary)!important;background:var(--surface-glass-strong)!important;box-shadow:var(--shadow-sm)!important}.sidebar-theme-toggle svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
