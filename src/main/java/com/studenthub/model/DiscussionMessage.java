@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public record DiscussionMessage(long messageId, long senderId, String authorName,
                                 String authorRole, Integer authorSemester, String authorSection,
-                                String message, LocalDateTime createdAt, String authorAvatarUrl) {
+                                String message, LocalDateTime createdAt, String authorAvatarUrl, Attachment attachment) {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, h:mm a");
 
     public long getMessageId() { return messageId; }
@@ -20,11 +20,13 @@ public record DiscussionMessage(long messageId, long senderId, String authorName
 
     public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
                              String message, LocalDateTime createdAt) {
-        this(messageId, senderId, authorName, authorRole, null, null, message, createdAt, null);
+        this(messageId, senderId, authorName, authorRole, null, null, message, createdAt, null, null);
     }
 
     public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
                              Integer authorSemester, String authorSection, String message, LocalDateTime createdAt) {
-        this(messageId, senderId, authorName, authorRole, authorSemester, authorSection, message, createdAt, null);
+        this(messageId, senderId, authorName, authorRole, authorSemester, authorSection, message, createdAt, null, null);
     }
+    public DiscussionMessage(long messageId,long senderId,String authorName,String authorRole,Integer authorSemester,String authorSection,String message,LocalDateTime createdAt,String authorAvatarUrl){this(messageId,senderId,authorName,authorRole,authorSemester,authorSection,message,createdAt,authorAvatarUrl,null);}
+    public DiscussionMessage withAttachment(Attachment value){return new DiscussionMessage(messageId,senderId,authorName,authorRole,authorSemester,authorSection,message,createdAt,authorAvatarUrl,value);} public Attachment getAttachment(){return attachment;}
 }

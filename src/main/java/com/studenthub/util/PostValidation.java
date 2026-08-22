@@ -48,11 +48,15 @@ public final class PostValidation {
 
     public static String validate(String title, String content, Long categoryId, String categoryName,
                                   String visibility, String deadlineDateInput) {
+        return validate(title, content, categoryId, categoryName, visibility, deadlineDateInput, false);
+    }
+    public static String validate(String title, String content, Long categoryId, String categoryName,
+                                  String visibility, String deadlineDateInput, boolean hasAttachment) {
         if (title == null || title.isBlank() || title.length() > 200) {
             return "Title is required and cannot exceed 200 characters.";
         }
-        if (content == null || content.isBlank() || content.length() > 10_000) {
-            return "Content is required and cannot exceed 10,000 characters.";
+        if ((content == null || content.isBlank()) && !hasAttachment || content != null && content.length() > 10_000) {
+            return "Content or an attachment is required, and content cannot exceed 10,000 characters.";
         }
         if (categoryId == null || categoryId <= 0) return "Select a valid category.";
         if (!Set.of("ALL", "SEMESTER", "SECTION").contains(visibility)) {

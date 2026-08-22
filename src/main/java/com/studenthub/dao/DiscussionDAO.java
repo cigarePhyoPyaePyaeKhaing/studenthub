@@ -34,10 +34,12 @@ public class DiscussionDAO {
         StringBuilder sql = new StringBuilder("""
                 SELECT m.message_id, m.sender_id, m.message, m.created_at,
                        u.full_name, u.role, u.semester AS author_semester,
-                       u.section_name AS author_section, u.profile_image AS author_avatar
+                       u.section_name AS author_section, u.profile_image AS author_avatar,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size
                 FROM messages m
                 JOIN chat_rooms r ON r.room_id = m.room_id
                 JOIN users u ON u.user_id = m.sender_id
+                LEFT JOIN attachments a ON a.message_id=m.message_id
                 WHERE r.room_type = ?
                 """);
         if (target.scope() == DiscussionScope.SEMESTER || target.scope() == DiscussionScope.CR_SEMESTER) sql.append(" AND r.semester = ? AND r.section_name IS NULL");
@@ -60,13 +62,14 @@ public class DiscussionDAO {
                             results.getString("role"), nullableInteger(results, "author_semester"),
                             results.getString("author_section"), results.getString("message"),
                             results.getTimestamp("created_at").toLocalDateTime(),
-                            results.getString("author_avatar")));
+                            results.getString("author_avatar"),mapAttachment(results)));
                 }
             }
         }
         Collections.reverse(messages);
         return messages;
     }
+    private com.studenthub.model.Attachment mapAttachment(ResultSet r)throws SQLException{long id=r.getLong("attachment_id");if(r.wasNull())return null;return new com.studenthub.model.Attachment(id,null,null,r.getLong("message_id"),r.getString("original_filename"),r.getString("storage_key"),r.getString("mime_type"),r.getLong("file_size"));}
 
     public long insert(Connection connection, DiscussionTarget target, String message) throws SQLException {
         long roomId = findOrCreateRoom(connection, target);

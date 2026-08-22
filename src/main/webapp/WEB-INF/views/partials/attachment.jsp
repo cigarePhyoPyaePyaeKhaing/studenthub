@@ -1,0 +1,4 @@
+<%@ page contentType="text/html;charset=UTF-8" %><%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<c:if test="${not empty attachment}"><c:url var="attachmentUrl" value="/attachments/${attachment.attachmentId}"/><div class="content-attachment">
+<c:choose><c:when test="${attachment.image}"><a href="${attachmentUrl}" target="_blank" rel="noopener"><img src="${attachmentUrl}" alt="<c:out value='${attachment.originalFilename}'/>" loading="lazy"></a></c:when><c:when test="${attachment.video}"><video controls preload="metadata"><source src="${attachmentUrl}" type="<c:out value='${attachment.mimeType}'/>">Your browser cannot play this video.</video></c:when><c:otherwise><a class="file-attachment" href="${attachmentUrl}"><span aria-hidden="true">📎</span><span><strong><c:out value="${attachment.originalFilename}"/></strong><small><c:out value="${attachment.sizeLabel}"/></small></span><span>Download</span></a></c:otherwise></c:choose>
+</div></c:if>

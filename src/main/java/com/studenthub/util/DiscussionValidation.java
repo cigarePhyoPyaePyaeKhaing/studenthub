@@ -6,7 +6,10 @@ public final class DiscussionValidation {
     private DiscussionValidation() {}
 
     public static String validate(String message) {
-        if (message == null || message.trim().isEmpty()) return "Enter a message before sending.";
+        return validate(message, false);
+    }
+    public static String validate(String message, boolean hasAttachment) {
+        if ((message == null || message.trim().isEmpty()) && !hasAttachment) return "Enter a message or choose an attachment before sending.";
         if (message.trim().length() > MAX_MESSAGE_LENGTH) {
             return "Messages must be " + MAX_MESSAGE_LENGTH + " characters or fewer.";
         }

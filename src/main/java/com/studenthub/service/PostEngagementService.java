@@ -5,6 +5,7 @@ import com.studenthub.dao.PostEngagementDAO;
 import com.studenthub.dao.NotificationDAO;
 import com.studenthub.model.Post;
 import com.studenthub.model.PostComment;
+import com.studenthub.dao.AttachmentDAO;
 import com.studenthub.util.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -46,7 +47,10 @@ public class PostEngagementService {
     }
 
     public OperationResult addComment(long authenticatedUserId, long postId, String rawContent) throws SQLException {
-        String error = CommentValidation.validate(rawContent);
+        return addComment(authenticatedUserId,postId,rawContent,null);
+    }
+    public OperationResult addComment(long authenticatedUserId,long postId,String rawContent,AttachmentUpload attachment)throws SQLException{
+        String error = CommentValidation.validate(rawContent,attachment!=null);
         if (error != null) return new OperationResult(false, error, postId);
         if (postDAO.findVisibleById(postId, authenticatedUserId).isEmpty()) {
             return new OperationResult(false, "NOT_FOUND", postId);
@@ -56,6 +60,7 @@ public class PostEngagementService {
         try(Connection connection=DBConnection.getConnection()){connection.setAutoCommit(false);try{
             id=engagementDAO.addComment(connection,postId,authenticatedUserId,CommentValidation.normalize(rawContent));
             if(id<=0)throw new SQLException("Comment identifier was unavailable after insertion.");
+            if(attachment!=null)new AttachmentDAO().insert(connection,"COMMENT",id,attachment);
             if(post.authorId()!=authenticatedUserId)notificationDAO.createForPost(connection,postId,authenticatedUserId,"COMMENT",
                     post.title(),"A new comment was added to your announcement.","/posts/comments?postId="+postId,post.authorId());
             connection.commit();}catch(SQLException e){connection.rollback();throw e;}finally{connection.setAutoCommit(true);}}
@@ -75,8 +80,8 @@ public class PostEngagementService {
                 && postDAO.findVisibleById(comment.postId(), authenticatedUserId).isEmpty()) {
             return new OperationResult(false, "FORBIDDEN", comment.postId());
         }
-        return engagementDAO.deleteComment(commentId) == 1
-                ? new OperationResult(true, "Comment deleted.", comment.postId())
-                : new OperationResult(false, "NOT_FOUND", comment.postId());
+        String attachmentKey=new AttachmentDAO().findStorageKey("COMMENT",commentId);
+        if(engagementDAO.deleteComment(commentId)==1){if(attachmentKey!=null)new AttachmentStorage().delete(attachmentKey);return new OperationResult(true,"Comment deleted.",comment.postId());}
+        return new OperationResult(false,"NOT_FOUND",comment.postId());
     }
 }

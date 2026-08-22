@@ -22,6 +22,7 @@ public class PostDAO {
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -31,6 +32,7 @@ public class PostDAO {
                 JOIN users author ON author.user_id = p.user_id
                 JOIN users viewer ON viewer.user_id = ?
                 LEFT JOIN categories c ON c.category_id = p.category_id
+                LEFT JOIN attachments a ON a.post_id=p.post_id
                 WHERE (p.visibility = 'ALL'
                        OR (p.visibility = 'SEMESTER' AND author.semester = viewer.semester)
                        OR (p.visibility = 'SECTION' AND author.semester = viewer.semester
@@ -66,6 +68,7 @@ public class PostDAO {
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -75,6 +78,7 @@ public class PostDAO {
                 JOIN users author ON author.user_id = p.user_id
                 JOIN users viewer ON viewer.user_id = ?
                 LEFT JOIN categories c ON c.category_id = p.category_id
+                LEFT JOIN attachments a ON a.post_id=p.post_id
                 WHERE p.deadline_date IS NOT NULL
                   AND p.deadline_date >= CURRENT_TIMESTAMP
                   AND (p.visibility = 'ALL'
@@ -104,6 +108,7 @@ public class PostDAO {
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -113,6 +118,7 @@ public class PostDAO {
                 JOIN users author ON author.user_id = p.user_id
                 JOIN users viewer ON viewer.user_id = ?
                 LEFT JOIN categories c ON c.category_id = p.category_id
+                LEFT JOIN attachments a ON a.post_id=p.post_id
                 WHERE p.deadline_date IS NOT NULL
                   AND p.deadline_date < CURRENT_TIMESTAMP
                   AND (p.visibility = 'ALL'
@@ -172,11 +178,13 @@ public class PostDAO {
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar, c.category_name,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        FALSE AS current_user_reacted
                 FROM posts p JOIN users author ON author.user_id=p.user_id
-                LEFT JOIN categories c ON c.category_id=p.category_id WHERE p.post_id=?
+                LEFT JOIN categories c ON c.category_id=p.category_id
+                LEFT JOIN attachments a ON a.post_id=p.post_id WHERE p.post_id=?
                 """;
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -192,6 +200,7 @@ public class PostDAO {
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar, c.category_name,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.post_id
@@ -200,6 +209,7 @@ public class PostDAO {
                 JOIN users author ON author.user_id=p.user_id
                 JOIN users viewer ON viewer.user_id=?
                 LEFT JOIN categories c ON c.category_id=p.category_id
+                LEFT JOIN attachments a ON a.post_id=p.post_id
                 WHERE p.post_id=? AND (p.visibility='ALL'
                     OR (p.visibility='SEMESTER' AND author.semester=viewer.semester)
                     OR (p.visibility='SECTION' AND author.semester=viewer.semester
@@ -272,6 +282,7 @@ public class PostDAO {
                 result.getString("image_url"), result.getString("visibility"),
                 created == null ? null : created.toLocalDateTime(), result.getLong("reaction_count"),
                 result.getLong("comment_count"), result.getBoolean("current_user_reacted"),
-                deadlineTs == null ? null : deadlineTs.toLocalDateTime(), result.getString("author_avatar"));
+                deadlineTs == null ? null : deadlineTs.toLocalDateTime(), result.getString("author_avatar"),mapAttachment(result));
     }
+    private com.studenthub.model.Attachment mapAttachment(ResultSet r)throws SQLException{long id=r.getLong("attachment_id");if(r.wasNull())return null;return new com.studenthub.model.Attachment(id,r.getLong("post_id"),null,null,r.getString("original_filename"),r.getString("storage_key"),r.getString("mime_type"),r.getLong("file_size"));}
 }

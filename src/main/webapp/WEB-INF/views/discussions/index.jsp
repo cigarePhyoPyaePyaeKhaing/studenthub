@@ -34,7 +34,7 @@
         <section class="chat-panel" aria-live="polite">
             <c:choose>
                 <c:when test="${empty room}"><div class="chat-empty"><p>Discussions are temporarily unavailable.</p></div></c:when>
-                <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p></div></c:when>
+                <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p><a class="btn btn-primary" href="${pageContext.request.contextPath}/profile?edit=true">Complete profile</a></div></c:when>
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
                 <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><div class="message-row ${isOwn ? 'outgoing' : 'incoming'}">
                     <a class="profile-identity-link message-avatar-link" href="${pageContext.request.contextPath}/profile?userId=${chatMessage.senderId}"><div class="avatar"><c:choose><c:when test="${not empty chatMessage.authorAvatarUrl}"><c:url var="messageAvatarUrl" value="/profile/photo/${chatMessage.authorAvatarUrl}"/><img src="${messageAvatarUrl}" alt=""></c:when><c:otherwise><c:out value="${chatMessage.authorName.substring(0,1)}"/></c:otherwise></c:choose></div></a>
@@ -51,6 +51,7 @@
                             <time><c:out value="${chatMessage.createdLabel}" /></time>
                         </header>
                         <p><c:out value="${chatMessage.message}" /></p>
+                        <c:set var="attachment" value="${chatMessage.attachment}" scope="request"/><jsp:include page="../partials/attachment.jsp"/>
                         <c:if test="${sessionScope.role eq 'ADMIN' or isOwn}">
                             <form method="post" action="${pageContext.request.contextPath}/discussions/messages/delete" onsubmit="return confirm('Delete this message?');">
                                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
@@ -62,7 +63,7 @@
                     </div>
                 </div></c:forEach></div></c:otherwise>
             </c:choose>
-            <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" required placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
+            <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="attachment-button" title="Attach a file">📎<input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"></label><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
         </section>
     </main>
 </div>

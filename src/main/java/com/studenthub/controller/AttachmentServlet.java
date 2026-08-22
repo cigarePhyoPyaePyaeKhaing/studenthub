@@ -1,0 +1,8 @@
+package com.studenthub.controller;
+import com.studenthub.dao.AttachmentDAO;import com.studenthub.model.Attachment;import com.studenthub.util.*;import jakarta.servlet.annotation.WebServlet;import jakarta.servlet.http.*;import java.io.*;import java.nio.file.*;
+@WebServlet(name="AttachmentServlet",urlPatterns="/attachments/*")
+public class AttachmentServlet extends HttpServlet{
+ private final AttachmentDAO dao=new AttachmentDAO(); private final AttachmentStorage storage=new AttachmentStorage();
+ @Override protected void doGet(HttpServletRequest req,HttpServletResponse res)throws IOException{HttpSession session=req.getSession(false);if(!Authorization.isAuthenticated(session)){res.sendRedirect(req.getContextPath()+"/login");return;}Long id=parse(req.getPathInfo());if(id==null){res.sendError(404);return;}try{Attachment a=dao.findById(id).orElse(null);if(a==null||!dao.visibleTo(a,(Long)session.getAttribute("userId"))){res.sendError(404);return;}Path path=storage.find(a.storageKey()).orElse(null);if(path==null){res.sendError(404);return;}res.setContentType(a.mimeType());res.setContentLengthLong(a.fileSize());res.setHeader("X-Content-Type-Options","nosniff");res.setHeader("Content-Disposition",(a.isImage()||a.isVideo()?"inline":"attachment")+"; filename*=UTF-8''"+java.net.URLEncoder.encode(a.originalFilename(),java.nio.charset.StandardCharsets.UTF_8).replace("+","%20"));res.setHeader("Cache-Control","private, max-age=3600");Files.copy(path,res.getOutputStream());}catch(Exception e){getServletContext().log("Attachment delivery failed: "+e.getClass().getName());res.sendError(404);}}
+ private Long parse(String p){try{if(p==null||!p.matches("/\\d+"))return null;long v=Long.parseLong(p.substring(1));return v>0?v:null;}catch(Exception e){return null;}}
+}

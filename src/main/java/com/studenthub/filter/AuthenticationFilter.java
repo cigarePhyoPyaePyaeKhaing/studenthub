@@ -13,6 +13,7 @@ import java.io.IOException;
 import com.studenthub.dao.NotificationDAO;
 import com.studenthub.dao.UserDAO;
 import com.studenthub.util.CsrfToken;
+import com.studenthub.util.NavigationSection;
 import java.sql.SQLException;
 import java.util.Set;
 
@@ -37,6 +38,7 @@ public class AuthenticationFilter implements Filter {
         HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
+        request.setAttribute("activeNav", NavigationSection.resolve(http));
         touchPresence(session, (Long) session.getAttribute("userId"), http);
         if (needsUnreadCount(http.getMethod(), http.getContextPath(), http.getRequestURI())) {
             long userId = (Long) session.getAttribute("userId");

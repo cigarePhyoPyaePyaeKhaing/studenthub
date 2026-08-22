@@ -27,8 +27,10 @@ public class PostEngagementDAO {
     public List<PostComment> findComments(long postId, int limit) throws SQLException {
         String sql = """
                 SELECT cm.comment_id,cm.post_id,cm.user_id,cm.content,cm.created_at,
-                       author.full_name,author.role,author.profile_image
+                       author.full_name,author.role,author.profile_image,
+                       a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size
                 FROM comments cm JOIN users author ON author.user_id=cm.user_id
+                LEFT JOIN attachments a ON a.comment_id=cm.comment_id
                 WHERE cm.post_id=? ORDER BY cm.created_at ASC,cm.comment_id ASC LIMIT ?
                 """;
         List<PostComment> comments = new ArrayList<>();
@@ -40,11 +42,12 @@ public class PostEngagementDAO {
                         result.getLong("post_id"), result.getLong("user_id"),
                         result.getString("full_name"), Role.valueOf(result.getString("role")),
                         result.getString("content"), result.getTimestamp("created_at").toLocalDateTime(),
-                        result.getString("profile_image")));
+                        result.getString("profile_image"),mapAttachment(result)));
             }
         }
         return comments;
     }
+    private com.studenthub.model.Attachment mapAttachment(ResultSet r)throws SQLException{long id=r.getLong("attachment_id");if(r.wasNull())return null;return new com.studenthub.model.Attachment(id,null,r.getLong("comment_id"),null,r.getString("original_filename"),r.getString("storage_key"),r.getString("mime_type"),r.getLong("file_size"));}
 
     public long addComment(long postId, long authenticatedUserId, String content) throws SQLException {
         try (Connection connection = DBConnection.getConnection()) { return addComment(connection,postId,authenticatedUserId,content); }

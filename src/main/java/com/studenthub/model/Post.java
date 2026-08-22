@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 public record Post(long postId, long authorId, Long categoryId, String authorName, Role authorRole, String categoryName,
                    String title, String content, String imageUrl, String visibility,
                    LocalDateTime createdAt, long reactionCount, long commentCount,
-                   boolean reactedByCurrentUser, LocalDateTime deadlineDate, String authorAvatarUrl) {
+                   boolean reactedByCurrentUser, LocalDateTime deadlineDate, String authorAvatarUrl, Attachment attachment) {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a");
     private static final DateTimeFormatter DISPLAY_DUE = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a");
     private static final DateTimeFormatter INPUT_DUE = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
@@ -18,15 +18,17 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
                 boolean reactedByCurrentUser) {
         this(postId, authorId, categoryId, authorName, authorRole, categoryName,
                 title, content, imageUrl, visibility, createdAt, reactionCount, commentCount,
-                reactedByCurrentUser, null, null);
+                reactedByCurrentUser, null, null, null);
     }
 
     public Post(long postId, long authorId, Long categoryId, String authorName, Role authorRole, String categoryName,
                 String title, String content, String imageUrl, String visibility, LocalDateTime createdAt,
                 long reactionCount, long commentCount, boolean reactedByCurrentUser, LocalDateTime deadlineDate) {
         this(postId, authorId, categoryId, authorName, authorRole, categoryName, title, content, imageUrl,
-                visibility, createdAt, reactionCount, commentCount, reactedByCurrentUser, deadlineDate, null);
+                visibility, createdAt, reactionCount, commentCount, reactedByCurrentUser, deadlineDate, null, null);
     }
+    public Post(long postId,long authorId,Long categoryId,String authorName,Role authorRole,String categoryName,String title,String content,String imageUrl,String visibility,LocalDateTime createdAt,long reactionCount,long commentCount,boolean reactedByCurrentUser,LocalDateTime deadlineDate,String authorAvatarUrl){this(postId,authorId,categoryId,authorName,authorRole,categoryName,title,content,imageUrl,visibility,createdAt,reactionCount,commentCount,reactedByCurrentUser,deadlineDate,authorAvatarUrl,null);}
+    public Post withAttachment(Attachment value){return new Post(postId,authorId,categoryId,authorName,authorRole,categoryName,title,content,imageUrl,visibility,createdAt,reactionCount,commentCount,reactedByCurrentUser,deadlineDate,authorAvatarUrl,value);}
 
     public String getCreatedLabel() {
         return createdAt == null ? "" : createdAt.format(DISPLAY_TIME);
@@ -90,6 +92,7 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
     public String getAuthorName() { return authorName; }
     public Role getAuthorRole() { return authorRole; }
     public String getAuthorAvatarUrl() { return authorAvatarUrl; }
+    public Attachment getAttachment(){return attachment;}
     public String getCategoryName() { return categoryName; }
     public String getTitle() { return title; }
     public String getContent() { return content; }

@@ -14,13 +14,8 @@ public final class DiscussionAccess {
 
     public static String denialReason(DiscussionScope scope, Integer semester, String sectionName) {
         if (scope == DiscussionScope.ALL || scope == DiscussionScope.CR_ALL) return null;
-        if (semester == null) {
-            return scope == DiscussionScope.SECTION
-                    ? "Your account needs semester and section information to use Section Chat."
-                    : "Your account needs semester information to use this semester room.";
-        }
-        if (scope == DiscussionScope.SECTION && (sectionName == null || sectionName.isBlank())) {
-            return "Your account needs semester and section information to use Section Chat.";
+        if (semester == null || sectionName == null || sectionName.isBlank()) {
+            return "Complete your semester and section information in your profile to join your academic discussion groups.";
         }
         return null;
     }

@@ -8,6 +8,7 @@ import com.studenthub.util.*;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
+import com.studenthub.dao.AttachmentDAO;
 
 public class DiscussionService {
     public record RoomView(DiscussionScope scope, Integer semester, String sectionName, boolean crRoomsVisible,
@@ -46,8 +47,11 @@ public class DiscussionService {
     }
 
     public OperationResult send(long userId, String requestedScope, String rawMessage) throws SQLException {
+        return send(userId,requestedScope,rawMessage,null);
+    }
+    public OperationResult send(long userId,String requestedScope,String rawMessage,AttachmentUpload attachment)throws SQLException{
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
-        String validation = DiscussionValidation.validate(rawMessage);
+        String validation = DiscussionValidation.validate(rawMessage,attachment!=null);
         if (validation != null) return new OperationResult(false, validation);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
@@ -60,6 +64,7 @@ public class DiscussionService {
             try {
                 long id = dao.insert(connection, target, DiscussionValidation.normalize(rawMessage));
                 if (id <= 0) throw new SQLException("Message identifier was unavailable after insertion.");
+                if(attachment!=null)new AttachmentDAO().insert(connection,"MESSAGE",id,attachment);
                 connection.commit();
                 return new OperationResult(true, "Message sent.");
             } catch (SQLException exception) {
@@ -84,8 +89,8 @@ public class DiscussionService {
             if (!DiscussionAccess.matches(message.scope(), profile.semester(), profile.sectionName(),
                     message.semester(), message.sectionName())) return new OperationResult(false, "FORBIDDEN");
         }
-        return dao.delete(messageId) == 1
-                ? new OperationResult(true, "Message deleted.")
-                : new OperationResult(false, "NOT_FOUND");
+        String attachmentKey=new AttachmentDAO().findStorageKey("MESSAGE",messageId);
+        if(dao.delete(messageId)==1){if(attachmentKey!=null)new AttachmentStorage().delete(attachmentKey);return new OperationResult(true,"Message deleted.");}
+        return new OperationResult(false,"NOT_FOUND");
     }
 }

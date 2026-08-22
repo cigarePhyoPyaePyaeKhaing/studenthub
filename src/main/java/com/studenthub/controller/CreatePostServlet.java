@@ -6,6 +6,7 @@ import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "CreatePostServlet", urlPatterns = "/posts/create")
+@MultipartConfig(maxFileSize=20971520L,maxRequestSize=22000000L)
 public class CreatePostServlet extends HttpServlet {
     private final PostService postService = new PostService();
     private final CategoryDAO categoryDAO = new CategoryDAO();
@@ -35,19 +37,23 @@ public class CreatePostServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         if (!requireManager(request, response)) return;
         if (!CsrfToken.isValid(request)) { response.sendError(403); return; }
+        com.studenthub.util.AttachmentRequest.Result attachment=com.studenthub.util.AttachmentRequest.read(request.getPart("attachment"));
+        if(!attachment.valid()){request.setAttribute("error",attachment.error());doGet(request,response);return;}
         try {
             PostService.OperationResult result = postService.create((Long) request.getSession().getAttribute("userId"),
                     request.getSession().getAttribute("role"), request.getParameter("title"),
                     request.getParameter("content"), parseCategory(request.getParameter("categoryId")),
-                    request.getParameter("visibility"), request.getParameter("deadlineDate"));
+                    request.getParameter("visibility"), request.getParameter("deadlineDate"),attachment.upload());
             if ("FORBIDDEN".equals(result.message())) { response.sendError(403); return; }
             if (result.successful()) {
                 request.getSession().setAttribute("flash", result.message());
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;
             }
+            com.studenthub.util.AttachmentRequest.discard(attachment.upload());
             request.setAttribute("error", result.message());
         } catch (SQLException exception) {
+            com.studenthub.util.AttachmentRequest.discard(attachment.upload());
             getServletContext().log("Create-post database failure: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode());
             request.setAttribute("error", "The post could not be published right now.");
