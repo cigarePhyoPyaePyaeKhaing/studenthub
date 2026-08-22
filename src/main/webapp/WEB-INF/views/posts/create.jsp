@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %><%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Create post | StudentHub</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"><script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-2" rel="stylesheet"></head>
 <body class="auth-page"><main class="container py-5"><div class="auth-card create-post-card card border-0 shadow-lg mx-auto"><div class="card-body p-4 p-md-5"><a href="${pageContext.request.contextPath}/home" class="text-decoration-none">← Back to home</a><h1 class="h2 mt-3">Create an announcement</h1><p class="text-secondary">Share an official update with StudentHub students.</p><c:if test="${not empty error}"><div class="alert alert-danger"><c:out value="${error}" /></div></c:if>
-<form method="post" action="${pageContext.request.contextPath}/posts/create" enctype="multipart/form-data">
+<form method="post" action="${pageContext.request.contextPath}/posts/create">
     <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
     <div class="mb-3">
         <label class="form-label" for="categoryId">Category</label>
@@ -32,7 +32,6 @@
         <label class="form-label" for="content">Content</label>
         <textarea class="form-control" id="content" name="content" rows="8" maxlength="10000" required></textarea>
     </div>
-    <div class="mb-4"><label class="form-label" for="attachment">Attachment <span class="text-secondary">(optional)</span></label><input class="form-control" type="file" id="attachment" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"><div class="form-text">One photo, video, or document. Images 5 MB, documents 10 MB, videos 25 MB.</div></div>
     <button class="btn btn-primary" type="submit">Publish announcement</button>
 </form>
 </div></div></main>

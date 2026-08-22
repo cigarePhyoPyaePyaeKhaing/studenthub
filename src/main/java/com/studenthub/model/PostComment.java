@@ -12,5 +12,5 @@ public record PostComment(long commentId, long postId, long authorId, String aut
     public String getAuthorName() { return authorName; }
     public Role getAuthorRole() { return authorRole; }
     public String getContent() { return content; }
-    public String getCreatedLabel() { return com.studenthub.util.MyanmarTime.formatUtc(createdAt, "MMM d, yyyy · h:mm a"); }
+    public String getCreatedLabel() { return createdAt == null ? "" : createdAt.format(DISPLAY_TIME); }
 }

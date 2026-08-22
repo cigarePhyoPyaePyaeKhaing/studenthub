@@ -7,7 +7,7 @@ import java.time.format.DateTimeFormatter;
 public record Post(long postId, long authorId, Long categoryId, String authorName, Role authorRole, String categoryName,
                    String title, String content, String imageUrl, String visibility,
                    LocalDateTime createdAt, long reactionCount, long commentCount,
-                   boolean reactedByCurrentUser, LocalDateTime deadlineDate, Attachment attachment) {
+                   boolean reactedByCurrentUser, LocalDateTime deadlineDate) {
     private static final DateTimeFormatter DISPLAY_TIME = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a");
     private static final DateTimeFormatter DISPLAY_DUE = DateTimeFormatter.ofPattern("MMM d, yyyy · h:mm a");
     private static final DateTimeFormatter INPUT_DUE = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
@@ -18,21 +18,14 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
                 boolean reactedByCurrentUser) {
         this(postId, authorId, categoryId, authorName, authorRole, categoryName,
                 title, content, imageUrl, visibility, createdAt, reactionCount, commentCount,
-                reactedByCurrentUser, null, null);
-    }
-
-    public Post(long postId, long authorId, Long categoryId, String authorName, Role authorRole, String categoryName,
-                String title, String content, String imageUrl, String visibility, LocalDateTime createdAt,
-                long reactionCount, long commentCount, boolean reactedByCurrentUser, LocalDateTime deadlineDate) {
-        this(postId, authorId, categoryId, authorName, authorRole, categoryName, title, content, imageUrl,
-                visibility, createdAt, reactionCount, commentCount, reactedByCurrentUser, deadlineDate, null);
+                reactedByCurrentUser, null);
     }
 
     public String getCreatedLabel() {
-        return com.studenthub.util.MyanmarTime.formatUtc(createdAt, "MMM d, yyyy · h:mm a");
+        return createdAt == null ? "" : createdAt.format(DISPLAY_TIME);
     }
     public String getDueLabel() {
-        return com.studenthub.util.MyanmarTime.formatLocal(deadlineDate, "MMM d, yyyy · h:mm a");
+        return deadlineDate == null ? "" : deadlineDate.format(DISPLAY_DUE);
     }
     public String getInputDueDate() {
         return deadlineDate == null ? "" : deadlineDate.format(INPUT_DUE);
@@ -44,17 +37,17 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
         return deadlineDate != null;
     }
     public boolean isExpired() {
-        return deadlineDate != null && deadlineDate.isBefore(com.studenthub.util.MyanmarTime.now());
+        return deadlineDate != null && deadlineDate.isBefore(LocalDateTime.now());
     }
     public String getStatus() {
         if (deadlineDate == null) return "";
         if (isExpired()) return "Expired";
-        return java.time.Duration.between(com.studenthub.util.MyanmarTime.now(), deadlineDate).toHours() <= 48 ? "Due soon" : "Upcoming";
+        return java.time.Duration.between(LocalDateTime.now(), deadlineDate).toHours() <= 48 ? "Due soon" : "Upcoming";
     }
     public String getTimeRemainingLabel() {
         if (deadlineDate == null) return "";
         if (isExpired()) return "Expired";
-        LocalDateTime now = com.studenthub.util.MyanmarTime.now();
+        LocalDateTime now = LocalDateTime.now();
         LocalDate today = now.toLocalDate();
         LocalDate dueDay = deadlineDate.toLocalDate();
         long daysBetween = java.time.temporal.ChronoUnit.DAYS.between(today, dueDay);
@@ -99,5 +92,4 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
     public long getReactionCount() { return reactionCount; }
     public long getCommentCount() { return commentCount; }
     public boolean isReactedByCurrentUser() { return reactedByCurrentUser; }
-    public Attachment getAttachment() { return attachment; }
 }

@@ -32,14 +32,6 @@ public class ProfileService {
         return userDAO.findProfileById(authenticatedUserId);
     }
 
-    public Optional<UserProfile> findVisibleProfile(long targetUserId, long viewerUserId,
-                                                    boolean viewerIsAdmin) throws SQLException {
-        Optional<UserProfile> profile = userDAO.findProfileById(targetUserId);
-        if (profile.isEmpty()) return profile;
-        return targetUserId == viewerUserId || viewerIsAdmin || profile.get().isProfilePublic()
-                ? profile : Optional.empty();
-    }
-
     public List<University> listAvailableUniversities() {
         if (universityDAO == null) {
             return Collections.emptyList();
@@ -104,12 +96,6 @@ public class ProfileService {
 
     public UserProfile updateProfileImage(long authenticatedUserId, String filename) throws SQLException {
         if (userDAO.updateProfileImage(authenticatedUserId, filename) != 1) return null;
-        return userDAO.findProfileById(authenticatedUserId).orElse(null);
-    }
-
-    public UserProfile updateProfileVisibility(long authenticatedUserId, String visibility) throws SQLException {
-        String normalized = "PUBLIC".equalsIgnoreCase(visibility) ? "PUBLIC" : "PRIVATE";
-        if (userDAO.updateProfileVisibility(authenticatedUserId, normalized) != 1) return null;
         return userDAO.findProfileById(authenticatedUserId).orElse(null);
     }
 

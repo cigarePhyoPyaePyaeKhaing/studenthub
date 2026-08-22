@@ -6,7 +6,6 @@
     <title>Discussions | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-3" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/discussion-media.js?v=20260822" defer></script>
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-3" rel="stylesheet">
 </head><body class="dashboard-body">
 <header class="mobile-header d-lg-none">
@@ -52,7 +51,6 @@
                             <time><c:out value="${chatMessage.createdLabel}" /></time>
                         </header>
                         <p><c:out value="${chatMessage.message}" /></p>
-                        <c:if test="${not empty chatMessage.attachment}"><c:url var="attachmentUrl" value="/attachments/${chatMessage.attachment.storedName}"/><div class="message-attachment"><c:choose><c:when test="${chatMessage.attachment.image}"><a href="${attachmentUrl}" target="_blank" rel="noopener"><img src="${attachmentUrl}" alt="${chatMessage.attachment.originalName}" loading="lazy"></a></c:when><c:when test="${chatMessage.attachment.video}"><video controls preload="metadata"><source src="${attachmentUrl}" type="${chatMessage.attachment.mimeType}"></video></c:when><c:when test="${chatMessage.attachment.audio}"><audio controls preload="metadata" src="${attachmentUrl}"></audio></c:when><c:otherwise><a class="attachment-file" href="${attachmentUrl}?download=1"><span>FILE</span><span><strong><c:out value="${chatMessage.attachment.originalName}"/></strong><small><c:out value="${chatMessage.attachment.sizeLabel}"/> · Download</small></span></a></c:otherwise></c:choose></div></c:if>
                         <c:if test="${sessionScope.role eq 'ADMIN' or isOwn}">
                             <form method="post" action="${pageContext.request.contextPath}/discussions/messages/delete" onsubmit="return confirm('Delete this message?');">
                                 <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
@@ -64,7 +62,7 @@
                     </div>
                 </div></c:forEach></div></c:otherwise>
             </c:choose>
-            <c:if test="${not empty room and room.available}"><form class="chat-composer telegram-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages" data-media-composer><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="attachment-trigger" for="discussionAttachment" aria-label="Attach photo, video, or file" title="Attach photo, video, or file">+</label><input class="visually-hidden" id="discussionAttachment" name="attachment" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/webm,audio/mp4,audio/mpeg,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip" data-attachment-input><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Type a message..."></textarea><button class="composer-icon" type="button" data-voice-record aria-label="Record voice message" title="Record voice message">Mic</button><button class="btn btn-primary" type="submit">Send</button><div class="media-preview" data-media-preview hidden></div></form></c:if>
+            <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" required placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
         </section>
     </main>
 </div>

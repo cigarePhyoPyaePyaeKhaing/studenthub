@@ -11,5 +11,5 @@ public record AdminUserSummary(long userId, String studentId, String fullName, S
     public String getFullName() { return fullName; } public String getEmail() { return email; }
     public Role getRole() { return role; } public boolean isEmailVerified() { return emailVerified; }
     public Integer getSemester() { return semester; } public String getSectionName() { return sectionName; }
-    public String getCreatedLabel() { return com.studenthub.util.MyanmarTime.formatUtc(createdAt, "MMM d, yyyy · h:mm a"); }
+    public String getCreatedLabel() { return createdAt == null ? "" : createdAt.format(FORMAT); }
 }

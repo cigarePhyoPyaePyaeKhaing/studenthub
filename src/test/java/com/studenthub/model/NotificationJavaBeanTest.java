@@ -36,7 +36,7 @@ class NotificationJavaBeanTest {
                 () -> assertEquals("Message", item.getMessage()),
                 () -> assertEquals("/posts/comments?postId=9", item.getLinkUrl()),
                 () -> assertTrue(item.isRead()),
-                () -> assertEquals("Aug 16, 2026 · 4:00 AM", item.getCreatedLabel()),
+                () -> assertEquals("Aug 15, 2026 9:30 PM", item.getCreatedLabel()),
                 () -> assertTrue(item.read()),
                 () -> assertEquals(42L, item.notificationId())
         );

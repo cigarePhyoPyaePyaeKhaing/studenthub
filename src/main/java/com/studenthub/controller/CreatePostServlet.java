@@ -6,7 +6,6 @@ import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -14,7 +13,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "CreatePostServlet", urlPatterns = "/posts/create")
-@MultipartConfig(maxFileSize = 26214400L, maxRequestSize = 27262976L)
 public class CreatePostServlet extends HttpServlet {
     private final PostService postService = new PostService();
     private final CategoryDAO categoryDAO = new CategoryDAO();
@@ -37,33 +35,22 @@ public class CreatePostServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         if (!requireManager(request, response)) return;
         if (!CsrfToken.isValid(request)) { response.sendError(403); return; }
-        com.studenthub.util.AttachmentStorage storage = new com.studenthub.util.AttachmentStorage();
-        String stored = null;
         try {
-            java.util.Optional<com.studenthub.util.AttachmentValidator.Upload> upload =
-                    com.studenthub.util.AttachmentValidator.validate(request.getPart("attachment"), false);
-            com.studenthub.model.Attachment attachment = null;
-            if (upload.isPresent()) { stored = storage.save(upload.get()); attachment = upload.get().metadata(stored); }
             PostService.OperationResult result = postService.create((Long) request.getSession().getAttribute("userId"),
                     request.getSession().getAttribute("role"), request.getParameter("title"),
                     request.getParameter("content"), parseCategory(request.getParameter("categoryId")),
-                    request.getParameter("visibility"), request.getParameter("deadlineDate"), attachment);
+                    request.getParameter("visibility"), request.getParameter("deadlineDate"));
             if ("FORBIDDEN".equals(result.message())) { response.sendError(403); return; }
             if (result.successful()) {
                 request.getSession().setAttribute("flash", result.message());
                 response.sendRedirect(request.getContextPath() + "/home");
                 return;
             }
-            if (stored != null) storage.delete(stored);
             request.setAttribute("error", result.message());
         } catch (SQLException exception) {
-            if (stored != null) storage.delete(stored);
             getServletContext().log("Create-post database failure: " + exception.getClass().getName()
                     + ", SQLState=" + exception.getSQLState() + ", code=" + exception.getErrorCode());
             request.setAttribute("error", "The post could not be published right now.");
-        } catch (IOException | ServletException | IllegalStateException exception) {
-            if (stored != null) storage.delete(stored);
-            request.setAttribute("error", exception.getMessage());
         }
         doGet(request, response);
     }
