@@ -38,6 +38,13 @@ class RoleAuthorizationFilterTest {
         assertTrue(AuthenticationFilter.isPublicPath("/reset-password"));
     }
 
+    @Test void allPublicWebsiteRoutesAreExplicitlyPublic() {
+        for (String path : new String[]{"/", "/public-home", "/features", "/how-it-works", "/about"}) {
+            assertTrue(AuthenticationFilter.isPublicPath(path));
+            assertFalse(AuthenticationFilter.isProtectedPath(path));
+        }
+    }
+
     @Test void sensitiveApplicationRoutesAreNotPublic() {
         for (String path : new String[]{"/admin/users", "/profile", "/users", "/academic-requests", "/discussions/messages"}) {
             assertFalse(AuthenticationFilter.isPublicPath(path));

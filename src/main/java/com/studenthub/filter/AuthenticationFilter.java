@@ -18,7 +18,8 @@ import java.util.Set;
 @WebFilter(urlPatterns = "/*")
 public class AuthenticationFilter implements Filter {
     private static final Set<String> PUBLIC_PATHS = Set.of(
-            "/", "/login", "/register", "/verify-email", "/resend-verification",
+            "/", "/public-home", "/features", "/how-it-works", "/about",
+            "/login", "/register", "/verify-email", "/resend-verification",
             "/forgot-password", "/verify-reset-code", "/reset-password", "/health");
     private static final long UNREAD_COUNT_CACHE_TTL_MS = 30000L;
     private final NotificationDAO notificationDAO=new NotificationDAO();
