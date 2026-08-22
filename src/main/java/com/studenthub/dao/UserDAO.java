@@ -106,7 +106,7 @@ public class UserDAO {
     public Optional<UserProfile> findProfileById(Connection connection, long userId) throws SQLException {
         String sqlWithJoin = """
                 SELECT u.user_id, u.student_id, u.full_name, u.email, u.role, u.email_verified,
-                       u.semester, u.section_name, u.university_id,
+                       u.semester, u.section_name, u.profile_image, u.university_id,
                        v.name AS university_name, v.short_name AS university_short_name
                 FROM users u
                 LEFT JOIN universities v ON v.university_id = u.university_id
@@ -141,7 +141,7 @@ public class UserDAO {
                         null,
                         null,
                         null,
-                        null,
+                        results.getString("profile_image"),
                         nullableUnivId,
                         univName,
                         univShort,
@@ -238,6 +238,17 @@ public class UserDAO {
             s.setString(1, fullName);
             s.setLong(2, userId);
             return s.executeUpdate();
+        }
+    }
+
+    public int updateProfileImage(long userId, String filename) throws SQLException {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "UPDATE users SET profile_image=? WHERE user_id=?")) {
+            if (filename == null) statement.setNull(1, java.sql.Types.VARCHAR);
+            else statement.setString(1, filename);
+            statement.setLong(2, userId);
+            return statement.executeUpdate();
         }
     }
 

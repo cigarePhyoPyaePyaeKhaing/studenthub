@@ -7,21 +7,27 @@ import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
 import com.studenthub.util.ProfileAuthorization;
 import com.studenthub.util.ProfileSession;
+import com.studenthub.util.ProfilePhotoStorage;
+import com.studenthub.util.ProfilePhotoValidator;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.MultipartConfig;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.Part;
 
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = "/profile")
+@MultipartConfig(maxFileSize = ProfilePhotoValidator.MAX_BYTES, maxRequestSize = 2300000L)
 public class ProfileServlet extends HttpServlet {
     private final ProfileService profileService;
     private final AcademicChangeDAO academicChangeDAO;
+    private final ProfilePhotoStorage photoStorage = new ProfilePhotoStorage();
 
     public ProfileServlet() {
         this(new ProfileService(), new AcademicChangeDAO());
@@ -104,12 +110,24 @@ public class ProfileServlet extends HttpServlet {
             return;
         }
 
-        if (!ProfileAuthorization.canSubmitUpdate(CsrfToken.isValid(request))) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        try {
+            if (!ProfileAuthorization.canSubmitUpdate(CsrfToken.isValid(request))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
+        } catch (IllegalStateException exception) {
+            request.getSession().setAttribute("flashError", "Choose a JPG, PNG, or WEBP image no larger than 2 MB.");
+            response.sendRedirect(request.getContextPath() + "/profile?edit=true");
             return;
         }
         try {
             long authenticatedUserId = (Long) session.getAttribute("userId");
+            PhotoChange photoChange = readPhotoChange(request);
+            if (!photoChange.valid()) {
+                request.getSession().setAttribute("flashError", photoChange.error());
+                response.sendRedirect(request.getContextPath() + "/profile?edit=true");
+                return;
+            }
             ProfileService.UpdateResult result = profileService.updateOwnProfile(
                     ProfileAuthorization.updateTarget(authenticatedUserId),
                     request.getParameter("fullName"),
@@ -122,7 +140,13 @@ public class ProfileServlet extends HttpServlet {
                 return;
             }
             if (result.successful()) {
-                ProfileSession.refresh(request.getSession(), result.profile());
+                UserProfile updatedProfile = applyPhotoChange(authenticatedUserId, result.profile(), photoChange);
+                if (updatedProfile == null) {
+                    request.getSession().setAttribute("flashError", "Your profile photo could not be updated right now.");
+                    response.sendRedirect(request.getContextPath() + "/profile?edit=true");
+                    return;
+                }
+                ProfileSession.refresh(request.getSession(), updatedProfile);
                 request.getSession().setAttribute("flash", result.message());
                 response.sendRedirect(request.getContextPath() + "/profile");
             } else {
@@ -136,8 +160,54 @@ public class ProfileServlet extends HttpServlet {
                     + ", message=" + exception.getMessage(), exception);
             request.getSession().setAttribute("flashError", "Your profile could not be updated right now.");
             response.sendRedirect(request.getContextPath() + "/profile?edit=true");
+        } catch (IllegalStateException | ServletException exception) {
+            request.getSession().setAttribute("flashError", "Choose a JPG, PNG, or WEBP image no larger than 2 MB.");
+            response.sendRedirect(request.getContextPath() + "/profile?edit=true");
         }
     }
+
+    private PhotoChange readPhotoChange(HttpServletRequest request) throws IOException, ServletException {
+        boolean remove = "true".equals(request.getParameter("removePhoto"));
+        Part part = request.getPart("profilePhoto");
+        if (part == null || part.getSize() == 0) return new PhotoChange(true, remove, null, null, null);
+        if (part.getSize() > ProfilePhotoValidator.MAX_BYTES) {
+            return new PhotoChange(false, false, null, null, "Profile photo must be 2 MB or smaller.");
+        }
+        byte[] content = part.getInputStream().readNBytes((int) ProfilePhotoValidator.MAX_BYTES + 1);
+        Optional<String> extension = ProfilePhotoValidator.validatedExtension(part.getContentType(), content);
+        return extension.map(value -> new PhotoChange(true, false, content, value, null))
+                .orElseGet(() -> new PhotoChange(false, false, null, null,
+                        "Choose a valid JPG, PNG, or WEBP image."));
+    }
+
+    private UserProfile applyPhotoChange(long userId, UserProfile profile, PhotoChange change) throws SQLException {
+        if (change.content() == null && !change.remove()) return profile;
+        String previous = profile.avatarUrl();
+        if (change.remove()) {
+            UserProfile updated = profileService.updateProfileImage(userId, null);
+            if (updated != null) photoStorage.delete(previous);
+            return updated;
+        }
+        String filename = null;
+        try {
+            filename = photoStorage.save(change.content(), change.extension());
+            UserProfile updated = profileService.updateProfileImage(userId, filename);
+            if (updated == null) {
+                photoStorage.delete(filename);
+                return null;
+            }
+            photoStorage.delete(previous);
+            return updated;
+        } catch (IOException exception) {
+            if (filename != null) photoStorage.delete(filename);
+            return null;
+        } catch (SQLException exception) {
+            if (filename != null) photoStorage.delete(filename);
+            throw exception;
+        }
+    }
+
+    private record PhotoChange(boolean valid, boolean remove, byte[] content, String extension, String error) {}
 
     private void logSafe(String message) {
         logSafe(message, null);

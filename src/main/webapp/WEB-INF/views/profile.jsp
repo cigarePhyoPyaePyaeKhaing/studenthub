@@ -8,8 +8,10 @@
     <title>Profile | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script>
+    <script src="${pageContext.request.contextPath}/assets/js/profile-photo.js?v=20260822" defer></script>
     <link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-2" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-2" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=20260822" rel="stylesheet">
 </head>
 <body class="dashboard-body">
 <header class="mobile-header d-lg-none">
@@ -33,8 +35,9 @@
         <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}" /></div></c:if>
         <c:if test="${not empty error}"><div class="alert alert-warning"><c:out value="${error}" /></div></c:if>
         <c:if test="${not empty profile}">
+            <c:if test="${not empty profile.avatarUrl}"><c:url var="profilePhotoUrl" value="/profile/photo/${profile.avatarUrl}" /></c:if>
             <section class="profile-hero">
-                <div class="profile-avatar"><c:out value="${profile.initial}" /></div>
+                <div class="profile-avatar"><c:choose><c:when test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="Profile photo"></c:when><c:otherwise><c:out value="${profile.initial}" /></c:otherwise></c:choose></div>
                 <div>
                     <p class="eyebrow mb-1">My StudentHub account</p>
                     <h1><c:out value="${profile.fullName}" /></h1>
@@ -56,8 +59,15 @@
                                 <h2>Edit profile</h2>
                             </div>
                         </div>
-                        <form method="post" action="${pageContext.request.contextPath}/profile" class="profile-form">
+                        <form method="post" action="${pageContext.request.contextPath}/profile" class="profile-form" enctype="multipart/form-data" data-profile-photo-form>
                             <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
+                            <fieldset class="profile-photo-editor">
+                                <legend>Profile Photo</legend>
+                                <div class="profile-photo-row">
+                                    <div class="profile-photo-preview" data-photo-preview data-fallback="<c:out value='${profile.initial}' />"><c:choose><c:when test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="Current profile photo" data-current-photo></c:when><c:otherwise><span><c:out value="${profile.initial}" /></span></c:otherwise></c:choose></div>
+                                    <div class="profile-photo-controls"><label class="profile-photo-button" for="profilePhoto">Choose Image</label><input class="visually-hidden" type="file" id="profilePhoto" name="profilePhoto" accept="image/jpeg,image/png,image/webp" data-photo-input><p>JPG, PNG, or WEBP · Max 2 MB</p><p class="profile-photo-error" data-photo-error role="alert"></p><c:if test="${not empty profile.avatarUrl}"><label class="remove-photo-control"><input type="checkbox" name="removePhoto" value="true" data-remove-photo> Remove photo</label></c:if></div>
+                                </div>
+                            </fieldset>
                             <div>
                                 <label for="fullName">Full name</label>
                                 <input class="form-control" id="fullName" name="fullName" maxlength="100" value="<c:out value='${profile.fullName}' />" required>

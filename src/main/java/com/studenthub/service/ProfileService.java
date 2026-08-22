@@ -94,6 +94,11 @@ public class ProfileService {
                 : new UpdateResult(true, "Profile updated successfully.", updated);
     }
 
+    public UserProfile updateProfileImage(long authenticatedUserId, String filename) throws SQLException {
+        if (userDAO.updateProfileImage(authenticatedUserId, filename) != 1) return null;
+        return userDAO.findProfileById(authenticatedUserId).orElse(null);
+    }
+
     public UpdateResult updateOwnProfile(long authenticatedUserId, String fullName,
                                          String semester, String section) throws SQLException {
         return updateOwnProfile(authenticatedUserId, fullName, semester, section, null);

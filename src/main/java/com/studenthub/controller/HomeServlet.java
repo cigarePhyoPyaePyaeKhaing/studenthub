@@ -1,6 +1,7 @@
 package com.studenthub.controller;
 
 import com.studenthub.service.DashboardService;
+import com.studenthub.service.ProfileService;
 import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.ServletException;
@@ -16,6 +17,7 @@ import java.util.List;
 @WebServlet(name = "HomeServlet", urlPatterns = "/home")
 public class HomeServlet extends HttpServlet {
     private final DashboardService dashboardService = new DashboardService();
+    private final ProfileService profileService = new ProfileService();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -39,6 +41,11 @@ public class HomeServlet extends HttpServlet {
             request.setAttribute("categories", List.of());
             request.setAttribute("deadlines", List.of());
             request.setAttribute("dashboardError", "Dashboard information is temporarily unavailable.");
+        }
+        try {
+            profileService.findOwnProfile(userId).ifPresent(profile -> request.setAttribute("dashboardProfile", profile));
+        } catch (SQLException exception) {
+            logSafe("Dashboard profile summary unavailable: " + exception.getClass().getName());
         }
         request.setAttribute("selectedCategory", categoryId);
         request.setAttribute("canCreatePost", Authorization.canManagePosts(request.getSession().getAttribute("role")));

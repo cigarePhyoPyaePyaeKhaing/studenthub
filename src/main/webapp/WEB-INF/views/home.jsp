@@ -8,6 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-3" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-3" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=20260822" rel="stylesheet">
 </head>
 <body class="dashboard-body">
 <header class="mobile-header d-lg-none">
@@ -27,7 +28,7 @@
     </main>
     <aside class="dashboard-right">
         <section class="side-card"><div class="side-card-heading"><h2>Upcoming Deadlines</h2><a href="${pageContext.request.contextPath}/announcements">View all</a></div><c:choose><c:when test="${empty deadlines}"><p class="empty-side-text">No upcoming deadlines.</p></c:when><c:otherwise><div class="deadline-list"><c:forEach var="deadline" items="${deadlines}"><div class="deadline-item"><span class="deadline-dot"></span><div><strong><c:out value="${deadline.title}" /></strong><small><c:out value="${deadline.relativeDueLabel}" /></small></div></div></c:forEach></div></c:otherwise></c:choose></section>
-        <section class="side-card account-card"><div class="avatar avatar-large"><c:out value="${sessionScope.fullName.substring(0, 1)}" /></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role"><c:out value="${sessionScope.role}" /></span></section>
+        <section class="side-card account-card"><div class="avatar avatar-large"><c:choose><c:when test="${not empty dashboardProfile.avatarUrl}"><c:url var="dashboardPhotoUrl" value="/profile/photo/${dashboardProfile.avatarUrl}"/><img src="${dashboardPhotoUrl}" alt="Profile photo"></c:when><c:otherwise><c:out value="${sessionScope.fullName.substring(0, 1)}" /></c:otherwise></c:choose></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role"><c:out value="${sessionScope.role}" /></span></section>
     </aside>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
