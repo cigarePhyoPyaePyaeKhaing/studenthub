@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <header class="public-header">
   <div class="public-container public-nav-shell">
-    <a class="public-brand" href="${pageContext.request.contextPath}/" aria-label="StudentHub home"><span class="brand-glyph">S</span><span>StudentHub</span></a>
+    <a class="public-brand" href="${pageContext.request.contextPath}/" aria-label="StudentHub home"><span class="brand-glyph"><span>S</span></span><span>StudentHub</span></a>
     <nav class="public-nav" data-public-nav aria-label="Primary navigation">
       <a class="${publicPage eq 'home' ? 'active' : ''}" href="${pageContext.request.contextPath}/">Home</a>
       <a class="${publicPage eq 'features' ? 'active' : ''}" href="${pageContext.request.contextPath}/features">Features</a>
