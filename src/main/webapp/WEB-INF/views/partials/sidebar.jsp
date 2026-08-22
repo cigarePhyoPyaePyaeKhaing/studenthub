@@ -6,7 +6,6 @@
     <div class="sidebar-links">
         <a class="${currentPath eq pageContext.request.contextPath.concat('/home') ? 'active' : ''}" href="${pageContext.request.contextPath}/home">Home</a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/announcements') ? 'active' : ''}" href="${pageContext.request.contextPath}/announcements">Announcements</a>
-        <a class="${currentPath eq pageContext.request.contextPath.concat('/deadlines') ? 'active' : ''}" href="${pageContext.request.contextPath}/deadlines">Deadlines</a>
         <a class="notification-link ${currentPath eq pageContext.request.contextPath.concat('/notifications') ? 'active' : ''}" href="${pageContext.request.contextPath}/notifications">Notifications<c:if test="${unreadNotificationCount gt 0}"><span class="notification-badge" aria-label="${unreadNotificationCount} unread"><c:out value="${unreadNotificationCount gt 99 ? '99+' : unreadNotificationCount}" /></span></c:if></a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/discussions') ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions">Discussions / Chat</a>
         <a class="${currentPath eq pageContext.request.contextPath.concat('/profile') ? 'active' : ''}" href="${pageContext.request.contextPath}/profile">Profile</a>
@@ -16,7 +15,13 @@
             <a class="${currentPath.startsWith(pageContext.request.contextPath.concat('/admin/academic-changes')) ? 'active' : ''}" href="${pageContext.request.contextPath}/admin/academic-changes">Academic Requests</a>
         </c:if>
     </div>
-    <div class="sidebar-theme" data-dashboard-theme-slot></div>
+    <div class="sidebar-theme">
+        <div class="theme-control" role="group" aria-label="Color theme">
+            <button type="button" data-theme-choice="light" aria-label="Use light theme">☀</button>
+            <button type="button" data-theme-choice="system" aria-label="Use system theme">◐</button>
+            <button type="button" data-theme-choice="dark" aria-label="Use dark theme">☾</button>
+        </div>
+    </div>
     <form method="post" action="${pageContext.request.contextPath}/logout" class="sidebar-logout">
         <input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />">
         <button type="submit">Logout</button>
