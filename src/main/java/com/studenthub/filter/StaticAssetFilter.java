@@ -20,7 +20,7 @@ public class StaticAssetFilter implements Filter {
             Object configured = httpRequest.getServletContext().getAttribute("assetVersion");
             String version = configured == null ? "dev" : configured.toString();
             String etag = "\"studenthub-" + version.replaceAll("[^A-Za-z0-9._-]", "") + "\"";
-            httpResponse.setHeader("Cache-Control", "public, max-age=0, must-revalidate");
+            httpResponse.setHeader("Cache-Control", "public, max-age=31536000, immutable");
             httpResponse.setHeader("ETag", etag);
             if (etag.equals(httpRequest.getHeader("If-None-Match"))) {
                 httpResponse.setStatus(HttpServletResponse.SC_NOT_MODIFIED);

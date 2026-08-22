@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public record DiscussionMessage(long messageId, long senderId, String authorName,
                                 String authorRole, Integer authorSemester, String authorSection,
-                                String message, LocalDateTime createdAt) {
+                                String message, LocalDateTime createdAt, String authorAvatarUrl) {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, h:mm a");
 
     public long getMessageId() { return messageId; }
@@ -15,10 +15,16 @@ public record DiscussionMessage(long messageId, long senderId, String authorName
     public Integer getAuthorSemester() { return authorSemester; }
     public String getAuthorSection() { return authorSection; }
     public String getMessage() { return message; }
+    public String getAuthorAvatarUrl() { return authorAvatarUrl; }
     public String getCreatedLabel() { return createdAt.format(TIME_FORMAT); }
 
     public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
                              String message, LocalDateTime createdAt) {
-        this(messageId, senderId, authorName, authorRole, null, null, message, createdAt);
+        this(messageId, senderId, authorName, authorRole, null, null, message, createdAt, null);
+    }
+
+    public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
+                             Integer authorSemester, String authorSection, String message, LocalDateTime createdAt) {
+        this(messageId, senderId, authorName, authorRole, authorSemester, authorSection, message, createdAt, null);
     }
 }

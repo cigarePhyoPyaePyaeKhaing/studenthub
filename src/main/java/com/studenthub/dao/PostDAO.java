@@ -21,7 +21,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
-                       author.full_name AS author_name, author.role AS author_role,
+                       author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -65,7 +65,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
-                       author.full_name AS author_name, author.role AS author_role,
+                       author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -103,7 +103,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
                        p.deadline_date,
-                       author.full_name AS author_name, author.role AS author_role,
+                       author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar,
                        c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id = p.post_id) AS reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id = p.post_id) AS comment_count,
@@ -171,7 +171,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
-                       author.full_name AS author_name, author.role AS author_role, c.category_name,
+                       author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        FALSE AS current_user_reacted
@@ -191,7 +191,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
-                       author.full_name AS author_name, author.role AS author_role, c.category_name,
+                       author.full_name AS author_name, author.role AS author_role, author.profile_image AS author_avatar, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
                        EXISTS(SELECT 1 FROM reactions mine WHERE mine.post_id=p.post_id
@@ -272,6 +272,6 @@ public class PostDAO {
                 result.getString("image_url"), result.getString("visibility"),
                 created == null ? null : created.toLocalDateTime(), result.getLong("reaction_count"),
                 result.getLong("comment_count"), result.getBoolean("current_user_reacted"),
-                deadlineTs == null ? null : deadlineTs.toLocalDateTime());
+                deadlineTs == null ? null : deadlineTs.toLocalDateTime(), result.getString("author_avatar"));
     }
 }

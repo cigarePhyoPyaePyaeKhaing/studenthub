@@ -18,6 +18,11 @@
 .profile-identity-link,.profile-name-link{color:inherit;text-decoration:none}.profile-identity-link{flex:none;border-radius:16px}.profile-identity-link:focus-visible,.profile-name-link:focus-visible{outline:3px solid color-mix(in srgb,var(--cyan-accent) 55%,transparent);outline-offset:3px}.profile-name-link:hover{color:var(--cyan-primary)}
 .presence-status{display:flex;align-items:center;gap:7px;margin-top:8px!important;color:var(--text-muted)!important;font-size:.82rem}.presence-status span{width:8px;height:8px;border-radius:50%;background:var(--text-muted)}.presence-status.is-active span{background:#20b56a;box-shadow:0 0 0 4px color-mix(in srgb,#20b56a 16%,transparent)}.profile-avatar img{width:100%;height:100%;border-radius:inherit;object-fit:cover}
 
+/* Consistent content identities and Telegram-style conversation geometry. */
+.avatar{overflow:hidden}.avatar img{display:block;width:100%;height:100%;object-fit:cover}.comment-avatar{width:40px;height:40px}.comment-card{display:flex;align-items:flex-start;gap:10px;min-width:0}.message-row.incoming{justify-content:flex-start}.message-row.outgoing{justify-content:flex-start;flex-direction:row-reverse}.message-row.outgoing .message-avatar-link{order:0}.message-row.outgoing .message-bubble{order:1}.message-row.incoming .message-bubble{background:color-mix(in srgb,var(--surface-glass-strong) 88%,var(--cyan-soft))}
+@media(max-width:1023px) and (min-width:768px){.discussions-shell .message-bubble{max-width:80%}}
+@media(max-width:767px){.discussions-shell .message-bubble{max-width:88%}}
+
 /* Academic Change Requests UI */
 .academic-filter-group{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
 .academic-filter-btn{display:inline-flex;align-items:center;min-height:38px;padding:6px 16px;border:1px solid var(--border-glass);border-radius:var(--radius-pill);color:var(--text-secondary);background:var(--surface-glass);text-decoration:none;font-size:.88rem;font-weight:700;transition:transform var(--transition-fast),color var(--transition-fast),background var(--transition-fast),border-color var(--transition-fast)}

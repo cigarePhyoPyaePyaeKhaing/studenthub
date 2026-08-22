@@ -34,7 +34,7 @@ public class DiscussionDAO {
         StringBuilder sql = new StringBuilder("""
                 SELECT m.message_id, m.sender_id, m.message, m.created_at,
                        u.full_name, u.role, u.semester AS author_semester,
-                       u.section_name AS author_section
+                       u.section_name AS author_section, u.profile_image AS author_avatar
                 FROM messages m
                 JOIN chat_rooms r ON r.room_id = m.room_id
                 JOIN users u ON u.user_id = m.sender_id
@@ -59,7 +59,8 @@ public class DiscussionDAO {
                             results.getLong("sender_id"), results.getString("full_name"),
                             results.getString("role"), nullableInteger(results, "author_semester"),
                             results.getString("author_section"), results.getString("message"),
-                            results.getTimestamp("created_at").toLocalDateTime()));
+                            results.getTimestamp("created_at").toLocalDateTime(),
+                            results.getString("author_avatar")));
                 }
             }
         }

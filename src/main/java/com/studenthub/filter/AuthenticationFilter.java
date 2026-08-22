@@ -28,6 +28,11 @@ public class AuthenticationFilter implements Filter {
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest http = (HttpServletRequest) request;
         String path = requestPath(http.getContextPath(), http.getRequestURI());
+        if (!path.startsWith("/assets/")) {
+            HttpServletResponse httpResponse = (HttpServletResponse) response;
+            httpResponse.setHeader("Cache-Control", "private, no-cache, must-revalidate");
+            httpResponse.setHeader("Pragma", "no-cache");
+        }
         if (isPublicPath(path) || !isProtectedPath(path)) { chain.doFilter(request, response); return; }
         HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }

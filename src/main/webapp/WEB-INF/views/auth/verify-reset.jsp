@@ -7,9 +7,9 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Verify your identity | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/main.css?v=otp2" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script>
-    <script src="${pageContext.request.contextPath}/assets/js/password-recovery.js?v=otp2" defer></script>
+    <link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script>
+    <script src="${pageContext.request.contextPath}/assets/js/password-recovery.js?v=${applicationScope.assetVersion}" defer></script>
 </head>
 <body class="auth-page recovery-page">
 <main class="container">

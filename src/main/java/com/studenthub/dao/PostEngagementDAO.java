@@ -27,7 +27,7 @@ public class PostEngagementDAO {
     public List<PostComment> findComments(long postId, int limit) throws SQLException {
         String sql = """
                 SELECT cm.comment_id,cm.post_id,cm.user_id,cm.content,cm.created_at,
-                       author.full_name,author.role
+                       author.full_name,author.role,author.profile_image
                 FROM comments cm JOIN users author ON author.user_id=cm.user_id
                 WHERE cm.post_id=? ORDER BY cm.created_at ASC,cm.comment_id ASC LIMIT ?
                 """;
@@ -39,7 +39,8 @@ public class PostEngagementDAO {
                 while (result.next()) comments.add(new PostComment(result.getLong("comment_id"),
                         result.getLong("post_id"), result.getLong("user_id"),
                         result.getString("full_name"), Role.valueOf(result.getString("role")),
-                        result.getString("content"), result.getTimestamp("created_at").toLocalDateTime()));
+                        result.getString("content"), result.getTimestamp("created_at").toLocalDateTime(),
+                        result.getString("profile_image")));
             }
         }
         return comments;
