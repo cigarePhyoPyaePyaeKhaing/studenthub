@@ -9,6 +9,7 @@ import java.sql.SQLException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.time.LocalDateTime;
 
 public class ProfileService {
     public record UpdateResult(boolean successful, String message, UserProfile profile) {}
@@ -30,6 +31,14 @@ public class ProfileService {
 
     public Optional<UserProfile> findOwnProfile(long authenticatedUserId) throws SQLException {
         return userDAO.findProfileById(authenticatedUserId);
+    }
+
+    public Optional<UserProfile> findPublicProfile(long userId) throws SQLException {
+        return userId > 0 ? userDAO.findProfileById(userId) : Optional.empty();
+    }
+
+    public Optional<LocalDateTime> findLastActive(long userId) throws SQLException {
+        return userDAO.findLastActive(userId);
     }
 
     public List<University> listAvailableUniversities() {

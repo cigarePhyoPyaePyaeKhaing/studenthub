@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class UserDAO {
@@ -183,6 +184,29 @@ public class UserDAO {
                             false,
                             academicInfoLocked));
                 }
+            }
+        }
+    }
+
+    public int touchLastActive(long userId) throws SQLException {
+        String sql = "UPDATE users SET last_active_at = CURRENT_TIMESTAMP "
+                + "WHERE user_id = ? AND (last_active_at IS NULL OR last_active_at < CURRENT_TIMESTAMP - INTERVAL 1 MINUTE)";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            return statement.executeUpdate();
+        }
+    }
+
+    public Optional<LocalDateTime> findLastActive(long userId) throws SQLException {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(
+                     "SELECT last_active_at FROM users WHERE user_id = ?")) {
+            statement.setLong(1, userId);
+            try (ResultSet results = statement.executeQuery()) {
+                if (!results.next()) return Optional.empty();
+                java.sql.Timestamp value = results.getTimestamp("last_active_at");
+                return value == null ? Optional.empty() : Optional.of(value.toLocalDateTime());
             }
         }
     }

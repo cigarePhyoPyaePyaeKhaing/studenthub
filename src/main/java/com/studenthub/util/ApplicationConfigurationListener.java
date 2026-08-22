@@ -24,6 +24,9 @@ public class ApplicationConfigurationListener implements ServletContextListener 
         cookie.setHttpOnly(true);
         cookie.setSecure("production".equalsIgnoreCase(System.getenv("APP_ENV")));
         cookie.setName("STUDENTHUB_SESSION");
+        String commit = firstNonBlank(System.getenv("RAILWAY_GIT_COMMIT_SHA"), System.getenv("BUILD_VERSION"), "dev");
+        context.setAttribute("buildVersion", commit);
+        context.setAttribute("assetVersion", commit.length() > 12 ? commit.substring(0, 12) : commit);
 
         ensureTablesExist(context);
     }
@@ -85,6 +88,7 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             context.log("Database tables verified/initialized: universities (UIT)");
 
             ensureUserUniversityColumn(connection, context);
+            ensureUserPresenceColumn(connection, context);
             ensureNotificationTypeColumn(connection, context);
             ensurePostDeadlineColumn(connection, context);
             ensureStandardCategories(connection, context);
@@ -92,6 +96,28 @@ public class ApplicationConfigurationListener implements ServletContextListener 
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
             LOGGER.log(Level.INFO, "Database table initialization check: {0}", e.getMessage());
+        }
+    }
+
+    private String firstNonBlank(String... values) {
+        for (String value : values) if (value != null && !value.isBlank()) return value.trim();
+        return "dev";
+    }
+
+    private void ensureUserPresenceColumn(Connection connection, ServletContext context) {
+        try {
+            boolean hasColumn;
+            try (var results = connection.getMetaData().getColumns(null, null, "users", "last_active_at")) {
+                hasColumn = results.next();
+            }
+            if (!hasColumn) {
+                try (Statement statement = connection.createStatement()) {
+                    statement.execute("ALTER TABLE users ADD COLUMN last_active_at DATETIME NULL");
+                    context.log("Added column users.last_active_at");
+                }
+            }
+        } catch (Exception exception) {
+            context.log("ensureUserPresenceColumn check: " + exception.getClass().getName());
         }
     }
 

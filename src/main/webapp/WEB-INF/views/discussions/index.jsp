@@ -5,8 +5,8 @@
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Discussions | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-3" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-3" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head><body class="dashboard-body">
 <header class="mobile-header d-lg-none">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
@@ -37,10 +37,10 @@
                 <c:when test="${not room.available}"><div class="chat-empty"><div class="empty-icon">i</div><h2>Room unavailable</h2><p><c:out value="${room.denialReason}" /></p></div></c:when>
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
                 <c:otherwise><div class="message-list"><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><div class="message-row ${isOwn ? 'outgoing' : 'incoming'}">
-                    <div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div>
+                    <a class="profile-identity-link" href="${pageContext.request.contextPath}/profile?userId=${chatMessage.senderId}"><div class="avatar"><c:out value="${chatMessage.authorName.substring(0,1)}" /></div></a>
                     <div class="message-bubble">
                         <header>
-                            <strong><c:out value="${chatMessage.authorName}" /></strong>
+                            <a class="profile-name-link" href="${pageContext.request.contextPath}/profile?userId=${chatMessage.senderId}"><strong><c:out value="${chatMessage.authorName}" /></strong></a>
                             <span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span>
                             <c:if test="${room.scope eq 'CR_SEMESTER' or room.scope eq 'CR_ALL'}">
                                 <span class="message-scope">

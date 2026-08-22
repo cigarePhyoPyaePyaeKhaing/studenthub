@@ -7,11 +7,11 @@
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>Profile | StudentHub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="${pageContext.request.contextPath}/assets/js/main.js" defer></script>
-    <script src="${pageContext.request.contextPath}/assets/js/profile-photo.js?v=20260822" defer></script>
-    <link href="${pageContext.request.contextPath}/assets/css/main.css?v=20260821-2" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=20260821-2" rel="stylesheet">
-    <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=20260822" rel="stylesheet">
+    <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script>
+    <script src="${pageContext.request.contextPath}/assets/js/profile-photo.js?v=${applicationScope.assetVersion}" defer></script>
+    <link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head>
 <body class="dashboard-body">
 <header class="mobile-header d-lg-none">
@@ -39,14 +39,14 @@
             <section class="profile-hero">
                 <div class="profile-avatar"><c:choose><c:when test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="Profile photo"></c:when><c:otherwise><c:out value="${profile.initial}" /></c:otherwise></c:choose></div>
                 <div>
-                    <p class="eyebrow mb-1">My StudentHub account</p>
+                    <p class="eyebrow mb-1">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                     <h1><c:out value="${profile.fullName}" /></h1>
                     <p>
                         <c:choose>
                             <c:when test="${not empty profile.studentId}"><c:out value="${profile.studentId}" /></c:when>
                             <c:otherwise>Not assigned</c:otherwise>
                         </c:choose>
-                    </p>
+                    </p><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p>
                 </div>
                 <span class="profile-role role-${profile.role}"><c:out value="${profile.role}" /></span>
             </section>
@@ -142,7 +142,7 @@
                                     <p class="eyebrow mb-1">Identity</p>
                                     <h2>Account information</h2>
                                 </div>
-                                <a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true">Edit profile</a>
+                                <c:if test="${not publicProfile}"><a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true">Edit profile</a></c:if>
                             </div>
                             <dl class="profile-details">
                                 <div>
@@ -158,10 +158,7 @@
                                         </c:choose>
                                     </dd>
                                 </div>
-                                <div>
-                                    <dt>Email</dt>
-                                    <dd><c:out value="${profile.email}" /></dd>
-                                </div>
+                                <c:if test="${not publicProfile}"><div><dt>Email</dt><dd><c:out value="${profile.email}" /></dd></div></c:if>
                                 <div>
                                     <dt>University</dt>
                                     <dd>
@@ -172,7 +169,7 @@
                                             <c:otherwise>
                                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                                     <span class="text-secondary">Not assigned</span>
-                                                    <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a>
+                                                    <c:if test="${not publicProfile}"><a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a></c:if>
                                                 </div>
                                             </c:otherwise>
                                         </c:choose>
@@ -182,10 +179,7 @@
                                     <dt>Role</dt>
                                     <dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd>
                                 </div>
-                                <div>
-                                    <dt>Email status</dt>
-                                    <dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd>
-                                </div>
+                                <c:if test="${not publicProfile}"><div><dt>Email status</dt><dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd></div></c:if>
                             </dl>
                         </section>
                         <section class="profile-card">
@@ -215,7 +209,7 @@
                                     </dd>
                                 </div>
                             </dl>
-                            <c:choose>
+                            <c:if test="${not publicProfile}"><c:choose>
                                 <c:when test="${profile.academicInfoLocked}">
                                     <p class="profile-card-note">Academic information is locked. Changes require administrator approval.</p>
                                     <c:choose>
@@ -274,7 +268,7 @@
                                 <c:otherwise>
                                     <p class="profile-card-note text-primary">Academic information is not set yet. Click "Edit profile" above to choose your Semester and Section.</p>
                                 </c:otherwise>
-                            </c:choose>
+                            </c:choose></c:if>
                         </section>
                     </div>
                 </c:otherwise>

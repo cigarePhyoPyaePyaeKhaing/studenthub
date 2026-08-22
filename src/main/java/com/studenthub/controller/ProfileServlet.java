@@ -21,6 +21,8 @@ import jakarta.servlet.http.Part;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Optional;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = "/profile")
 @MultipartConfig(maxFileSize = ProfilePhotoValidator.MAX_BYTES, maxRequestSize = 2300000L)
@@ -52,18 +54,36 @@ public class ProfileServlet extends HttpServlet {
         }
 
         long startTime = System.currentTimeMillis();
-        long userId = (Long) session.getAttribute("userId");
+        long authenticatedUserId = (Long) session.getAttribute("userId");
+        Long requestedUserId = parseUserId(request.getParameter("userId"));
+        if (request.getParameter("userId") != null && requestedUserId == null) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+        long userId = requestedUserId == null ? authenticatedUserId : requestedUserId;
+        boolean publicProfile = userId != authenticatedUserId;
         try {
-            Optional<UserProfile> found = profileService.findOwnProfile(userId);
+            Optional<UserProfile> found = publicProfile
+                    ? profileService.findPublicProfile(userId) : profileService.findOwnProfile(userId);
             if (found.isEmpty()) {
-                session.invalidate();
-                response.sendRedirect(request.getContextPath() + "/login");
+                if (publicProfile) response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                else {
+                    session.invalidate();
+                    response.sendRedirect(request.getContextPath() + "/login");
+                }
                 return;
             }
             UserProfile profile = found.get();
-            boolean editing = "true".equalsIgnoreCase(request.getParameter("edit"));
+            boolean editing = !publicProfile && "true".equalsIgnoreCase(request.getParameter("edit"));
             request.setAttribute("profile", profile);
             request.setAttribute("editing", editing);
+            request.setAttribute("publicProfile", publicProfile);
+            try {
+                setPresence(request, profileService.findLastActive(userId).orElse(null));
+            } catch (Exception presenceException) {
+                setPresence(request, null);
+                logSafe("Presence lookup degraded gracefully: " + presenceException.getClass().getName());
+            }
 
             if (editing && !profile.isUniversityLocked()) {
                 request.setAttribute("availableUniversities", profileService.listAvailableUniversities());
@@ -71,7 +91,7 @@ public class ProfileServlet extends HttpServlet {
                 request.setAttribute("availableUniversities", java.util.Collections.emptyList());
             }
 
-            if (academicChangeDAO != null) {
+            if (!publicProfile && academicChangeDAO != null) {
                 try {
                     request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
                 } catch (Exception academicException) {
@@ -99,6 +119,30 @@ public class ProfileServlet extends HttpServlet {
             logSafe("Profile load completed in " + (System.currentTimeMillis() - startTime) + " ms");
         }
         request.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(request, response);
+    }
+
+    private Long parseUserId(String value) {
+        if (value == null || value.isBlank()) return null;
+        try {
+            long parsed = Long.parseLong(value);
+            return parsed > 0 ? parsed : null;
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
+    }
+
+    private void setPresence(HttpServletRequest request, LocalDateTime lastActive) {
+        if (lastActive == null) {
+            request.setAttribute("presenceLabel", "Last seen unavailable");
+            return;
+        }
+        long minutes = Math.max(0, Duration.between(lastActive, LocalDateTime.now()).toMinutes());
+        boolean active = minutes < 3;
+        request.setAttribute("activeNow", active);
+        if (active) request.setAttribute("presenceLabel", "Active now");
+        else if (minutes < 60) request.setAttribute("presenceLabel", "Last seen " + minutes + " minutes ago");
+        else if (minutes < 1440) request.setAttribute("presenceLabel", "Last seen " + (minutes / 60) + " hours ago");
+        else request.setAttribute("presenceLabel", "Last seen " + (minutes / 1440) + " days ago");
     }
 
     @Override

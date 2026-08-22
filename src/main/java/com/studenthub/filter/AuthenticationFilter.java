@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import com.studenthub.dao.NotificationDAO;
+import com.studenthub.dao.UserDAO;
 import com.studenthub.util.CsrfToken;
 import java.sql.SQLException;
 import java.util.Set;
@@ -23,6 +24,7 @@ public class AuthenticationFilter implements Filter {
             "/forgot-password", "/verify-reset-code", "/reset-password", "/health");
     private static final long UNREAD_COUNT_CACHE_TTL_MS = 30000L;
     private final NotificationDAO notificationDAO=new NotificationDAO();
+    private final UserDAO userDAO = new UserDAO();
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest http = (HttpServletRequest) request;
         String path = requestPath(http.getContextPath(), http.getRequestURI());
@@ -30,6 +32,7 @@ public class AuthenticationFilter implements Filter {
         HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
+        touchPresence(session, (Long) session.getAttribute("userId"), http);
         if (needsUnreadCount(http.getMethod(), http.getContextPath(), http.getRequestURI())) {
             long userId = (Long) session.getAttribute("userId");
             Long cachedCount = (Long) session.getAttribute("cachedUnreadCount");
@@ -51,6 +54,20 @@ public class AuthenticationFilter implements Filter {
             }
         }
         chain.doFilter(request, response);
+    }
+
+    private void touchPresence(HttpSession session, long userId, HttpServletRequest request) {
+        long now = System.currentTimeMillis();
+        Object previous = session.getAttribute("lastPresenceTouch");
+        if (previous instanceof Long last && now - last < 60000L) return;
+        try {
+            userDAO.touchLastActive(userId);
+            session.setAttribute("lastPresenceTouch", now);
+        } catch (SQLException exception) {
+            if (request.getServletContext() != null) {
+                request.getServletContext().log("Presence update failed: " + exception.getClass().getName());
+            }
+        }
     }
 
     static boolean isPublicPath(String path) {
