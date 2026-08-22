@@ -10,8 +10,9 @@
         var dark = root.dataset.theme === "dark";
         themeButton.setAttribute("aria-label", dark ? "Switch to light theme" : "Switch to dark theme");
         themeButton.setAttribute("title", dark ? "Switch to light theme" : "Switch to dark theme");
-        themeButton.querySelector(".theme-sun").hidden = !dark;
-        themeButton.querySelector(".theme-moon").hidden = dark;
+        themeButton.querySelector("svg").innerHTML = dark
+            ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.66 6.34l1.41-1.41"/>'
+            : '<path d="M21 15.2A9 9 0 1 1 8.8 3a7 7 0 0 0 12.2 12.2Z"/>';
     }
 
     if (themeButton) {
