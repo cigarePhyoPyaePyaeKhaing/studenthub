@@ -33,6 +33,7 @@ public class DiscussionDAO {
     public List<DiscussionMessage> findRecent(DiscussionTarget target, int limit) throws SQLException {
         StringBuilder sql = new StringBuilder("""
                 SELECT m.message_id, m.sender_id, m.message, m.created_at,
+                       m.attachment_name, m.attachment_stored_name, m.attachment_mime_type, m.attachment_size,
                        u.full_name, u.role, u.semester AS author_semester,
                        u.section_name AS author_section
                 FROM messages m
@@ -59,7 +60,8 @@ public class DiscussionDAO {
                             results.getLong("sender_id"), results.getString("full_name"),
                             results.getString("role"), nullableInteger(results, "author_semester"),
                             results.getString("author_section"), results.getString("message"),
-                            results.getTimestamp("created_at").toLocalDateTime()));
+                            results.getTimestamp("created_at").toLocalDateTime(),
+                            mapAttachment(results)));
                 }
             }
         }
@@ -68,12 +70,18 @@ public class DiscussionDAO {
     }
 
     public long insert(Connection connection, DiscussionTarget target, String message) throws SQLException {
+        return insert(connection, target, message, null);
+    }
+
+    public long insert(Connection connection, DiscussionTarget target, String message,
+                       com.studenthub.model.Attachment attachment) throws SQLException {
         long roomId = findOrCreateRoom(connection, target);
-        String sql = "INSERT INTO messages (room_id, sender_id, message) VALUES (?, ?, ?)";
+        String sql = "INSERT INTO messages (room_id, sender_id, message, attachment_name, attachment_stored_name, attachment_mime_type, attachment_size) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setLong(1, roomId);
             statement.setLong(2, target.authorId());
             statement.setString(3, message);
+            setAttachment(statement, 4, attachment);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) { return keys.next() ? keys.getLong(1) : 0; }
         }
@@ -163,5 +171,21 @@ public class DiscussionDAO {
     private Integer nullableInteger(ResultSet results, String column) throws SQLException {
         int value = results.getInt(column);
         return results.wasNull() ? null : value;
+    }
+
+    private com.studenthub.model.Attachment mapAttachment(ResultSet results) throws SQLException {
+        String stored = results.getString("attachment_stored_name");
+        return stored == null ? null : new com.studenthub.model.Attachment(results.getString("attachment_name"),
+                stored, results.getString("attachment_mime_type"), results.getLong("attachment_size"));
+    }
+
+    private void setAttachment(PreparedStatement statement, int index, com.studenthub.model.Attachment attachment) throws SQLException {
+        if (attachment == null) {
+            statement.setNull(index, Types.VARCHAR); statement.setNull(index+1, Types.VARCHAR);
+            statement.setNull(index+2, Types.VARCHAR); statement.setNull(index+3, Types.BIGINT);
+        } else {
+            statement.setString(index, attachment.originalName()); statement.setString(index+1, attachment.storedName());
+            statement.setString(index+2, attachment.mimeType()); statement.setLong(index+3, attachment.size());
+        }
     }
 }

@@ -8,7 +8,7 @@ public record Deadline(long deadlineId, Long postId, String relatedPostTitle, St
                        String subjectName, LocalDateTime dueDate, int semester, String sectionName,
                        long createdBy, String creatorName, LocalDateTime createdAt) {
     private static final DateTimeFormatter DISPLAY_DATE = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm a");
-    public String getDueLabel() { return dueDate == null ? "" : dueDate.format(DISPLAY_DATE); }
+    public String getDueLabel() { return com.studenthub.util.MyanmarTime.formatLocal(dueDate, "MMM d, yyyy · h:mm a"); }
     public long getDeadlineId() { return deadlineId; }
     public Long getPostId() { return postId; }
     public String getRelatedPostTitle() { return relatedPostTitle; }
@@ -20,9 +20,9 @@ public record Deadline(long deadlineId, Long postId, String relatedPostTitle, St
     public String getCreatorName() { return creatorName; }
     public String getInputDueDate() { return dueDate == null ? "" : dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")); }
     public String getScopeLabel() { return sectionName == null ? "Semester " + semester : "Semester " + semester + " / " + sectionName; }
-    public boolean isExpired() { return dueDate != null && dueDate.isBefore(LocalDateTime.now()); }
+    public boolean isExpired() { return dueDate != null && dueDate.isBefore(com.studenthub.util.MyanmarTime.now()); }
     public String getStatus() {
         if (isExpired()) return "Expired";
-        return Duration.between(LocalDateTime.now(), dueDate).toHours() <= 48 ? "Due soon" : "Upcoming";
+        return Duration.between(com.studenthub.util.MyanmarTime.now(), dueDate).toHours() <= 48 ? "Due soon" : "Upcoming";
     }
 }

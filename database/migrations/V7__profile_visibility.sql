@@ -1,0 +1,17 @@
+USE studenthub_db;
+
+DROP PROCEDURE IF EXISTS migrate_studenthub_profile_visibility;
+DELIMITER $$
+CREATE PROCEDURE migrate_studenthub_profile_visibility()
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'profile_visibility'
+    ) THEN
+        ALTER TABLE users ADD COLUMN profile_visibility VARCHAR(7) NOT NULL DEFAULT 'PRIVATE' AFTER profile_image;
+    END IF;
+END$$
+DELIMITER ;
+
+CALL migrate_studenthub_profile_visibility();
+DROP PROCEDURE migrate_studenthub_profile_visibility;

@@ -68,6 +68,14 @@
                                     <div class="profile-photo-controls"><label class="profile-photo-button" for="profilePhoto">Choose Image</label><input class="visually-hidden" type="file" id="profilePhoto" name="profilePhoto" accept="image/jpeg,image/png,image/webp" data-photo-input><p>JPG, PNG, or WEBP · Max 2 MB</p><p class="profile-photo-error" data-photo-error role="alert"></p><c:if test="${not empty profile.avatarUrl}"><label class="remove-photo-control"><input type="checkbox" name="removePhoto" value="true" data-remove-photo> Remove photo</label></c:if></div>
                                 </div>
                             </fieldset>
+                            <fieldset class="profile-privacy-editor">
+                                <legend>Profile Privacy</legend>
+                                <p>Who can see my profile?</p>
+                                <div class="privacy-options">
+                                    <label><input type="radio" name="profileVisibility" value="PUBLIC" <c:if test="${profile.profileVisibility eq 'PUBLIC'}">checked</c:if>><span><strong>Public</strong><small>Other StudentHub users can view your public profile.</small></span></label>
+                                    <label><input type="radio" name="profileVisibility" value="PRIVATE" <c:if test="${profile.profileVisibility ne 'PUBLIC'}">checked</c:if>><span><strong>Private</strong><small>Only you and administrators can view your profile.</small></span></label>
+                                </div>
+                            </fieldset>
                             <div>
                                 <label for="fullName">Full name</label>
                                 <input class="form-control" id="fullName" name="fullName" maxlength="100" value="<c:out value='${profile.fullName}' />" required>
@@ -142,7 +150,7 @@
                                     <p class="eyebrow mb-1">Identity</p>
                                     <h2>Account information</h2>
                                 </div>
-                                <a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true">Edit profile</a>
+                                <c:if test="${profileOwner}"><a class="btn btn-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true">Edit profile</a></c:if>
                             </div>
                             <dl class="profile-details">
                                 <div>
@@ -158,10 +166,10 @@
                                         </c:choose>
                                     </dd>
                                 </div>
-                                <div>
+                                <c:if test="${profileOwner}"><div>
                                     <dt>Email</dt>
                                     <dd><c:out value="${profile.email}" /></dd>
-                                </div>
+                                </div></c:if>
                                 <div>
                                     <dt>University</dt>
                                     <dd>
@@ -172,7 +180,7 @@
                                             <c:otherwise>
                                                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
                                                     <span class="text-secondary">Not assigned</span>
-                                                    <a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a>
+                                                    <c:if test="${profileOwner}"><a class="btn btn-outline-primary btn-sm" href="${pageContext.request.contextPath}/profile?edit=true#universityId">Select University</a></c:if>
                                                 </div>
                                             </c:otherwise>
                                         </c:choose>
@@ -182,10 +190,10 @@
                                     <dt>Role</dt>
                                     <dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd>
                                 </div>
-                                <div>
+                                <c:if test="${profileOwner}"><div>
                                     <dt>Email status</dt>
                                     <dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd>
-                                </div>
+                                </div></c:if>
                             </dl>
                         </section>
                         <section class="profile-card">
@@ -215,7 +223,7 @@
                                     </dd>
                                 </div>
                             </dl>
-                            <c:choose>
+                            <c:if test="${profileOwner}"><c:choose>
                                 <c:when test="${profile.academicInfoLocked}">
                                     <p class="profile-card-note">Academic information is locked. Changes require administrator approval.</p>
                                     <c:choose>
@@ -274,7 +282,7 @@
                                 <c:otherwise>
                                     <p class="profile-card-note text-primary">Academic information is not set yet. Click "Edit profile" above to choose your Semester and Section.</p>
                                 </c:otherwise>
-                            </c:choose>
+                            </c:choose></c:if>
                         </section>
                     </div>
                 </c:otherwise>

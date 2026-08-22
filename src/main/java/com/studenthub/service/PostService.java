@@ -27,6 +27,12 @@ public class PostService {
     public OperationResult create(long userId, Object role, String titleInput, String contentInput,
                                   Long categoryId, String visibilityInput, String deadlineDateInput)
             throws SQLException {
+        return create(userId, role, titleInput, contentInput, categoryId, visibilityInput, deadlineDateInput, null);
+    }
+
+    public OperationResult create(long userId, Object role, String titleInput, String contentInput,
+                                  Long categoryId, String visibilityInput, String deadlineDateInput,
+                                  com.studenthub.model.Attachment attachment) throws SQLException {
         if (!Authorization.canManagePosts(role)) return new OperationResult(false, "FORBIDDEN");
         String title = titleInput == null ? "" : titleInput.trim();
         String content = contentInput == null ? "" : contentInput.trim();
@@ -44,7 +50,7 @@ public class PostService {
                 if (!postDAO.authorHasScope(connection, userId, visibility)) {
                     connection.rollback(); return new OperationResult(false, "Your account does not have the semester/section details required for that visibility.");
                 }
-                long postId = postDAO.create(connection, userId, categoryId, title, content, visibility, deadlineDate);
+                long postId = postDAO.create(connection, userId, categoryId, title, content, visibility, deadlineDate, attachment);
                 if (postId <= 0) throw new SQLException("Post was saved but its identifier was unavailable.");
                 String notifType = deadlineDate != null ? "DEADLINE" : "ANNOUNCEMENT";
                 String notifMessage = deadlineDate != null ? "A new deadline announcement was published." : "A new announcement was published.";

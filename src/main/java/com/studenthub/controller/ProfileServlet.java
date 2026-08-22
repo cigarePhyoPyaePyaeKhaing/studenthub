@@ -53,17 +53,29 @@ public class ProfileServlet extends HttpServlet {
 
         long startTime = System.currentTimeMillis();
         long userId = (Long) session.getAttribute("userId");
+        long targetUserId = parseTargetUserId(request.getParameter("userId"), userId);
+        boolean owner = targetUserId == userId;
+        boolean admin = "ADMIN".equals(String.valueOf(session.getAttribute("role")));
         try {
-            Optional<UserProfile> found = profileService.findOwnProfile(userId);
+            Optional<UserProfile> found = owner ? profileService.findOwnProfile(userId)
+                    : profileService.findVisibleProfile(targetUserId, userId, admin);
             if (found.isEmpty()) {
-                session.invalidate();
-                response.sendRedirect(request.getContextPath() + "/login");
+                if (owner) {
+                    session.invalidate();
+                    response.sendRedirect(request.getContextPath() + "/login");
+                } else {
+                    request.setAttribute("privateProfile", true);
+                    request.setAttribute("error", "This profile is private.");
+                    request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
+                    request.getRequestDispatcher("/WEB-INF/views/profile.jsp").forward(request, response);
+                }
                 return;
             }
             UserProfile profile = found.get();
-            boolean editing = "true".equalsIgnoreCase(request.getParameter("edit"));
+            boolean editing = owner && "true".equalsIgnoreCase(request.getParameter("edit"));
             request.setAttribute("profile", profile);
             request.setAttribute("editing", editing);
+            request.setAttribute("profileOwner", owner);
 
             if (editing && !profile.isUniversityLocked()) {
                 request.setAttribute("availableUniversities", profileService.listAvailableUniversities());
@@ -146,6 +158,15 @@ public class ProfileServlet extends HttpServlet {
                     response.sendRedirect(request.getContextPath() + "/profile?edit=true");
                     return;
                 }
+                String requestedVisibility = request.getParameter("profileVisibility");
+                if (requestedVisibility != null) {
+                    updatedProfile = profileService.updateProfileVisibility(authenticatedUserId, requestedVisibility);
+                    if (updatedProfile == null) {
+                        request.getSession().setAttribute("flashError", "Your profile privacy setting could not be updated.");
+                        response.sendRedirect(request.getContextPath() + "/profile?edit=true");
+                        return;
+                    }
+                }
                 ProfileSession.refresh(request.getSession(), updatedProfile);
                 request.getSession().setAttribute("flash", result.message());
                 response.sendRedirect(request.getContextPath() + "/profile");
@@ -208,6 +229,16 @@ public class ProfileServlet extends HttpServlet {
     }
 
     private record PhotoChange(boolean valid, boolean remove, byte[] content, String extension, String error) {}
+
+    private long parseTargetUserId(String value, long fallback) {
+        if (value == null || value.isBlank()) return fallback;
+        try {
+            long parsed = Long.parseLong(value);
+            return parsed > 0 ? parsed : fallback;
+        } catch (NumberFormatException ignored) {
+            return fallback;
+        }
+    }
 
     private void logSafe(String message) {
         logSafe(message, null);

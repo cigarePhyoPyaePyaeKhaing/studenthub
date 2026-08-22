@@ -30,6 +30,6 @@ public record Notification(long notificationId, String type, String title, Strin
     }
 
     public String getCreatedLabel() {
-        return createdAt == null ? "" : createdAt.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"));
+        return com.studenthub.util.MyanmarTime.formatUtc(createdAt, "MMM d, yyyy · h:mm a");
     }
 }

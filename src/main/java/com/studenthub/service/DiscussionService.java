@@ -46,8 +46,14 @@ public class DiscussionService {
     }
 
     public OperationResult send(long userId, String requestedScope, String rawMessage) throws SQLException {
+        return send(userId, requestedScope, rawMessage, null);
+    }
+
+    public OperationResult send(long userId, String requestedScope, String rawMessage,
+                                com.studenthub.model.Attachment attachment) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
-        String validation = DiscussionValidation.validate(rawMessage);
+        String messageInput = rawMessage == null ? "" : rawMessage;
+        String validation = attachment != null && messageInput.isBlank() ? null : DiscussionValidation.validate(messageInput);
         if (validation != null) return new OperationResult(false, validation);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
@@ -58,7 +64,8 @@ public class DiscussionService {
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);
             try {
-                long id = dao.insert(connection, target, DiscussionValidation.normalize(rawMessage));
+                long id = dao.insert(connection, target,
+                        messageInput.isBlank() ? "" : DiscussionValidation.normalize(messageInput), attachment);
                 if (id <= 0) throw new SQLException("Message identifier was unavailable after insertion.");
                 connection.commit();
                 return new OperationResult(true, "Message sent.");

@@ -20,6 +20,7 @@ public class PostDAO {
     public List<Post> findVisibleForUser(long viewerId, Long categoryId, int limit) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
+                       p.attachment_name, p.attachment_stored_name, p.attachment_mime_type, p.attachment_size,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role,
                        c.category_name,
@@ -64,6 +65,7 @@ public class PostDAO {
     public List<Post> findUpcomingDeadlinesForUser(long viewerId, int limit) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
+                       p.attachment_name, p.attachment_stored_name, p.attachment_mime_type, p.attachment_size,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role,
                        c.category_name,
@@ -102,6 +104,7 @@ public class PostDAO {
     public List<Post> findPastDeadlinesForUser(long viewerId, int limit) throws SQLException {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url, p.visibility, p.created_at,
+                       p.attachment_name, p.attachment_stored_name, p.attachment_mime_type, p.attachment_size,
                        p.deadline_date,
                        author.full_name AS author_name, author.role AS author_role,
                        c.category_name,
@@ -146,8 +149,13 @@ public class PostDAO {
     public long create(Connection connection, long userId, long categoryId, String title, String content,
                        String visibility, java.time.LocalDateTime deadlineDate)
             throws SQLException {
-        String sql = "INSERT INTO posts (user_id, category_id, title, content, visibility, deadline_date) "
-                + "VALUES (?, ?, ?, ?, ?, ?)";
+        return create(connection, userId, categoryId, title, content, visibility, deadlineDate, null);
+    }
+
+    public long create(Connection connection, long userId, long categoryId, String title, String content,
+                       String visibility, java.time.LocalDateTime deadlineDate,
+                       com.studenthub.model.Attachment attachment) throws SQLException {
+        String sql = "INSERT INTO posts (user_id, category_id, title, content, visibility, deadline_date, attachment_name, attachment_stored_name, attachment_mime_type, attachment_size) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(sql,
                 java.sql.Statement.RETURN_GENERATED_KEYS)) {
             statement.setLong(1, userId);
@@ -160,6 +168,13 @@ public class PostDAO {
             } else {
                 statement.setTimestamp(6, Timestamp.valueOf(deadlineDate));
             }
+            if (attachment == null) {
+                statement.setNull(7, java.sql.Types.VARCHAR); statement.setNull(8, java.sql.Types.VARCHAR);
+                statement.setNull(9, java.sql.Types.VARCHAR); statement.setNull(10, java.sql.Types.BIGINT);
+            } else {
+                statement.setString(7, attachment.originalName()); statement.setString(8, attachment.storedName());
+                statement.setString(9, attachment.mimeType()); statement.setLong(10, attachment.size());
+            }
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 return keys.next() ? keys.getLong(1) : 0;
@@ -171,6 +186,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
+                       p.attachment_name, p.attachment_stored_name, p.attachment_mime_type, p.attachment_size,
                        author.full_name AS author_name, author.role AS author_role, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
@@ -191,6 +207,7 @@ public class PostDAO {
         String sql = """
                 SELECT p.post_id, p.user_id, p.category_id, p.title, p.content, p.image_url,
                        p.visibility, p.created_at, p.deadline_date,
+                       p.attachment_name, p.attachment_stored_name, p.attachment_mime_type, p.attachment_size,
                        author.full_name AS author_name, author.role AS author_role, c.category_name,
                        (SELECT COUNT(*) FROM reactions r WHERE r.post_id=p.post_id) reaction_count,
                        (SELECT COUNT(*) FROM comments cm WHERE cm.post_id=p.post_id) comment_count,
@@ -266,12 +283,16 @@ public class PostDAO {
         }
         long categoryValue = result.getLong("category_id");
         Long categoryId = result.wasNull() ? null : categoryValue;
+        String attachmentStored = result.getString("attachment_stored_name");
+        com.studenthub.model.Attachment attachment = attachmentStored == null ? null
+                : new com.studenthub.model.Attachment(result.getString("attachment_name"), attachmentStored,
+                result.getString("attachment_mime_type"), result.getLong("attachment_size"));
         return new Post(result.getLong("post_id"), result.getLong("user_id"), categoryId,
                 result.getString("author_name"), Role.valueOf(result.getString("author_role")),
                 result.getString("category_name"), result.getString("title"), result.getString("content"),
                 result.getString("image_url"), result.getString("visibility"),
                 created == null ? null : created.toLocalDateTime(), result.getLong("reaction_count"),
                 result.getLong("comment_count"), result.getBoolean("current_user_reacted"),
-                deadlineTs == null ? null : deadlineTs.toLocalDateTime());
+                deadlineTs == null ? null : deadlineTs.toLocalDateTime(), attachment);
     }
 }
