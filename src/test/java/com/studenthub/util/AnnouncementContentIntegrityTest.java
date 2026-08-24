@@ -231,18 +231,36 @@ class AnnouncementContentIntegrityTest {
 
     @Test
     void verifiesMobileTabletBreakpointContract() {
-        int[] mobileTabletWidths = {360, 375, 390, 412, 430, 768, 820, 1024, 1100, 1112, 1180};
+        int[] phoneWidths = {360, 375, 390, 412, 430, 600};
+        int[] tabletWidths = {601, 768, 820, 1024, 1100, 1112, 1180};
         int[] desktopWidths = {1181, 1280, 1366, 1440, 1920};
 
-        for (int width : mobileTabletWidths) {
-            assertTrue(isMobileTabletViewport(width), "Width " + width + " should use mobile/tablet bottom nav");
+        for (int width : phoneWidths) {
+            assertTrue(isMobileTabletViewport(width), "Phone width " + width + " should use mobile bottom nav");
+            assertTrue(isPhoneViewport(width), "Width " + width + " should use phone full-width bottom nav");
+            assertFalse(isTabletFloatingViewport(width), "Width " + width + " should not use tablet floating nav");
+        }
+        for (int width : tabletWidths) {
+            assertTrue(isMobileTabletViewport(width), "Tablet width " + width + " should use tablet bottom nav");
+            assertFalse(isPhoneViewport(width), "Width " + width + " should not use phone full-width bottom nav");
+            assertTrue(isTabletFloatingViewport(width), "Width " + width + " should use tablet floating centered nav");
         }
         for (int width : desktopWidths) {
             assertFalse(isMobileTabletViewport(width), "Width " + width + " should use desktop sidebar");
+            assertFalse(isPhoneViewport(width), "Width " + width + " should not use phone nav");
+            assertFalse(isTabletFloatingViewport(width), "Width " + width + " should not use tablet floating nav");
         }
     }
 
     private boolean isMobileTabletViewport(int width) {
         return width <= 1180;
+    }
+
+    private boolean isPhoneViewport(int width) {
+        return width <= 600;
+    }
+
+    private boolean isTabletFloatingViewport(int width) {
+        return width > 600 && width <= 1180;
     }
 }
