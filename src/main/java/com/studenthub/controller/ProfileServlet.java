@@ -184,9 +184,10 @@ public class ProfileServlet extends HttpServlet {
                 return;
             }
             if (result.successful()) {
-                UserProfile updatedProfile = applyPhotoChange(authenticatedUserId, result.profile(), photoChange);
+                PhotoUpdateResult photoResult = applyPhotoChange(authenticatedUserId, result.profile(), photoChange);
+                UserProfile updatedProfile = photoResult.profile();
                 if (updatedProfile == null) {
-                    request.getSession().setAttribute("flashError", "Your profile photo could not be updated right now.");
+                    request.getSession().setAttribute("flashError", photoResult.error());
                     response.sendRedirect(request.getContextPath() + "/profile?edit=true");
                     return;
                 }
@@ -224,13 +225,21 @@ public class ProfileServlet extends HttpServlet {
                         "Choose a valid JPG, PNG, or WEBP image."));
     }
 
-    private UserProfile applyPhotoChange(long userId, UserProfile profile, PhotoChange change) throws SQLException {
-        if (change.content() == null && !change.remove()) return profile;
+    private PhotoUpdateResult applyPhotoChange(long userId, UserProfile profile, PhotoChange change) throws SQLException {
+        if (change.content() == null && !change.remove()) return new PhotoUpdateResult(profile, null);
         String previous = profile.avatarUrl();
         if (change.remove()) {
             UserProfile updated = profileService.updateProfileImage(userId, null);
             if (updated != null) photoStorage.delete(previous);
-            return updated;
+            return new PhotoUpdateResult(updated, updated == null ? "Your profile photo reference could not be removed." : null);
+        }
+        if (!photoStorage.isConfigured()) {
+            logSafe("Profile photo upload rejected: storage_not_configured");
+            return new PhotoUpdateResult(null, "Profile photo storage is not configured right now. Please contact support.");
+        }
+        if (!photoStorage.ensureWritable()) {
+            logSafe("Profile photo upload rejected: storage_not_writable");
+            return new PhotoUpdateResult(null, "Profile photo storage is temporarily unavailable. Please try again later.");
         }
         String filename = null;
         try {
@@ -238,22 +247,26 @@ public class ProfileServlet extends HttpServlet {
             UserProfile updated = profileService.updateProfileImage(userId, filename);
             if (updated == null) {
                 photoStorage.delete(filename);
-                return null;
+                logSafe("Profile photo upload failed: database_update_returned_no_profile");
+                return new PhotoUpdateResult(null, "Your profile photo was saved but could not be linked to your account. Please try again.");
             }
             photoStorage.delete(previous);
-            return updated;
+            return new PhotoUpdateResult(updated, null);
         } catch (IOException exception) {
             if (filename != null) photoStorage.delete(filename);
             logSafe("Profile photo storage failed: " + exception.getClass().getName()
                     + ", storageConfigured=" + photoStorage.isConfigured());
-            return null;
+            return new PhotoUpdateResult(null, "Your profile photo could not be saved. Please try again.");
         } catch (SQLException exception) {
             if (filename != null) photoStorage.delete(filename);
-            throw exception;
+            logSafe("Profile photo upload failed: database_update_failed, SQLState=" + exception.getSQLState()
+                    + ", errorCode=" + exception.getErrorCode());
+            return new PhotoUpdateResult(null, "Your profile photo could not be linked to your account. Please try again.");
         }
     }
 
     private record PhotoChange(boolean valid, boolean remove, byte[] content, String extension, String error) {}
+    private record PhotoUpdateResult(UserProfile profile, String error) {}
 
     private void logSafe(String message) {
         logSafe(message, null);

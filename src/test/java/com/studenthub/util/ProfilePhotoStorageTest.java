@@ -33,4 +33,13 @@ class ProfilePhotoStorageTest {
         assertTrue(storage.find("../../secret.jpg").isEmpty());
         assertTrue(storage.find("missing.jpg").isEmpty());
     }
+
+    @Test void configuredPathThatIsAFileIsNotWritableStorage() throws Exception {
+        Path file = temporaryDirectory.resolve("not-a-directory");
+        Files.writeString(file, "occupied");
+        ProfilePhotoStorage storage = new ProfilePhotoStorage(file);
+        assertTrue(storage.isConfigured());
+        assertFalse(storage.ensureWritable());
+        assertThrows(IOException.class, () -> storage.save(new byte[]{1}, "jpg"));
+    }
 }
