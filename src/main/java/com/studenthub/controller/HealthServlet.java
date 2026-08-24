@@ -30,6 +30,8 @@ public class HealthServlet extends HttpServlet {
                 health.put("version", String.valueOf(version));
                 health.put("profileStorageConfigured", Boolean.TRUE.equals(getServletContext().getAttribute("profileStorageConfigured")));
                 health.put("profileStorageWritable", Boolean.TRUE.equals(getServletContext().getAttribute("profileStorageWritable")));
+                health.put("attachmentStorageConfigured", Boolean.TRUE.equals(getServletContext().getAttribute("attachmentStorageConfigured")));
+                health.put("attachmentStorageWritable", Boolean.TRUE.equals(getServletContext().getAttribute("attachmentStorageWritable")));
                 JSON.writeValue(response.getWriter(), health);
                 return;
             }

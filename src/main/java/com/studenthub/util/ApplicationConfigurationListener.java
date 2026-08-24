@@ -36,6 +36,12 @@ public class ApplicationConfigurationListener implements ServletContextListener 
         if (!profileStorageWritable) {
             context.log("Profile photo uploads unavailable: persistent storage is not configured or writable.");
         }
+        AttachmentStorage attachmentStorage = new AttachmentStorage();
+        boolean attachmentStorageConfigured = attachmentStorage.isConfigured();
+        boolean attachmentStorageWritable = attachmentStorage.ensureWritable();
+        context.setAttribute("attachmentStorageConfigured", attachmentStorageConfigured);
+        context.setAttribute("attachmentStorageWritable", attachmentStorageWritable);
+        if (!attachmentStorageWritable) context.log("Attachment uploads unavailable: persistent storage is not configured or writable.");
 
         ensureTablesExist(context);
     }
