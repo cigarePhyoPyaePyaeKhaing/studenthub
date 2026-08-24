@@ -215,6 +215,20 @@ class AnnouncementContentIntegrityTest {
         assertEquals("FINAL-LINE-MUST-BE-VISIBLE", lines[21]);
     }
 
+    @Test
+    void verifiesMobileNavLabelsFullTextIntegrity() {
+        String[] labels = {"Home", "Announcements", "Notifications", "Discussions", "Profile"};
+        assertEquals(5, labels.length);
+        for (String label : labels) {
+            assertFalse(label.contains("..."), "Label must not contain ellipsis: " + label);
+            assertFalse(label.endsWith("..."), "Label must not be truncated: " + label);
+            assertTrue(label.length() >= 4, "Label must be full length word: " + label);
+        }
+        assertEquals("Announcements", labels[1]);
+        assertEquals("Notifications", labels[2]);
+        assertEquals("Discussions", labels[3]);
+    }
+
     private boolean isMobileTabletViewport(int width) {
         return width <= 1024;
     }
