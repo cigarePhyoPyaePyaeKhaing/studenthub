@@ -175,6 +175,46 @@ class AnnouncementContentIntegrityTest {
         assertTrue(post.getContent().contains("FINAL-LINE-MUST-BE-VISIBLE"));
     }
 
+    @Test
+    void verifiesSentinelLongAnnouncementContentIntegrity() {
+        String sentinelContent = """
+                FIRST-LINE-VISIBLE
+                Line 02
+                Line 03
+                Line 04
+                Line 05
+                Line 06
+                Line 07
+                Line 08
+                Line 09
+                Line 10
+                Line 11
+                Line 12
+                Line 13
+                Line 14
+                Line 15
+                Line 16
+                Line 17
+                Line 18
+                Line 19
+                Line 20
+                မြန်မာစာ စမ်းသပ်ချက် အပြည့်အစုံ
+                FINAL-LINE-MUST-BE-VISIBLE""";
+
+        Post post = new Post(
+                106L, 1L, 1L, "Admin Sentinel", Role.ADMIN, "General News",
+                "Sentinel Long Announcement", sentinelContent, null, "ALL", LocalDateTime.now(), 0L, 0L, false
+        );
+
+        String[] lines = post.getContent().lines().toArray(String[]::new);
+        assertEquals(22, lines.length);
+        assertEquals("FIRST-LINE-VISIBLE", lines[0]);
+        assertEquals("Line 10", lines[9]);
+        assertEquals("Line 20", lines[19]);
+        assertEquals("မြန်မာစာ စမ်းသပ်ချက် အပြည့်အစုံ", lines[20]);
+        assertEquals("FINAL-LINE-MUST-BE-VISIBLE", lines[21]);
+    }
+
     private boolean isMobileTabletViewport(int width) {
         return width <= 1024;
     }
