@@ -12,7 +12,7 @@ public final class NavigationSection {
         if (path.equals("/home")) return "HOME";
         if (path.equals("/announcements") || path.startsWith("/posts/")) return "ANNOUNCEMENTS";
         if (path.equals("/notifications") || path.startsWith("/notifications/")) return "NOTIFICATIONS";
-        if (path.equals("/discussions") || path.startsWith("/discussions/")) return "DISCUSSIONS";
+        if (path.equals("/discussions") || path.startsWith("/discussions/") || path.equals("/messages") || path.startsWith("/messages/")) return "DISCUSSIONS";
         if (path.equals("/profile") && (request.getParameter("userId") == null
                 || request.getParameter("userId").isBlank())) return "PROFILE";
         if (path.startsWith("/profile/") && !path.startsWith("/profile/photo/")) return "PROFILE";

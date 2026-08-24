@@ -21,6 +21,7 @@
             <c:if test="${not empty room and room.available}"><span class="discussion-scope-label"><c:out value="${room.scopeLabel}" /></span></c:if>
         </section>
         <nav class="room-tabs" aria-label="Discussion rooms">
+            <a href="${pageContext.request.contextPath}/messages">Private Messages</a>
             <a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a>
             <a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a>
             <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>

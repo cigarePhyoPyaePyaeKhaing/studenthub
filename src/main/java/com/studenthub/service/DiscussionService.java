@@ -38,8 +38,8 @@ public class DiscussionService {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
-        String denial = DiscussionAccess.denialReason(scope, profile.semester(), profile.sectionName());
-        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope,
+        String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());
+        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
         return new RoomView(scope, profile.semester(), profile.sectionName(),
                 DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, profile.role()), denial,
@@ -55,9 +55,9 @@ public class DiscussionService {
         if (validation != null) return new OperationResult(false, validation);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
-        String denial = DiscussionAccess.denialReason(scope, profile.semester(), profile.sectionName());
+        String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());
         if (denial != null) return new OperationResult(false, denial);
-        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope,
+        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
         try (Connection connection = DBConnection.getConnection()) {
             connection.setAutoCommit(false);

@@ -7,7 +7,7 @@
         <a class="${activeNav eq 'HOME' ? 'active' : ''}" href="${pageContext.request.contextPath}/home">Home</a>
         <a class="${activeNav eq 'ANNOUNCEMENTS' ? 'active' : ''}" href="${pageContext.request.contextPath}/announcements">Announcements</a>
         <a class="notification-link ${activeNav eq 'NOTIFICATIONS' ? 'active' : ''}" href="${pageContext.request.contextPath}/notifications">Notifications<c:if test="${unreadNotificationCount gt 0}"><span class="notification-badge" aria-label="${unreadNotificationCount} unread"><c:out value="${unreadNotificationCount gt 99 ? '99+' : unreadNotificationCount}" /></span></c:if></a>
-        <a class="${activeNav eq 'DISCUSSIONS' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions">Discussions / Chat</a>
+        <a class="notification-link ${activeNav eq 'DISCUSSIONS' ? 'active' : ''}" href="${pageContext.request.contextPath}/messages">Discussions / Chat<c:if test="${unreadPrivateMessageCount gt 0}"><span class="private-message-badge notification-badge"><c:out value="${unreadPrivateMessageCount gt 99 ? '99+' : unreadPrivateMessageCount}"/></span></c:if></a>
         <a class="${activeNav eq 'PROFILE' ? 'active' : ''}" href="${pageContext.request.contextPath}/profile">Profile</a>
         <c:if test="${sessionScope.role eq 'ADMIN'}">
             <a class="${currentPath eq pageContext.request.contextPath.concat('/admin') ? 'active' : ''}" href="${pageContext.request.contextPath}/admin">Admin Dashboard</a>

@@ -11,20 +11,21 @@ import java.util.Collections;
 import java.util.List;
 
 public class DiscussionDAO {
-    public record AcademicProfile(String role, Integer semester, String sectionName) {}
+    public record AcademicProfile(String role, Long universityId, Integer semester, String sectionName) {}
     public record MessageRecord(long messageId, long senderId, DiscussionScope scope,
                                 Integer semester, String sectionName) {}
 
     public AcademicProfile findAcademicProfile(long userId) throws SQLException {
-        String sql = "SELECT role, semester, section_name FROM users WHERE user_id = ?";
+        String sql = "SELECT role, university_id, semester, section_name FROM users WHERE user_id = ?";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);
             try (ResultSet results = statement.executeQuery()) {
-                if (!results.next()) return new AcademicProfile(null, null, null);
+                if (!results.next()) return new AcademicProfile(null, null, null, null);
                 int value = results.getInt("semester");
                 Integer semester = results.wasNull() ? null : value;
-                return new AcademicProfile(results.getString("role"), semester,
+                long universityValue=results.getLong("university_id"); Long universityId=results.wasNull()?null:universityValue;
+                return new AcademicProfile(results.getString("role"), universityId, semester,
                         results.getString("section_name"));
             }
         }
@@ -42,6 +43,7 @@ public class DiscussionDAO {
                 LEFT JOIN attachments a ON a.message_id=m.message_id
                 WHERE r.room_type = ?
                 """);
+        if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL) sql.append(" AND r.university_id = ?");
         if (target.scope() == DiscussionScope.SEMESTER || target.scope() == DiscussionScope.CR_SEMESTER) sql.append(" AND r.semester = ? AND r.section_name IS NULL");
         if (target.scope() == DiscussionScope.SECTION) sql.append(" AND r.semester = ? AND r.section_name = ?");
         if (target.scope() == DiscussionScope.ALL || target.scope() == DiscussionScope.CR_ALL) sql.append(" AND r.semester IS NULL AND r.section_name IS NULL");
@@ -52,6 +54,7 @@ public class DiscussionDAO {
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             int index = 1;
             statement.setString(index++, target.scope().name());
+            if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL) statement.setLong(index++,target.universityId());
             if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL) statement.setInt(index++, target.semester());
             if (target.scope() == DiscussionScope.SECTION) statement.setString(index++, target.sectionName());
             statement.setInt(index, Math.max(1, Math.min(limit, 100)));
@@ -112,7 +115,7 @@ public class DiscussionDAO {
     }
 
     private long findOrCreateRoom(Connection connection, DiscussionTarget target) throws SQLException {
-        String lockName = "studenthub:room:" + target.scope() + ":" + target.semester() + ":" + target.sectionName();
+        String lockName = "studenthub:room:" + target.universityId() + ":" + target.scope() + ":" + target.semester() + ":" + target.sectionName();
         try (PreparedStatement lock = connection.prepareStatement("SELECT GET_LOCK(?, 5)")) {
             lock.setString(1, lockName);
             try (ResultSet result = lock.executeQuery()) {
@@ -127,19 +130,20 @@ public class DiscussionDAO {
     private long findOrCreateRoomWhileLocked(Connection connection, DiscussionTarget target) throws SQLException {
         String select = """
                 SELECT room_id FROM chat_rooms
-                WHERE room_type = ? AND semester <=> ? AND section_name <=> ?
+                WHERE room_type = ? AND university_id <=> ? AND semester <=> ? AND section_name <=> ?
                 ORDER BY room_id LIMIT 1
                 """;
         try (PreparedStatement statement = connection.prepareStatement(select)) {
             setRoomScope(statement, target);
             try (ResultSet results = statement.executeQuery()) { if (results.next()) return results.getLong(1); }
         }
-        String insert = "INSERT INTO chat_rooms (room_name, room_type, semester, section_name) VALUES (?, ?, ?, ?)";
+        String insert = "INSERT INTO chat_rooms (room_name, room_type, university_id, semester, section_name) VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement statement = connection.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, roomName(target));
             statement.setString(2, target.scope().name());
-            if (target.semester() == null) statement.setNull(3, Types.INTEGER); else statement.setInt(3, target.semester());
-            if (target.sectionName() == null) statement.setNull(4, Types.VARCHAR); else statement.setString(4, target.sectionName());
+            if(target.universityId()==null)statement.setNull(3,Types.BIGINT);else statement.setLong(3,target.universityId());
+            if (target.semester() == null) statement.setNull(4, Types.INTEGER); else statement.setInt(4, target.semester());
+            if (target.sectionName() == null) statement.setNull(5, Types.VARCHAR); else statement.setString(5, target.sectionName());
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) return keys.getLong(1);
@@ -150,8 +154,9 @@ public class DiscussionDAO {
 
     private void setRoomScope(PreparedStatement statement, DiscussionTarget target) throws SQLException {
         statement.setString(1, target.scope().name());
-        if (target.semester() == null) statement.setNull(2, Types.INTEGER); else statement.setInt(2, target.semester());
-        if (target.sectionName() == null) statement.setNull(3, Types.VARCHAR); else statement.setString(3, target.sectionName());
+        if(target.universityId()==null)statement.setNull(2,Types.BIGINT);else statement.setLong(2,target.universityId());
+        if (target.semester() == null) statement.setNull(3, Types.INTEGER); else statement.setInt(3, target.semester());
+        if (target.sectionName() == null) statement.setNull(4, Types.VARCHAR); else statement.setString(4, target.sectionName());
     }
 
     private String roomName(DiscussionTarget target) {

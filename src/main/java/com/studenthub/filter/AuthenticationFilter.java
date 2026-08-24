@@ -12,6 +12,7 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 import com.studenthub.dao.NotificationDAO;
 import com.studenthub.dao.UserDAO;
+import com.studenthub.dao.PrivateMessageDAO;
 import com.studenthub.util.CsrfToken;
 import com.studenthub.util.NavigationSection;
 import java.sql.SQLException;
@@ -26,6 +27,7 @@ public class AuthenticationFilter implements Filter {
     private static final long UNREAD_COUNT_CACHE_TTL_MS = 30000L;
     private final NotificationDAO notificationDAO=new NotificationDAO();
     private final UserDAO userDAO = new UserDAO();
+    private final PrivateMessageDAO privateMessageDAO = new PrivateMessageDAO();
     @Override public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
         HttpServletRequest http = (HttpServletRequest) request;
         String path = requestPath(http.getContextPath(), http.getRequestURI());
@@ -59,6 +61,8 @@ public class AuthenticationFilter implements Filter {
                     request.setAttribute("unreadNotificationCount", cachedCount != null ? cachedCount : 0L);
                 }
             }
+            try { request.setAttribute("unreadPrivateMessageCount", privateMessageDAO.unread(userId)); }
+            catch (SQLException privateException) { request.setAttribute("unreadPrivateMessageCount", 0L); }
         }
         chain.doFilter(request, response);
     }
@@ -85,6 +89,7 @@ public class AuthenticationFilter implements Filter {
         return path.equals("/home") || path.equals("/announcements") || path.equals("/notifications")
                 || path.equals("/deadlines") || path.startsWith("/deadlines/")
                 || path.equals("/discussions") || path.startsWith("/discussions/")
+                || path.equals("/messages") || path.startsWith("/messages/")
                 || path.equals("/profile") || path.startsWith("/profile/")
                 || path.equals("/admin") || path.startsWith("/admin/")
                 || path.equals("/users") || path.startsWith("/users/")
@@ -100,7 +105,7 @@ public class AuthenticationFilter implements Filter {
         if (!"GET".equalsIgnoreCase(method)) return false;
         String path = requestUri.substring(Math.min(contextPath.length(), requestUri.length()));
         return path.equals("/home") || path.equals("/announcements") || path.equals("/notifications")
-                || path.equals("/deadlines") || path.equals("/discussions") || path.equals("/profile")
+                || path.equals("/deadlines") || path.equals("/discussions") || path.equals("/messages") || path.equals("/profile")
                 || path.equals("/posts/comments") || path.equals("/admin") || path.startsWith("/admin/");
     }
 }

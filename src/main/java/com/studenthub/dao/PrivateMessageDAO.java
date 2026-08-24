@@ -1,0 +1,44 @@
+package com.studenthub.dao;
+
+import com.studenthub.model.*;
+import com.studenthub.util.*;
+import java.sql.*;
+import java.util.*;
+
+public class PrivateMessageDAO {
+ public long findOrCreate(long current,long target)throws SQLException{
+  var p=PrivateConversationPolicy.normalize(current,target);
+  try(Connection c=DBConnection.getConnection()){c.setAutoCommit(false);try{
+   try(PreparedStatement s=c.prepareStatement("INSERT INTO private_conversations(user1_id,user2_id) VALUES(?,?) ON DUPLICATE KEY UPDATE conversation_id=LAST_INSERT_ID(conversation_id)",Statement.RETURN_GENERATED_KEYS)){s.setLong(1,p.first());s.setLong(2,p.second());s.executeUpdate();try(ResultSet r=s.getGeneratedKeys()){if(r.next()){long id=r.getLong(1);c.commit();return id;}}}
+   try(PreparedStatement s=c.prepareStatement("SELECT conversation_id FROM private_conversations WHERE user1_id=? AND user2_id=?")){s.setLong(1,p.first());s.setLong(2,p.second());try(ResultSet r=s.executeQuery()){if(r.next()){long id=r.getLong(1);c.commit();return id;}}}
+   throw new SQLException("Conversation identifier unavailable.");
+  }catch(SQLException e){c.rollback();throw e;}}
+ }
+ public boolean isParticipant(long conversation,long user)throws SQLException{try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("SELECT 1 FROM private_conversations WHERE conversation_id=? AND (user1_id=? OR user2_id=?)")){s.setLong(1,conversation);s.setLong(2,user);s.setLong(3,user);try(ResultSet r=s.executeQuery()){return r.next();}}}
+ public List<PrivateConversation> list(long user)throws SQLException{
+  String q="""
+   SELECT c.conversation_id,u.user_id,u.full_name,u.profile_image,u.last_active_at,c.updated_at,
+   (SELECT pm.message FROM private_messages pm WHERE pm.conversation_id=c.conversation_id ORDER BY pm.message_id DESC LIMIT 1) preview,
+   (SELECT COUNT(*) FROM private_messages pm WHERE pm.conversation_id=c.conversation_id AND pm.sender_id<>? AND pm.message_id>COALESCE((SELECT pr.last_read_message_id FROM private_message_reads pr WHERE pr.conversation_id=c.conversation_id AND pr.user_id=?),0)) unread
+   FROM private_conversations c JOIN users u ON u.user_id=IF(c.user1_id=?,c.user2_id,c.user1_id)
+   WHERE c.user1_id=? OR c.user2_id=? ORDER BY c.updated_at DESC
+   """;
+  List<PrivateConversation> out=new ArrayList<>();try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(q)){for(int i=1;i<=5;i++)s.setLong(i,user);try(ResultSet r=s.executeQuery()){while(r.next()){Timestamp active=r.getTimestamp("last_active_at"),updated=r.getTimestamp("updated_at");out.add(new PrivateConversation(r.getLong("conversation_id"),r.getLong("user_id"),r.getString("full_name"),r.getString("profile_image"),active==null?null:active.toLocalDateTime(),r.getString("preview"),updated==null?null:updated.toLocalDateTime(),r.getLong("unread")));}}}return out;
+ }
+ public List<PrivateMessage> messages(long conversation,long viewer,long after)throws SQLException{
+  if(!isParticipant(conversation,viewer))throw new SecurityException("FORBIDDEN");
+  String q="SELECT pm.*,a.attachment_id,a.original_filename,a.storage_key,a.mime_type,a.file_size FROM private_messages pm LEFT JOIN private_message_attachments a ON a.message_id=pm.message_id WHERE pm.conversation_id=? AND pm.message_id>? ORDER BY pm.message_id LIMIT 100";
+  List<PrivateMessage> out=new ArrayList<>();try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(q)){s.setLong(1,conversation);s.setLong(2,after);try(ResultSet r=s.executeQuery()){while(r.next()){long aid=r.getLong("attachment_id");Attachment a=r.wasNull()?null:new Attachment(aid,null,null,null,r.getString("original_filename"),r.getString("storage_key"),r.getString("mime_type"),r.getLong("file_size"));out.add(new PrivateMessage(r.getLong("message_id"),conversation,r.getLong("sender_id"),r.getString("message"),r.getTimestamp("created_at").toLocalDateTime(),a));}}}return out;
+ }
+ public PrivateMessage send(long conversation,long sender,String clientId,String content,AttachmentUpload upload)throws SQLException{
+  if(!isParticipant(conversation,sender))throw new SecurityException("FORBIDDEN");if(!PrivateConversationPolicy.validClientId(clientId))throw new IllegalArgumentException("Invalid message token.");
+  try(Connection c=DBConnection.getConnection()){c.setAutoCommit(false);try{long id;
+   try(PreparedStatement s=c.prepareStatement("INSERT INTO private_messages(conversation_id,sender_id,client_message_id,message) VALUES(?,?,?,?) ON DUPLICATE KEY UPDATE message_id=LAST_INSERT_ID(message_id)",Statement.RETURN_GENERATED_KEYS)){s.setLong(1,conversation);s.setLong(2,sender);s.setString(3,clientId);if(content==null||content.isBlank())s.setNull(4,Types.VARCHAR);else s.setString(4,content.trim());s.executeUpdate();try(ResultSet r=s.getGeneratedKeys()){if(!r.next())throw new SQLException("Message identifier unavailable.");id=r.getLong(1);}}
+   if(upload!=null)try(PreparedStatement s=c.prepareStatement("INSERT IGNORE INTO private_message_attachments(message_id,original_filename,storage_key,mime_type,file_size) VALUES(?,?,?,?,?)")){s.setLong(1,id);s.setString(2,upload.originalFilename());s.setString(3,upload.storageKey());s.setString(4,upload.mimeType());s.setLong(5,upload.fileSize());s.executeUpdate();}
+   try(PreparedStatement s=c.prepareStatement("UPDATE private_conversations SET updated_at=CURRENT_TIMESTAMP WHERE conversation_id=?")){s.setLong(1,conversation);s.executeUpdate();}c.commit();return messages(conversation,sender,id-1).stream().filter(m->m.messageId()==id).findFirst().orElseThrow();
+  }catch(Exception e){c.rollback();if(e instanceof SQLException x)throw x;if(e instanceof RuntimeException x)throw x;throw new SQLException("Private message failed.",e);}}
+ }
+ public void markRead(long conversation,long user)throws SQLException{if(!isParticipant(conversation,user))throw new SecurityException("FORBIDDEN");try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("INSERT INTO private_message_reads(conversation_id,user_id,last_read_message_id) SELECT ?,?,MAX(message_id) FROM private_messages WHERE conversation_id=? ON DUPLICATE KEY UPDATE last_read_message_id=VALUES(last_read_message_id),read_at=CURRENT_TIMESTAMP")){s.setLong(1,conversation);s.setLong(2,user);s.setLong(3,conversation);s.executeUpdate();}}
+ public long unread(long user)throws SQLException{String q="SELECT COUNT(*) FROM private_messages pm JOIN private_conversations c ON c.conversation_id=pm.conversation_id LEFT JOIN private_message_reads r ON r.conversation_id=c.conversation_id AND r.user_id=? WHERE (c.user1_id=? OR c.user2_id=?) AND pm.sender_id<>? AND pm.message_id>COALESCE(r.last_read_message_id,0)";try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(q)){for(int i=1;i<=4;i++)s.setLong(i,user);try(ResultSet r=s.executeQuery()){return r.next()?r.getLong(1):0;}}}
+ public Optional<Attachment> attachment(long id,long viewer)throws SQLException{String q="SELECT a.*,pm.conversation_id FROM private_message_attachments a JOIN private_messages pm ON pm.message_id=a.message_id JOIN private_conversations c ON c.conversation_id=pm.conversation_id WHERE a.attachment_id=? AND (c.user1_id=? OR c.user2_id=?)";try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(q)){s.setLong(1,id);s.setLong(2,viewer);s.setLong(3,viewer);try(ResultSet r=s.executeQuery()){if(!r.next())return Optional.empty();return Optional.of(new Attachment(id,null,null,null,r.getString("original_filename"),r.getString("storage_key"),r.getString("mime_type"),r.getLong("file_size")));}}}
+}

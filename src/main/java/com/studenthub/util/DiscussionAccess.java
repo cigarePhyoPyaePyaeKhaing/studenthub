@@ -13,9 +13,12 @@ public final class DiscussionAccess {
     }
 
     public static String denialReason(DiscussionScope scope, Integer semester, String sectionName) {
+        return denialReason(scope, 1L, semester, sectionName);
+    }
+    public static String denialReason(DiscussionScope scope, Long universityId, Integer semester, String sectionName) {
         if (scope == DiscussionScope.ALL || scope == DiscussionScope.CR_ALL) return null;
-        if (semester == null || sectionName == null || sectionName.isBlank()) {
-            return "Complete your semester and section information in your profile to join your academic discussion groups.";
+        if (universityId == null || universityId <= 0 || semester == null || sectionName == null || sectionName.isBlank()) {
+            return "Complete your university, semester and section information to join your academic discussion groups.";
         }
         return null;
     }
