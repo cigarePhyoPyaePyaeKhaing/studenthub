@@ -31,5 +31,6 @@
         <section class="side-card account-card"><div class="avatar avatar-large"><jsp:include page="partials/avatar.jsp"><jsp:param name="photo" value="${dashboardProfile.avatarUrl}"/><jsp:param name="initial" value="${sessionScope.fullName.substring(0, 1)}"/></jsp:include></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role"><c:out value="${sessionScope.role}" /></span></section>
     </aside>
 </div>
+<jsp:include page="partials/mobile-bottom-nav.jsp" />
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body></html>
