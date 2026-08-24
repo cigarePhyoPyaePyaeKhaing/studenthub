@@ -15,6 +15,87 @@ public class NotificationDAO {
               AND n.section_name=viewer.section_name))
         """;
 
+    private record PostSummary(String title, String content) {}
+
+    public static Long extractPostId(String linkUrl) {
+        if (linkUrl == null || linkUrl.isBlank()) return null;
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?:postId|post_id|id)=(\\d+)").matcher(linkUrl);
+        if (matcher.find()) {
+            try {
+                return Long.parseLong(matcher.group(1));
+            } catch (NumberFormatException ignored) {}
+        }
+        matcher = java.util.regex.Pattern.compile("/posts/(\\d+)").matcher(linkUrl);
+        if (matcher.find()) {
+            try {
+                return Long.parseLong(matcher.group(1));
+            } catch (NumberFormatException ignored) {}
+        }
+        return null;
+    }
+
+    private void enrichAnnouncementContents(Connection connection, List<Notification> items) throws SQLException {
+        if (items == null || items.isEmpty()) return;
+        java.util.Set<Long> postIds = new java.util.LinkedHashSet<>();
+        for (Notification item : items) {
+            if ("ANNOUNCEMENT".equalsIgnoreCase(item.type())) {
+                Long postId = extractPostId(item.linkUrl());
+                if (postId != null) {
+                    postIds.add(postId);
+                }
+            }
+        }
+        if (postIds.isEmpty()) return;
+
+        StringBuilder sql = new StringBuilder("SELECT post_id, title, content FROM posts WHERE post_id IN (");
+        int count = 0;
+        for (int i = 0; i < postIds.size(); i++) {
+            if (i > 0) sql.append(",");
+            sql.append("?");
+        }
+        sql.append(")");
+
+        java.util.Map<Long, PostSummary> postMap = new java.util.HashMap<>();
+        try (PreparedStatement s = connection.prepareStatement(sql.toString())) {
+            int idx = 1;
+            for (Long id : postIds) {
+                s.setLong(idx++, id);
+            }
+            try (ResultSet r = s.executeQuery()) {
+                while (r.next()) {
+                    long postId = r.getLong("post_id");
+                    String title = r.getString("title");
+                    String content = r.getString("content");
+                    postMap.put(postId, new PostSummary(title, content));
+                }
+            }
+        }
+
+        for (int i = 0; i < items.size(); i++) {
+            Notification item = items.get(i);
+            if ("ANNOUNCEMENT".equalsIgnoreCase(item.type())) {
+                Long postId = extractPostId(item.linkUrl());
+                if (postId != null && postMap.containsKey(postId)) {
+                    PostSummary post = postMap.get(postId);
+                    String resolvedTitle = (post.title() != null && !post.title().isBlank()) ? post.title() : item.title();
+                    String resolvedContent = (post.content() != null && !post.content().isBlank()) ? post.content() : item.message();
+                    items.set(i, new Notification(
+                        item.notificationId(),
+                        item.type(),
+                        resolvedTitle,
+                        resolvedContent,
+                        item.linkUrl(),
+                        item.read(),
+                        item.createdAt(),
+                        item.actorUserId(),
+                        item.actorName(),
+                        item.actorAvatarUrl()
+                    ));
+                }
+            }
+        }
+    }
+
     public List<Notification> findVisible(long userId, int limit) throws SQLException {
         String sql = "SELECT n.notification_id,n.notification_type,n.title,n.message,n.link_url,n.created_at,"+
                 "actor.user_id actor_user_id,actor.full_name actor_name,actor.profile_image actor_avatar_url,"+
@@ -26,6 +107,7 @@ public class NotificationDAO {
         try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(sql)){
             s.setLong(1,userId);s.setInt(2,Math.max(1,Math.min(limit,100)));
             try(ResultSet r=s.executeQuery()){while(r.next())items.add(map(r));}
+            enrichAnnouncementContents(c, items);
         }
         return items;
     }
