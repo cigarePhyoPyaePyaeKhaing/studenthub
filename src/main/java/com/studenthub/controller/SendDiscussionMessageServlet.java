@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "SendDiscussionMessageServlet", urlPatterns = "/discussions/messages")
-@MultipartConfig(maxFileSize=52428800L,maxRequestSize=57671680L)
+@MultipartConfig(maxFileSize=com.studenthub.util.UploadPolicy.VIDEO_MAX,maxRequestSize=com.studenthub.util.UploadPolicy.MULTIPART_MAX)
 public class SendDiscussionMessageServlet extends HttpServlet {
     private final DiscussionService service = new DiscussionService();
 

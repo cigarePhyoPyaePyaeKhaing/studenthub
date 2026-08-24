@@ -4,6 +4,7 @@ import com.studenthub.dao.CategoryDAO;
 import com.studenthub.service.PostService;
 import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
+import com.studenthub.util.UploadPolicy;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.annotation.MultipartConfig;
@@ -14,7 +15,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "CreatePostServlet", urlPatterns = "/posts/create")
-@MultipartConfig(maxFileSize=52428800L,maxRequestSize=57671680L)
+@MultipartConfig(maxFileSize=UploadPolicy.VIDEO_MAX,maxRequestSize=UploadPolicy.MULTIPART_MAX)
 public class CreatePostServlet extends HttpServlet {
     private final PostService postService = new PostService();
     private final CategoryDAO categoryDAO = new CategoryDAO();

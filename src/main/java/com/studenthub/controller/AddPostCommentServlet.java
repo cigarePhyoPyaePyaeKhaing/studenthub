@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "AddPostCommentServlet", urlPatterns = "/posts/comments/add")
-@MultipartConfig(maxFileSize=52428800L,maxRequestSize=57671680L)
+@MultipartConfig(maxFileSize=com.studenthub.util.UploadPolicy.VIDEO_MAX,maxRequestSize=com.studenthub.util.UploadPolicy.MULTIPART_MAX)
 public class AddPostCommentServlet extends HttpServlet {
     private final PostEngagementService service = new PostEngagementService();
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, jakarta.servlet.ServletException {

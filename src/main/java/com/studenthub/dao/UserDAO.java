@@ -14,8 +14,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import com.studenthub.model.UserSearchResult;
 
 public class UserDAO {
+    public List<UserSearchResult> searchPublicUsers(long currentUserId,String rawQuery,int limit)throws SQLException{
+        String query=rawQuery==null?"":rawQuery.trim().toLowerCase(java.util.Locale.ROOT);if(query.length()<2)return List.of();int safeLimit=Math.max(1,Math.min(limit,20));String like="%"+query.replace("\\","\\\\").replace("%","\\%").replace("_","\\_")+"%";
+        String sql="SELECT user_id,student_id,full_name,role,profile_image,last_active_at FROM users WHERE user_id<>? AND email_verified=TRUE AND (LOWER(full_name) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE(username,'')) LIKE ? ESCAPE '\\\\' OR LOWER(COALESCE(student_id,'')) LIKE ? ESCAPE '\\\\') ORDER BY CASE WHEN LOWER(full_name)=? THEN 0 ELSE 1 END,full_name LIMIT ?";
+        List<UserSearchResult> out=new ArrayList<>();try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(sql)){s.setLong(1,currentUserId);s.setString(2,like);s.setString(3,like);s.setString(4,like);s.setString(5,query);s.setInt(6,safeLimit);try(ResultSet r=s.executeQuery()){while(r.next()){var active=r.getTimestamp("last_active_at");out.add(new UserSearchResult(r.getLong("user_id"),r.getString("student_id"),r.getString("full_name"),r.getString("role"),r.getString("profile_image"),active==null?null:active.toLocalDateTime()));}}}return out;
+    }
     public long createPendingStudent(Connection connection, String studentId, String fullName,
                                      String email, String passwordHash) throws SQLException {
         String sql = """

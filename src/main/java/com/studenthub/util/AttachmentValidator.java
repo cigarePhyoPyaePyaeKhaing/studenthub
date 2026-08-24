@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public final class AttachmentValidator {
-    public static final long MAX_BYTES=50L*1024*1024;
+    public static final long MAX_BYTES=UploadPolicy.VIDEO_MAX;
     private static final Map<String,Set<String>> ALLOWED=Map.ofEntries(
             Map.entry("image/jpeg",Set.of("jpg","jpeg")),Map.entry("image/png",Set.of("png")),Map.entry("image/webp",Set.of("webp")),Map.entry("image/gif",Set.of("gif")),
             Map.entry("video/mp4",Set.of("mp4")),Map.entry("video/webm",Set.of("webm")),Map.entry("application/pdf",Set.of("pdf")),
@@ -22,7 +22,7 @@ public final class AttachmentValidator {
         if(safeName.length()>180)safeName=safeName.substring(safeName.length()-180);
         int dot=safeName.lastIndexOf('.'); String ext=dot<0?"":safeName.substring(dot+1).toLowerCase(Locale.ROOT); String type=mime==null?"":mime.toLowerCase(Locale.ROOT).split(";",2)[0];
         if(!ALLOWED.getOrDefault(type,Set.of()).contains(ext)||!signature(type,ext,data))return new Result(false,null,"This attachment type is not supported or its content does not match the file type.");
-        long limit=type.startsWith("video/")?50L*1024*1024:type.startsWith("image/")?10L*1024*1024:20L*1024*1024;
+        long limit=UploadPolicy.limit(type);
         if(data.length>limit)return new Result(false,null,type.startsWith("image/")?"Images must be 10 MB or smaller.":type.startsWith("video/")?"Videos must be 50 MB or smaller.":"Attachments must be 20 MB or smaller.");
         return new Result(true,new Validated(safeName,type,ext,data),null);
     }
@@ -36,4 +36,5 @@ public final class AttachmentValidator {
     }
     private static boolean starts(byte[]b,int...v){if(b.length<v.length)return false;for(int i=0;i<v.length;i++)if((b[i]&255)!=v[i])return false;return true;} private static String text(byte[]b,int o,int n){return b.length<o+n?"":new String(b,o,n,StandardCharsets.US_ASCII);}
     public record Validated(String originalFilename,String mimeType,String extension,byte[] content){} public record Result(boolean valid,Validated value,String error){}
+    public static Result validateHeader(String filename,String mime,byte[] header,long size){Result result=validate(filename,mime,header);if(!result.valid())return result;if(size>UploadPolicy.limit(result.value.mimeType()))return new Result(false,null,UploadPolicy.sizeError(result.value.mimeType()));return new Result(true,new Validated(result.value.originalFilename(),result.value.mimeType(),result.value.extension(),header),null);}
 }
