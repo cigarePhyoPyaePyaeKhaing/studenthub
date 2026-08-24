@@ -268,10 +268,12 @@ class AnnouncementContentIntegrityTest {
         }
 
         // Assert width and breakpoint contract parity
-        int[] sampleWidths = {375, 390, 430, 768, 820, 1024, 1112, 1180};
+        int[] sampleWidths = {360, 375, 390, 412, 430, 600, 768, 820, 1024, 1112, 1180};
         for (int width : sampleWidths) {
             assertEquals(isTabletFloatingViewport(width), width > 600 && width <= 1180,
                     "Home and Notifications must have identical responsive behavior at width " + width);
+            assertEquals(isPhoneViewport(width), width <= 600,
+                    "Phone viewport contract must match on width " + width);
         }
     }
 
