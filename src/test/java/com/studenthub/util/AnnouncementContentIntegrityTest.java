@@ -229,6 +229,19 @@ class AnnouncementContentIntegrityTest {
         assertEquals("Discussions", labels[3]);
     }
 
+    @Test
+    void verifiesMobileTabletBreakpointContract() {
+        int[] mobileTabletWidths = {360, 375, 390, 412, 430, 768, 820, 1024};
+        int[] desktopWidths = {1025, 1280, 1366, 1440, 1920};
+
+        for (int width : mobileTabletWidths) {
+            assertTrue(isMobileTabletViewport(width), "Width " + width + " should use mobile/tablet bottom nav");
+        }
+        for (int width : desktopWidths) {
+            assertFalse(isMobileTabletViewport(width), "Width " + width + " should use desktop sidebar");
+        }
+    }
+
     private boolean isMobileTabletViewport(int width) {
         return width <= 1024;
     }
