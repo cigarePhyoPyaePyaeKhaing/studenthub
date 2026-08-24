@@ -35,9 +35,9 @@
         <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}" /></div></c:if>
         <c:if test="${not empty error}"><div class="alert alert-warning"><c:out value="${error}" /></div></c:if>
         <c:if test="${not empty profile}">
-            <c:if test="${not empty profile.avatarUrl}"><c:url var="profilePhotoUrl" value="/profile/photo/${profile.avatarUrl}" /></c:if>
+            <c:if test="${not empty profile.avatarUrl}"><c:url var="profilePhotoUrl" value="/profile/photo/${profile.avatarUrl}"><c:param name="v" value="${profile.avatarUrl}"/></c:url></c:if>
             <section class="profile-hero">
-                <div class="profile-avatar"><c:choose><c:when test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="Profile photo"></c:when><c:otherwise><c:out value="${profile.initial}" /></c:otherwise></c:choose></div>
+                <div class="profile-avatar"><span class="avatar-fallback"><c:out value="${profile.initial}"/></span><c:if test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="" onerror="this.hidden=true;this.previousElementSibling.hidden=false" onload="this.previousElementSibling.hidden=true"></c:if></div>
                 <div>
                     <p class="eyebrow mb-1">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                     <h1><c:out value="${profile.fullName}" /></h1>
@@ -64,7 +64,7 @@
                             <fieldset class="profile-photo-editor">
                                 <legend>Profile Photo</legend>
                                 <div class="profile-photo-row">
-                                    <div class="profile-photo-preview" data-photo-preview data-fallback="<c:out value='${profile.initial}' />"><c:choose><c:when test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="Current profile photo" data-current-photo></c:when><c:otherwise><span><c:out value="${profile.initial}" /></span></c:otherwise></c:choose></div>
+                                    <div class="profile-photo-preview" data-photo-preview data-fallback="<c:out value='${profile.initial}' />"><span class="avatar-fallback"><c:out value="${profile.initial}"/></span><c:if test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="" data-current-photo onerror="this.hidden=true;this.previousElementSibling.hidden=false" onload="this.previousElementSibling.hidden=true"></c:if></div>
                                     <div class="profile-photo-controls"><label class="profile-photo-button" for="profilePhoto">Choose Image</label><input class="visually-hidden" type="file" id="profilePhoto" name="profilePhoto" accept="image/jpeg,image/png,image/webp" data-photo-input><p>JPG, PNG, or WEBP · Max 2 MB</p><p class="profile-photo-error" data-photo-error role="alert"></p><c:if test="${not empty profile.avatarUrl}"><label class="remove-photo-control"><input type="checkbox" name="removePhoto" value="true" data-remove-photo> Remove photo</label></c:if></div>
                                 </div>
                             </fieldset>

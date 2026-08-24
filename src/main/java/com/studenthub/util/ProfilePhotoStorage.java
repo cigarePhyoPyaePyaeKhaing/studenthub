@@ -50,6 +50,10 @@ public class ProfilePhotoStorage {
         if (configured != null && !configured.isBlank()) {
             return Path.of(configured).resolve("profile");
         }
+        String environment = System.getenv("APP_ENV");
+        if (environment != null && environment.equalsIgnoreCase("production")) {
+            throw new IllegalStateException("STUDENTHUB_UPLOAD_DIR is required in production");
+        }
         return Path.of(System.getProperty("java.io.tmpdir"), "studenthub-uploads", "profile");
     }
 }

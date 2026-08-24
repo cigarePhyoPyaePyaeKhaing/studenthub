@@ -17,7 +17,9 @@ public class NotificationDAO {
 
     public List<Notification> findVisible(long userId, int limit) throws SQLException {
         String sql = "SELECT n.notification_id,n.notification_type,n.title,n.message,n.link_url,n.created_at,"+
+                "actor.user_id actor_user_id,actor.full_name actor_name,actor.profile_image actor_avatar_url,"+
                 "(nr.notification_id IS NOT NULL) is_read FROM notifications n JOIN users viewer ON viewer.user_id=? "+
+                "LEFT JOIN users actor ON actor.user_id=n.actor_id "+
                 "LEFT JOIN notification_reads nr ON nr.notification_id=n.notification_id AND nr.user_id=viewer.user_id "+
                 "WHERE "+VISIBLE+" ORDER BY n.created_at DESC,n.notification_id DESC LIMIT ?";
         List<Notification> items = new ArrayList<>();
@@ -113,6 +115,9 @@ public class NotificationDAO {
         }
     }
 
-    private Notification map(ResultSet r)throws SQLException{return new Notification(r.getLong("notification_id"),r.getString("notification_type"),
-            r.getString("title"),r.getString("message"),r.getString("link_url"),r.getBoolean("is_read"),r.getTimestamp("created_at").toLocalDateTime());}
+    private Notification map(ResultSet r)throws SQLException{
+        long actorId=r.getLong("actor_user_id"); Long nullableActor=r.wasNull()?null:actorId;
+        return new Notification(r.getLong("notification_id"),r.getString("notification_type"),
+            r.getString("title"),r.getString("message"),r.getString("link_url"),r.getBoolean("is_read"),
+            r.getTimestamp("created_at").toLocalDateTime(),nullableActor,r.getString("actor_name"),r.getString("actor_avatar_url"));}
 }
