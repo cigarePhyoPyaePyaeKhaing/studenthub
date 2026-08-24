@@ -134,8 +134,8 @@ class AnnouncementContentIntegrityTest {
 
     @Test
     void verifiesResponsiveBreakpointClassificationContract() {
-        int[] mobileTabletWidths = {375, 390, 430, 768, 820, 1024};
-        int[] desktopWidths = {1025, 1280, 1366, 1920};
+        int[] mobileTabletWidths = {375, 390, 430, 768, 820, 1024, 1100, 1112, 1180};
+        int[] desktopWidths = {1181, 1280, 1366, 1920};
 
         for (int width : mobileTabletWidths) {
             assertTrue(isMobileTabletViewport(width), "Width " + width + " must be classified as Mobile/Tablet layout");
@@ -231,8 +231,8 @@ class AnnouncementContentIntegrityTest {
 
     @Test
     void verifiesMobileTabletBreakpointContract() {
-        int[] mobileTabletWidths = {360, 375, 390, 412, 430, 768, 820, 1024};
-        int[] desktopWidths = {1025, 1280, 1366, 1440, 1920};
+        int[] mobileTabletWidths = {360, 375, 390, 412, 430, 768, 820, 1024, 1100, 1112, 1180};
+        int[] desktopWidths = {1181, 1280, 1366, 1440, 1920};
 
         for (int width : mobileTabletWidths) {
             assertTrue(isMobileTabletViewport(width), "Width " + width + " should use mobile/tablet bottom nav");
@@ -243,6 +243,6 @@ class AnnouncementContentIntegrityTest {
     }
 
     private boolean isMobileTabletViewport(int width) {
-        return width <= 1024;
+        return width <= 1180;
     }
 }

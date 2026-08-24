@@ -8,13 +8,13 @@
     <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head><body class="dashboard-body">
-<header class="mobile-header d-lg-none">
+<header class="mobile-header">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
     <button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation">Menu</button>
 </header>
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileNavigation"><div class="offcanvas-header"><h2 class="offcanvas-title h5">StudentHub</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><jsp:include page="../partials/sidebar.jsp" /></div></div>
 <div class="dashboard-shell discussions-shell">
-    <aside class="dashboard-sidebar d-none d-lg-flex"><jsp:include page="../partials/sidebar.jsp" /></aside>
+    <aside class="dashboard-sidebar"><jsp:include page="../partials/sidebar.jsp" /></aside>
     <main class="discussion-column">
         <section class="discussion-header">
             <div><p class="eyebrow mb-2">Student community</p><h1>Discussions</h1><p>Connect with classmates in securely scoped rooms.</p></div>

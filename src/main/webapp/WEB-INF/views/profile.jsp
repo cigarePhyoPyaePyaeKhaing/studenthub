@@ -14,7 +14,7 @@
     <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head>
 <body class="dashboard-body">
-<header class="mobile-header d-lg-none">
+<header class="mobile-header">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
     <button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation">Menu</button>
 </header>
@@ -28,7 +28,7 @@
     </div>
 </div>
 <div class="dashboard-shell profile-shell">
-    <aside class="dashboard-sidebar d-none d-lg-flex">
+    <aside class="dashboard-sidebar">
         <jsp:include page="partials/sidebar.jsp" />
     </aside>
     <main class="profile-column">

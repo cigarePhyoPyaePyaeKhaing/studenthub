@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <nav class="sidebar-content" aria-label="Primary navigation">
     <c:set var="currentPath" value="${pageContext.request.requestURI}" />
-    <a class="dashboard-brand d-none d-lg-flex" href="${pageContext.request.contextPath}/home"><jsp:include page="logo.jsp" /></a>
+    <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><jsp:include page="logo.jsp" /></a>
     <div class="sidebar-links">
         <a class="${activeNav eq 'HOME' ? 'active' : ''}" href="${pageContext.request.contextPath}/home">Home</a>
         <a class="${activeNav eq 'ANNOUNCEMENTS' ? 'active' : ''}" href="${pageContext.request.contextPath}/announcements">Announcements</a>

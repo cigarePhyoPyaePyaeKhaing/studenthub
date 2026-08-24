@@ -11,13 +11,13 @@
     <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head>
 <body class="dashboard-body">
-<header class="mobile-header d-lg-none">
+<header class="mobile-header">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
     <button class="btn btn-light" type="button" data-bs-toggle="offcanvas" data-bs-target="#mobileNavigation">Menu</button>
 </header>
 <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileNavigation"><div class="offcanvas-header"><h2 class="offcanvas-title h5">StudentHub</h2><button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button></div><div class="offcanvas-body"><jsp:include page="partials/sidebar.jsp" /></div></div>
 <div class="dashboard-shell">
-    <aside class="dashboard-sidebar d-none d-lg-flex"><jsp:include page="partials/sidebar.jsp" /></aside>
+    <aside class="dashboard-sidebar"><jsp:include page="partials/sidebar.jsp" /></aside>
     <main class="feed-column">
         <section class="welcome-panel"><div><p class="eyebrow mb-2">University of Information Technology</p><h1>Welcome back, <c:out value="${sessionScope.fullName}" /></h1><p class="mb-0 text-secondary">Here is what is happening in your StudentHub community.</p></div><c:if test="${canCreatePost}"><a class="btn btn-primary create-post-button" href="${pageContext.request.contextPath}/posts/create">Create Post</a></c:if></section>
         <c:if test="${not empty message}"><div class="alert alert-success"><c:out value="${message}" /></div></c:if>
