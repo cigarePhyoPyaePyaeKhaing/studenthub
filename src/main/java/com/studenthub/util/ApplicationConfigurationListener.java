@@ -111,12 +111,14 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             ensureDiscussionUniversityColumn(connection, context);
             ensurePrivateMessagingTables(connection, context);
             ensurePrivateMessageReceipts(connection, context);
+            ensurePrivateConversationVisibility(connection, context);
 
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
             LOGGER.log(Level.INFO, "Database table initialization check: {0}", e.getMessage());
         }
     }
+    private void ensurePrivateConversationVisibility(Connection connection,ServletContext context){String sql="CREATE TABLE IF NOT EXISTS private_conversation_visibility(conversation_id BIGINT NOT NULL,user_id BIGINT NOT NULL,deleted_at TIMESTAMP NULL,PRIMARY KEY(conversation_id,user_id),CONSTRAINT fk_private_visibility_conversation FOREIGN KEY(conversation_id) REFERENCES private_conversations(conversation_id) ON DELETE CASCADE,CONSTRAINT fk_private_visibility_user FOREIGN KEY(user_id) REFERENCES users(user_id) ON DELETE CASCADE,INDEX idx_private_visibility_user(user_id,deleted_at)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";try(Statement statement=connection.createStatement()){statement.execute(sql);}catch(SQLException exception){context.log("ensurePrivateConversationVisibility check: "+exception.getClass().getName());}}
 
     private void ensurePrivateMessageReceipts(Connection connection, ServletContext context) {
         try {

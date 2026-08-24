@@ -17,13 +17,16 @@ public class PrivateMessageDAO {
   }catch(SQLException e){c.rollback();throw e;}}
  }
  public boolean isParticipant(long conversation,long user)throws SQLException{try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("SELECT 1 FROM private_conversations WHERE conversation_id=? AND (user1_id=? OR user2_id=?)")){s.setLong(1,conversation);s.setLong(2,user);s.setLong(3,user);try(ResultSet r=s.executeQuery()){return r.next();}}}
+ public void hide(long conversation,long user)throws SQLException{if(!isParticipant(conversation,user))throw new SecurityException("FORBIDDEN");try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("INSERT INTO private_conversation_visibility(conversation_id,user_id,deleted_at) VALUES(?,?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE deleted_at=CURRENT_TIMESTAMP")){s.setLong(1,conversation);s.setLong(2,user);s.executeUpdate();}}
+ public void restore(long conversation,long user)throws SQLException{if(!isParticipant(conversation,user))throw new SecurityException("FORBIDDEN");try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("INSERT INTO private_conversation_visibility(conversation_id,user_id,deleted_at) VALUES(?,?,NULL) ON DUPLICATE KEY UPDATE deleted_at=NULL")){s.setLong(1,conversation);s.setLong(2,user);s.executeUpdate();}}
  public List<PrivateConversation> list(long user)throws SQLException{
   String q="""
    SELECT c.conversation_id,u.user_id,u.full_name,u.profile_image,u.last_active_at,c.updated_at,
    (SELECT pm.message FROM private_messages pm WHERE pm.conversation_id=c.conversation_id ORDER BY pm.message_id DESC LIMIT 1) preview,
    (SELECT COUNT(*) FROM private_messages pm WHERE pm.conversation_id=c.conversation_id AND pm.sender_id<>? AND pm.message_id>COALESCE((SELECT pr.last_read_message_id FROM private_message_reads pr WHERE pr.conversation_id=c.conversation_id AND pr.user_id=?),0)) unread
    FROM private_conversations c JOIN users u ON u.user_id=IF(c.user1_id=?,c.user2_id,c.user1_id)
-   WHERE c.user1_id=? OR c.user2_id=? ORDER BY c.updated_at DESC
+   LEFT JOIN private_conversation_visibility v ON v.conversation_id=c.conversation_id AND v.user_id=IF(c.user1_id=u.user_id,c.user2_id,c.user1_id)
+   WHERE (c.user1_id=? OR c.user2_id=?) AND (v.deleted_at IS NULL OR EXISTS(SELECT 1 FROM private_messages restore WHERE restore.conversation_id=c.conversation_id AND restore.sender_id<>v.user_id AND restore.created_at>v.deleted_at)) ORDER BY c.updated_at DESC
    """;
   List<PrivateConversation> out=new ArrayList<>();try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(q)){for(int i=1;i<=5;i++)s.setLong(i,user);try(ResultSet r=s.executeQuery()){while(r.next()){Timestamp active=r.getTimestamp("last_active_at"),updated=r.getTimestamp("updated_at");out.add(new PrivateConversation(r.getLong("conversation_id"),r.getLong("user_id"),r.getString("full_name"),r.getString("profile_image"),active==null?null:active.toLocalDateTime(),r.getString("preview"),updated==null?null:updated.toLocalDateTime(),r.getLong("unread")));}}}return out;
  }

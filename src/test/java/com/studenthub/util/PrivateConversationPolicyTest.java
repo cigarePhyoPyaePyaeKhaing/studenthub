@@ -6,4 +6,5 @@ class PrivateConversationPolicyTest{
  @Test void selfMessageRejected(){assertThrows(IllegalArgumentException.class,()->PrivateConversationPolicy.normalize(4,4));}
  @Test void participantsOnly(){assertTrue(PrivateConversationPolicy.participant(2,2,7));assertFalse(PrivateConversationPolicy.participant(5,2,7));}
  @Test void clientTokenMustBeUuid(){assertTrue(PrivateConversationPolicy.validClientId("550e8400-e29b-41d4-a716-446655440000"));assertFalse(PrivateConversationPolicy.validClientId("retry-me"));}
+ @Test void newerIncomingMessageRestoresHiddenConversation(){var deleted=java.time.LocalDateTime.of(2026,8,24,10,0);assertFalse(PrivateConversationPolicy.shouldReappear(deleted,deleted.minusSeconds(1)));assertTrue(PrivateConversationPolicy.shouldReappear(deleted,deleted.plusSeconds(1)));}
 }
