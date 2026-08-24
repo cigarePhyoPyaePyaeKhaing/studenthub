@@ -1,15 +1,310 @@
-document.addEventListener("DOMContentLoaded",()=>{
-const form=document.querySelector(".private-composer"),list=document.querySelector(".private-message-list");if(!form||!list)return;const field=form.querySelector("textarea"),fileInput=form.querySelector("[type=file]"),send=form.querySelector("button[type=submit]"),csrf=list.dataset.csrf;let last=Math.max(0,...[...list.querySelectorAll("[data-message-id]")].map(x=>+x.dataset.messageId)),pending,xhr;
-const uuid=()=>crypto.randomUUID(),size=n=>n<1048576?`${Math.max(1,Math.round(n/1024))} KB`:`${(n/1048576).toFixed(1)} MB`,mark=(el,s)=>{let x=el.querySelector(".message-receipt");if(!x){x=document.createElement("span");x.className="message-receipt";el.querySelector(".message-meta").append(x)}x.dataset.status=s;x.textContent=s==="SENDING"?"◷":s==="SENT"?"✓":s==="DELIVERED"||s==="SEEN"?"✓✓":"!";x.title=s};
-const media=(el,d)=>{if(!d.attachmentId)return;let box=el.querySelector(".private-file");if(!box){box=document.createElement("div");box.className="private-file";el.querySelector(".message-meta").before(box)}box.replaceChildren();let view;if(d.attachmentType==="IMAGE"){view=document.createElement("img");view.src=d.previewUrl}else if(d.attachmentType==="VIDEO"){view=document.createElement("video");view.src=d.previewUrl;view.controls=true;view.preload="metadata"}else if(d.attachmentType==="AUDIO"){view=document.createElement("audio");view.src=d.previewUrl;view.controls=true;view.preload="metadata"}else{view=document.createElement("strong");view.textContent=d.originalFilename}const details=document.createElement("small");details.textContent=`${d.originalFilename} · ${size(d.fileSize)}`;const link=document.createElement("a");link.href=d.downloadUrl;link.textContent="Download";box.append(view,details,link)};
-const bubble=(d,own,temp=false)=>{const old=!temp&&list.querySelector(`[data-message-id="${d.messageId}"]`);if(old){mark(old,d.status||"SENT");return old}const near=list.scrollHeight-list.scrollTop-list.clientHeight<100,el=document.createElement("article");el.className=`private-bubble ${own?"outgoing":"incoming"}`;if(!temp)el.dataset.messageId=d.messageId;el.innerHTML='<p></p><div class="message-meta"><time></time></div>';el.querySelector("p").textContent=d.message||"";el.querySelector("time").textContent=d.createdLabel||"";media(el,d);if(own)mark(el,d.status||"SENDING");list.append(el);if(!temp)last=Math.max(last,+d.messageId);if(own||temp||near)list.scrollTop=list.scrollHeight;else if(!document.querySelector(".new-message-indicator")){const n=document.createElement("button");n.className="new-message-indicator";n.textContent="New messages";n.onclick=()=>{list.scrollTop=list.scrollHeight;n.remove()};list.after(n)}return el};
-const uploadCard=(el,file)=>{const box=document.createElement("div");box.className="upload-state";box.innerHTML='<strong></strong><small></small><span>Uploading… 0%</span><progress max="100" value="0"></progress><div><button type="button">Cancel</button></div>';box.querySelector("strong").textContent=file.name;box.querySelector("small").textContent=size(file.size);box.querySelector("button").onclick=()=>xhr?.abort();el.querySelector(".message-meta").before(box);return box};
-const resetComposer=()=>{field.value="";fileInput.value="";document.querySelector(".private-composer .attachment-preview")?.remove();send.disabled=false};
-const fail=message=>{mark(pending.el,"FAILED");let actions;if(pending.upload){pending.upload.querySelector("span").textContent=message||"Upload failed";pending.upload.querySelector("progress")?.remove();actions=pending.upload.querySelector("div");actions.replaceChildren()}else{actions=document.createElement("div");actions.className="failed-message-actions";pending.el.append(actions)}for(const [label,action]of[["Retry",sendPending],["Remove",()=>{pending.el.remove();pending=null}]]){const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=action;actions.append(b)}send.disabled=false};
-function sendPending(){if(!pending)return;send.disabled=true;xhr=new XMLHttpRequest();xhr.open("POST",form.action);xhr.responseType="json";if(pending.file)xhr.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);pending.upload.querySelector("progress").value=p;pending.upload.querySelector("span").textContent=`Uploading… ${p}%`}};xhr.onload=()=>{const d=xhr.response||{};if(xhr.status<200||xhr.status>=300){fail(d.error);return}pending.el.dataset.messageId=d.messageId;pending.el.querySelector("time").textContent=d.createdLabel;pending.upload?.remove();media(pending.el,d);mark(pending.el,d.status);last=Math.max(last,+d.messageId);pending=null;send.disabled=false};xhr.onerror=()=>fail("Upload failed");xhr.onabort=()=>fail("Upload cancelled");xhr.send(pending.body)}
-form.onsubmit=e=>{e.preventDefault();if(pending)return;const text=field.value.trim(),file=fileInput.files[0];if(!text&&!file)return;form.querySelector("[name=clientMessageId]").value=uuid();const body=new FormData(form),el=bubble({message:text,status:"SENDING"},true,true),upload=file?uploadCard(el,file):null;pending={text,file,body,el,upload};resetComposer();sendPending()};
-const seen=()=>{if(document.hidden)return;const x=[...list.querySelectorAll(".incoming[data-message-id]")].at(-1);if(x)fetch(list.dataset.seenUrl,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({csrfToken:csrf,conversationId:list.dataset.conversation,lastSeenMessageId:x.dataset.messageId})}).catch(()=>{})};
-const poll=async()=>{if(document.hidden)return;try{const r=await fetch(`${form.action.replace(/\/send$/,"/poll")}?conversationId=${list.dataset.conversation}&afterMessageId=${last}`),d=await r.json();d.messages.forEach(m=>bubble(m,String(m.senderId)===list.dataset.currentUser));d.receipts.forEach(x=>{const el=list.querySelector(`[data-message-id="${x.messageId}"]`);if(el)mark(el,x.status)});if(d.messages.some(m=>String(m.senderId)!==list.dataset.currentUser))seen()}catch(e){}};setInterval(poll,1500);document.onvisibilitychange=()=>{if(!document.hidden){poll();seen()}};list.scrollTop=list.scrollHeight;seen();
-const panel=document.querySelector(".conversation-list"),header=panel?.querySelector("header");if(header){const search=document.createElement("div");search.className="people-search";search.innerHTML='<input type="search" placeholder="Search people…" aria-label="Search people"><div class="people-results" hidden></div>';header.after(search);const input=search.querySelector("input"),results=search.querySelector("div");let timer;input.oninput=()=>{clearTimeout(timer);const q=input.value.trim();panel.classList.toggle("searching",q.length>0);if(q.length<2){results.hidden=true;results.replaceChildren();return}timer=setTimeout(async()=>{const r=await fetch(form.action.replace(/\/messages\/send$/,"/users/search")+`?q=${encodeURIComponent(q)}`),users=r.ok?await r.json():[];results.replaceChildren();if(!users.length){const empty=document.createElement("p");empty.className="search-empty";empty.textContent="No users found.";results.append(empty)}users.forEach(u=>{const b=document.createElement("button");b.type="button";b.className="people-result";b.innerHTML='<span class="search-avatar"></span><span><strong></strong><small></small></span>';b.querySelector(".search-avatar").textContent=u.fullName[0];b.querySelector("strong").textContent=u.fullName;b.querySelector("small").textContent=[u.studentId,u.role,u.presenceLabel].join(" · ");b.onclick=async()=>{const response=await fetch(form.action.replace(/\/messages\/send$/,"/messages/start"),{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({csrfToken:csrf,targetUserId:u.userId})});if(response.ok)location.href=response.url};results.append(b)});results.hidden=false},320)};
-const threadHeader=document.querySelector(".private-thread-header");if(threadHeader){const menu=document.createElement("button");menu.className="conversation-menu";menu.type="button";menu.textContent="⋯";menu.setAttribute("aria-label","Conversation options");threadHeader.append(menu);menu.onclick=()=>{const dialog=document.createElement("dialog");dialog.className="delete-conversation-dialog";dialog.innerHTML='<form method="dialog"><h2>Delete this conversation?</h2><p>This will remove the conversation from your chat list. The other participant keeps their history.</p><div><button value="cancel">Cancel</button><button value="delete" class="danger">Delete</button></div></form>';document.body.append(dialog);dialog.addEventListener("close",async()=>{if(dialog.returnValue==="delete"){const url=form.action.replace(/\/messages\/send$/,"/messages/delete"),r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:new URLSearchParams({csrfToken:csrf,conversationId:list.dataset.conversation})});if(r.ok)location.href=form.action.replace(/\/messages\/send$/,"/messages")}dialog.remove()});dialog.showModal()}}}
+document.addEventListener("DOMContentLoaded", () => {
+    const panel = document.querySelector(".conversation-list");
+    if (panel) initializePeopleSearch(panel);
+    const form = document.querySelector(".private-composer");
+    const list = document.querySelector(".private-message-list");
+    if (!form || !list) return;
+    initializeChat(form, list);
 });
+
+function initializePeopleSearch(panel) {
+    const input = panel.querySelector(".people-search input");
+    const results = panel.querySelector(".people-results");
+    if (!input || !results) return;
+    let timer;
+    let request;
+    input.addEventListener("input", () => {
+        clearTimeout(timer);
+        request?.abort();
+        const query = input.value.trim();
+        panel.classList.toggle("searching", query.length > 0);
+        if (query.length < 2) {
+            results.hidden = true;
+            results.replaceChildren();
+            return;
+        }
+        timer = setTimeout(async () => {
+            request = new AbortController();
+            try {
+                const response = await fetch(`${panel.dataset.searchUrl}?q=${encodeURIComponent(query)}`, {signal: request.signal});
+                const users = response.ok ? await response.json() : [];
+                results.replaceChildren();
+                if (!users.length) {
+                    const empty = document.createElement("p");
+                    empty.className = "search-empty";
+                    empty.textContent = "No users found.";
+                    results.append(empty);
+                }
+                users.forEach(user => results.append(createSearchResult(panel, user)));
+                results.hidden = false;
+            } catch (error) {
+                if (error.name !== "AbortError") results.hidden = true;
+            }
+        }, 320);
+    });
+}
+
+function createSearchResult(panel, user) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "people-result";
+    button.innerHTML = '<span class="search-avatar"><span class="avatar-fallback"></span></span><span><strong></strong><small></small></span>';
+    button.querySelector(".avatar-fallback").textContent = user.fullName.charAt(0).toUpperCase();
+    if (user.avatarUrl) {
+        const image = document.createElement("img");
+        image.src = user.avatarUrl;
+        image.alt = "";
+        image.addEventListener("error", () => image.remove());
+        button.querySelector(".search-avatar").append(image);
+    }
+    button.querySelector("strong").textContent = user.fullName;
+    button.querySelector("small").textContent = [user.studentId, user.role, user.presenceLabel].filter(Boolean).join(" · ");
+    button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+            const response = await fetch(panel.dataset.startUrl, {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: new URLSearchParams({csrfToken: panel.dataset.csrf, targetUserId: user.userId})
+            });
+            if (response.ok) location.href = response.url;
+            else button.disabled = false;
+        } catch (_ignored) {
+            button.disabled = false;
+        }
+    });
+    return button;
+}
+
+function initializeChat(form, list) {
+    const field = form.querySelector("textarea");
+    const fileInput = form.querySelector("[type=file]");
+    const send = form.querySelector("button[type=submit]");
+    const preview = form.querySelector(".attachment-preview");
+    const csrf = list.dataset.csrf;
+    let last = Math.max(0, ...[...list.querySelectorAll("[data-message-id]")].map(element => +element.dataset.messageId));
+    let pending;
+    let xhr;
+    const size = bytes => bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+
+    function renderPreview(file) {
+        preview.replaceChildren();
+        if (!file) { preview.hidden = true; return; }
+        const icon = document.createElement("span");
+        icon.className = "attachment-preview-icon";
+        icon.textContent = file.type.startsWith("image/") ? "IMG" : file.type.startsWith("video/") ? "VID" : file.type.startsWith("audio/") ? "AUD" : "FILE";
+        const copy = document.createElement("span");
+        copy.className = "attachment-preview-copy";
+        const name = document.createElement("strong");
+        name.textContent = file.name;
+        const details = document.createElement("small");
+        details.textContent = `${file.type || "File"} · ${size(file.size)}`;
+        copy.append(name, details);
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "attachment-preview-remove";
+        remove.setAttribute("aria-label", "Remove attachment");
+        remove.textContent = "×";
+        remove.addEventListener("click", () => { fileInput.value = ""; renderPreview(null); });
+        preview.append(icon, copy, remove);
+        preview.hidden = false;
+    }
+
+    function mark(element, status) {
+        let receipt = element.querySelector(".message-receipt");
+        if (!receipt) {
+            receipt = document.createElement("span");
+            receipt.className = "message-receipt";
+            element.querySelector(".message-meta").append(receipt);
+        }
+        receipt.dataset.status = status;
+        receipt.textContent = status === "SENDING" ? "◷" : status === "SENT" ? "✓" : status === "DELIVERED" || status === "SEEN" ? "✓✓" : "!";
+        receipt.title = status;
+    }
+
+    function media(element, data) {
+        if (!data.attachmentId) return;
+        let box = element.querySelector(".private-file");
+        if (!box) {
+            box = document.createElement("div");
+            box.className = "private-file";
+            element.querySelector(".message-meta").before(box);
+        }
+        box.replaceChildren();
+        let view;
+        if (data.attachmentType === "IMAGE") {
+            view = document.createElement("img"); view.src = data.previewUrl; view.alt = data.originalFilename || "Image attachment";
+        } else if (data.attachmentType === "VIDEO") {
+            view = document.createElement("video"); view.src = data.previewUrl; view.controls = true; view.preload = "metadata";
+        } else if (data.attachmentType === "AUDIO") {
+            view = document.createElement("audio"); view.src = data.previewUrl; view.controls = true; view.preload = "metadata";
+        } else {
+            view = document.createElement("strong"); view.textContent = data.originalFilename;
+        }
+        const details = document.createElement("small");
+        details.textContent = `${data.originalFilename} · ${size(data.fileSize)}`;
+        const link = document.createElement("a");
+        link.href = data.downloadUrl; link.textContent = "Download";
+        box.append(view, details, link);
+    }
+
+    function bubble(data, own, temporary = false) {
+        const old = !temporary && list.querySelector(`[data-message-id="${data.messageId}"]`);
+        if (old) { mark(old, data.status || "SENT"); return old; }
+        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 100;
+        const element = document.createElement("article");
+        element.className = `private-bubble ${own ? "outgoing" : "incoming"}`;
+        if (!temporary) element.dataset.messageId = data.messageId;
+        element.innerHTML = '<p></p><div class="message-meta"><time></time></div>';
+        element.querySelector("p").textContent = data.message || "";
+        element.querySelector("time").textContent = data.createdLabel || "";
+        media(element, data);
+        if (own) mark(element, data.status || "SENDING");
+        list.append(element);
+        if (!temporary) last = Math.max(last, +data.messageId);
+        if (own || temporary || nearBottom) list.scrollTop = list.scrollHeight;
+        else if (!document.querySelector(".new-message-indicator")) {
+            const indicator = document.createElement("button");
+            indicator.className = "new-message-indicator"; indicator.textContent = "New messages";
+            indicator.addEventListener("click", () => { list.scrollTop = list.scrollHeight; indicator.remove(); });
+            list.after(indicator);
+        }
+        return element;
+    }
+
+    function uploadCard(element, file) {
+        const box = document.createElement("div");
+        box.className = "upload-state";
+        box.innerHTML = '<strong></strong><small></small><span>Uploading… 0%</span><progress max="100" value="0"></progress><div><button type="button">Cancel</button></div>';
+        box.querySelector("strong").textContent = file.name;
+        box.querySelector("small").textContent = size(file.size);
+        box.querySelector("button").addEventListener("click", () => xhr?.abort());
+        element.querySelector(".message-meta").before(box);
+        return box;
+    }
+
+    function resetComposer() {
+        field.value = ""; field.style.height = "auto"; fileInput.value = ""; renderPreview(null);
+    }
+
+    function fail(message) {
+        mark(pending.element, "FAILED");
+        let actions;
+        if (pending.upload) {
+            pending.upload.querySelector("span").textContent = message || "Upload failed";
+            pending.upload.querySelector("progress")?.remove();
+            actions = pending.upload.querySelector("div"); actions.replaceChildren();
+        } else {
+            actions = document.createElement("div"); actions.className = "failed-message-actions"; pending.element.append(actions);
+        }
+        for (const [label, action] of [["Retry", sendPending], ["Remove", () => { pending.element.remove(); pending = null; }]]) {
+            const button = document.createElement("button");
+            button.type = "button"; button.textContent = label; button.addEventListener("click", action); actions.append(button);
+        }
+        xhr = null; send.disabled = false;
+    }
+
+    function sendPending() {
+        if (!pending || xhr) return;
+        mark(pending.element, "SENDING");
+        pending.element.querySelector(".failed-message-actions")?.remove();
+        if (pending.upload && !pending.upload.querySelector("progress")) {
+            pending.upload.querySelector("span").textContent = "Uploading… 0%";
+            const progress = document.createElement("progress");
+            progress.max = 100;
+            progress.value = 0;
+            pending.upload.querySelector("div").before(progress);
+            const actions = pending.upload.querySelector("div");
+            actions.replaceChildren();
+            const cancel = document.createElement("button");
+            cancel.type = "button";
+            cancel.textContent = "Cancel";
+            cancel.addEventListener("click", () => xhr?.abort());
+            actions.append(cancel);
+        }
+        send.disabled = true;
+        xhr = new XMLHttpRequest(); xhr.open("POST", form.action); xhr.responseType = "json";
+        if (pending.file) xhr.upload.onprogress = event => {
+            if (event.lengthComputable) {
+                const progress = Math.round(event.loaded / event.total * 100);
+                pending.upload.querySelector("progress").value = progress;
+                pending.upload.querySelector("span").textContent = `Uploading… ${progress}%`;
+            }
+        };
+        xhr.onload = () => {
+            const data = xhr.response || {};
+            if (xhr.status < 200 || xhr.status >= 300) { xhr = null; fail(data.error); return; }
+            pending.element.dataset.messageId = data.messageId;
+            pending.element.querySelector("time").textContent = data.createdLabel;
+            pending.upload?.remove(); media(pending.element, data); mark(pending.element, data.status);
+            last = Math.max(last, +data.messageId); pending = null; xhr = null; send.disabled = false;
+        };
+        xhr.onerror = () => { xhr = null; fail("Upload failed"); };
+        xhr.onabort = () => { xhr = null; fail("Upload cancelled"); };
+        xhr.send(pending.body);
+    }
+
+    form.addEventListener("submit", event => {
+        event.preventDefault();
+        if (pending) return;
+        const text = field.value.trim();
+        const file = fileInput.files[0];
+        if (!text && !file) return;
+        form.querySelector("[name=clientMessageId]").value = crypto.randomUUID();
+        const body = new FormData(form);
+        const element = bubble({message: text, status: "SENDING"}, true, true);
+        pending = {file, body, element, upload: file ? uploadCard(element, file) : null};
+        resetComposer(); sendPending();
+    });
+    field.addEventListener("input", () => { field.style.height = "auto"; field.style.height = `${Math.min(field.scrollHeight, 120)}px`; });
+    field.addEventListener("keydown", event => {
+        if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
+    });
+    fileInput.addEventListener("change", () => renderPreview(fileInput.files[0]));
+
+    const seen = () => {
+        if (document.hidden) return;
+        const message = [...list.querySelectorAll(".incoming[data-message-id]")].at(-1);
+        if (message) fetch(list.dataset.seenUrl, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation, lastSeenMessageId: message.dataset.messageId})}).catch(() => {});
+    };
+    const poll = async () => {
+        if (document.hidden) return;
+        try {
+            const response = await fetch(`${form.action.replace(/\/send$/, "/poll")}?conversationId=${list.dataset.conversation}&afterMessageId=${last}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            data.messages.forEach(message => bubble(message, String(message.senderId) === list.dataset.currentUser));
+            data.receipts.forEach(receipt => { const element = list.querySelector(`[data-message-id="${receipt.messageId}"]`); if (element) mark(element, receipt.status); });
+            if (data.messages.some(message => String(message.senderId) !== list.dataset.currentUser)) seen();
+        } catch (_ignored) {}
+    };
+    setInterval(poll, 1500);
+    document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); seen(); } });
+    list.scrollTop = list.scrollHeight; seen(); initializeConversationMenu(form, list, csrf);
+}
+
+function initializeConversationMenu(form, list, csrf) {
+    const threadHeader = document.querySelector(".private-thread-header");
+    if (!threadHeader) return;
+    const menu = document.createElement("button");
+    menu.className = "conversation-menu"; menu.type = "button"; menu.textContent = "⋯"; menu.setAttribute("aria-label", "Conversation options");
+    threadHeader.append(menu);
+    menu.addEventListener("click", () => {
+        const dialog = document.createElement("dialog");
+        dialog.className = "delete-conversation-dialog";
+        dialog.innerHTML = '<form method="dialog"><h2>Delete this conversation?</h2><p>This will remove the conversation from your chat list. The other participant keeps their history.</p><p class="delete-error" role="alert" hidden>Could not delete this conversation. Please try again.</p><div><button value="cancel">Cancel</button><button value="delete" class="danger">Delete</button></div></form>';
+        document.body.append(dialog);
+        const deleteButton = dialog.querySelector(".danger");
+        dialog.addEventListener("close", async () => {
+            if (dialog.returnValue !== "delete") { dialog.remove(); return; }
+            deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
+            try {
+                const response = await fetch(form.action.replace(/\/messages\/send$/, "/messages/delete"), {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})});
+                if (response.ok) { location.href = form.action.replace(/\/messages\/send$/, "/messages"); return; }
+            } catch (_ignored) {}
+            deleteButton.disabled = false; deleteButton.textContent = "Delete";
+            dialog.querySelector(".delete-error").hidden = false; dialog.showModal();
+        });
+        dialog.showModal();
+    });
+}

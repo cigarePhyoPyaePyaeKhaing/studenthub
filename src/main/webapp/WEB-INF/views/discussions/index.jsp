@@ -20,8 +20,11 @@
             <div><p class="eyebrow mb-2">Student community</p><h1>Discussions</h1><p>Connect with classmates in securely scoped rooms.</p></div>
             <c:if test="${not empty room and room.available}"><span class="discussion-scope-label"><c:out value="${room.scopeLabel}" /></span></c:if>
         </section>
-        <nav class="room-tabs" aria-label="Discussion rooms">
+        <nav class="message-mode-switch discussion-mode-switch" aria-label="Messaging sections">
             <a href="${pageContext.request.contextPath}/messages">Private Messages</a>
+            <a class="active" href="${pageContext.request.contextPath}/discussions" aria-current="page">Academic Discussions</a>
+        </nav>
+        <nav class="room-tabs" aria-label="Discussion rooms">
             <a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a>
             <a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a>
             <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>

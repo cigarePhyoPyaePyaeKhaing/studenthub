@@ -38,7 +38,7 @@
             <c:if test="${not empty profile.avatarUrl}"><c:url var="profilePhotoUrl" value="/profile/photo/${profile.avatarUrl}"><c:param name="v" value="${profile.avatarUrl}"/></c:url></c:if>
             <section class="profile-hero">
                 <div class="profile-avatar"><span class="avatar-fallback"><c:out value="${profile.initial}"/></span><c:if test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="" onerror="this.hidden=true;this.previousElementSibling.hidden=false" onload="this.previousElementSibling.hidden=true"></c:if></div>
-                <div>
+                <div class="profile-identity">
                     <p class="eyebrow mb-1">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                     <h1><c:out value="${profile.fullName}" /></h1>
                     <p>
@@ -46,7 +46,7 @@
                             <c:when test="${not empty profile.studentId}"><c:out value="${profile.studentId}" /></c:when>
                             <c:otherwise>Not assigned</c:otherwise>
                         </c:choose>
-                    </p><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p><c:if test="${publicProfile}"><form method="post" action="${pageContext.request.contextPath}/messages/start" class="profile-message-action"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>"><input type="hidden" name="targetUserId" value="${profile.userId}"><button class="btn btn-primary" type="submit">Message</button></form></c:if>
+                    </p><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p><c:if test="${publicProfile}"><form method="post" action="${pageContext.request.contextPath}/messages/start" class="profile-message-action"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>"><input type="hidden" name="targetUserId" value="${profile.userId}"><button class="btn btn-primary" type="submit" aria-label="Start private conversation"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-3.8-.8L3 21l1.8-4.8A8.4 8.4 0 1 1 21 11.5Z"/></svg><span>Message</span></button></form></c:if>
                 </div>
                 <span class="profile-role role-${profile.role}"><c:out value="${profile.role}" /></span>
             </section>
