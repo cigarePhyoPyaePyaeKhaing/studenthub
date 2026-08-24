@@ -35,7 +35,7 @@ public record Notification(long notificationId, String type, String title, Strin
     }
 
     public String getCreatedLabel() {
-        return createdAt == null ? "" : createdAt.format(DateTimeFormatter.ofPattern("MMM d, yyyy h:mm a"));
+        return com.studenthub.util.YangonTime.label(createdAt);
     }
 
     public Long getActorUserId() { return actorUserId; }

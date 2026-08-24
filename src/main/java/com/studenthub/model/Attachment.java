@@ -6,5 +6,6 @@ public record Attachment(long attachmentId, Long postId, Long commentId, Long me
     public String getMimeType(){return mimeType;} public long getFileSize(){return fileSize;}
     public boolean isImage(){return mimeType != null && mimeType.startsWith("image/");}
     public boolean isVideo(){return mimeType != null && mimeType.startsWith("video/");}
+    public boolean isAudio(){return mimeType != null && mimeType.startsWith("audio/");}
     public String getSizeLabel(){if(fileSize<1024)return fileSize+" B"; if(fileSize<1048576)return String.format("%.1f KB",fileSize/1024d);return String.format("%.1f MB",fileSize/1048576d);}
 }

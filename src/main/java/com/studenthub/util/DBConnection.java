@@ -75,6 +75,7 @@ public final class DBConnection {
                             config.setKeepaliveTime(30000);
                             config.setIdleTimeout(120000);
                             config.setMaxLifetime(1800000);
+                            config.setConnectionInitSql("SET time_zone = '+00:00'");
                             config.addDataSourceProperty("cachePrepStmts", "true");
                             config.addDataSourceProperty("prepStmtCacheSize", "250");
                             config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");

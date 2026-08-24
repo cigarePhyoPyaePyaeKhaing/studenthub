@@ -14,7 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 
 @WebServlet(name = "CreatePostServlet", urlPatterns = "/posts/create")
-@MultipartConfig(maxFileSize=20971520L,maxRequestSize=22000000L)
+@MultipartConfig(maxFileSize=52428800L,maxRequestSize=57671680L)
 public class CreatePostServlet extends HttpServlet {
     private final PostService postService = new PostService();
     private final CategoryDAO categoryDAO = new CategoryDAO();

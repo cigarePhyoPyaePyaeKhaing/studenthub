@@ -30,8 +30,9 @@
     </div>
     <div class="mb-4">
         <label class="form-label" for="content">Content</label>
-        <textarea class="form-control" id="content" name="content" rows="8" maxlength="10000" required></textarea>
+        <textarea class="form-control" id="content" name="content" rows="8" maxlength="10000"></textarea>
     </div>
+    <div class="mb-4"><label class="form-label" for="postAttachment">Attachment</label><input class="form-control" id="postAttachment" type="file" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"><small class="text-secondary">Image, video, audio, or document. One file per announcement.</small></div>
     <button class="btn btn-primary" type="submit">Publish announcement</button>
 </form>
 </div></div></main>

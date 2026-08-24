@@ -1,0 +1,4 @@
+package com.studenthub.controller;
+import com.studenthub.dao.PrivateMessageDAO;import com.studenthub.util.CsrfToken;import jakarta.servlet.annotation.WebServlet;import jakarta.servlet.http.*;import java.io.*;
+@WebServlet(name="SeenPrivateMessagesServlet",urlPatterns="/messages/seen")
+public class SeenPrivateMessagesServlet extends HttpServlet{private final PrivateMessageDAO dao=new PrivateMessageDAO();@Override protected void doPost(HttpServletRequest q,HttpServletResponse r)throws IOException{if(!CsrfToken.isValid(q)){r.sendError(403);return;}try{long conversation=Long.parseLong(q.getParameter("conversationId")),last=Long.parseLong(q.getParameter("lastSeenMessageId")),user=(Long)q.getSession().getAttribute("userId");dao.markSeen(conversation,user,last);r.setStatus(204);}catch(SecurityException e){r.sendError(403);}catch(Exception e){r.sendError(400);}}}

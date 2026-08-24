@@ -132,17 +132,8 @@ public class ProfileServlet extends HttpServlet {
     }
 
     private void setPresence(HttpServletRequest request, LocalDateTime lastActive) {
-        if (lastActive == null) {
-            request.setAttribute("presenceLabel", "Last seen unavailable");
-            return;
-        }
-        long minutes = Math.max(0, Duration.between(lastActive, LocalDateTime.now()).toMinutes());
-        boolean active = minutes < 3;
-        request.setAttribute("activeNow", active);
-        if (active) request.setAttribute("presenceLabel", "Active now");
-        else if (minutes < 60) request.setAttribute("presenceLabel", "Last seen " + minutes + " minutes ago");
-        else if (minutes < 1440) request.setAttribute("presenceLabel", "Last seen " + (minutes / 60) + " hours ago");
-        else request.setAttribute("presenceLabel", "Last seen " + (minutes / 1440) + " days ago");
+        request.setAttribute("activeNow", com.studenthub.util.YangonTime.active(lastActive));
+        request.setAttribute("presenceLabel", com.studenthub.util.YangonTime.presence(lastActive));
     }
 
     @Override

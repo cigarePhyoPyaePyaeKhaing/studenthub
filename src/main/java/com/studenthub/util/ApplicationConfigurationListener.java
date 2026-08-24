@@ -110,11 +110,19 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             ensureAttachmentsTable(connection, context);
             ensureDiscussionUniversityColumn(connection, context);
             ensurePrivateMessagingTables(connection, context);
+            ensurePrivateMessageReceipts(connection, context);
 
         } catch (SQLException e) {
             context.log("Database table initialization check: " + e.getClass().getName() + ": " + e.getMessage());
             LOGGER.log(Level.INFO, "Database table initialization check: {0}", e.getMessage());
         }
+    }
+
+    private void ensurePrivateMessageReceipts(Connection connection, ServletContext context) {
+        try {
+            boolean delivered;try(var columns=connection.getMetaData().getColumns(null,null,"private_messages","delivered_at")){delivered=columns.next();}
+            if(!delivered)try(Statement statement=connection.createStatement()){statement.execute("ALTER TABLE private_messages ADD COLUMN delivered_at TIMESTAMP NULL AFTER created_at");statement.execute("ALTER TABLE private_messages ADD COLUMN seen_at TIMESTAMP NULL AFTER delivered_at");statement.execute("CREATE INDEX idx_private_message_receipts ON private_messages(conversation_id,sender_id,seen_at,delivered_at,message_id)");}
+        }catch(SQLException exception){context.log("ensurePrivateMessageReceipts check: "+exception.getClass().getName());}
     }
 
     private void ensureDiscussionUniversityColumn(Connection connection, ServletContext context) {

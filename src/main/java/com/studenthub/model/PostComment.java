@@ -13,7 +13,7 @@ public record PostComment(long commentId, long postId, long authorId, String aut
     public Role getAuthorRole() { return authorRole; }
     public String getContent() { return content; }
     public String getAuthorAvatarUrl() { return authorAvatarUrl; }
-    public String getCreatedLabel() { return createdAt == null ? "" : createdAt.format(DISPLAY_TIME); }
+    public String getCreatedLabel() { return com.studenthub.util.YangonTime.label(createdAt); }
     public PostComment(long commentId, long postId, long authorId, String authorName,
                        Role authorRole, String content, LocalDateTime createdAt) {
         this(commentId, postId, authorId, authorName, authorRole, content, createdAt, null, null);

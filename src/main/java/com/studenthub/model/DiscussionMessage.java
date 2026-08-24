@@ -1,12 +1,11 @@
 package com.studenthub.model;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import com.studenthub.util.YangonTime;
 
 public record DiscussionMessage(long messageId, long senderId, String authorName,
                                 String authorRole, Integer authorSemester, String authorSection,
                                 String message, LocalDateTime createdAt, String authorAvatarUrl, Attachment attachment) {
-    private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("MMM d, h:mm a");
 
     public long getMessageId() { return messageId; }
     public long getSenderId() { return senderId; }
@@ -16,7 +15,7 @@ public record DiscussionMessage(long messageId, long senderId, String authorName
     public String getAuthorSection() { return authorSection; }
     public String getMessage() { return message; }
     public String getAuthorAvatarUrl() { return authorAvatarUrl; }
-    public String getCreatedLabel() { return createdAt.format(TIME_FORMAT); }
+    public String getCreatedLabel() { return YangonTime.label(createdAt); }
 
     public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
                              String message, LocalDateTime createdAt) {

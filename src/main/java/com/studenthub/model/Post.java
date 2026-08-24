@@ -31,7 +31,7 @@ public record Post(long postId, long authorId, Long categoryId, String authorNam
     public Post withAttachment(Attachment value){return new Post(postId,authorId,categoryId,authorName,authorRole,categoryName,title,content,imageUrl,visibility,createdAt,reactionCount,commentCount,reactedByCurrentUser,deadlineDate,authorAvatarUrl,value);}
 
     public String getCreatedLabel() {
-        return createdAt == null ? "" : createdAt.format(DISPLAY_TIME);
+        return com.studenthub.util.YangonTime.label(createdAt);
     }
     public String getDueLabel() {
         return deadlineDate == null ? "" : deadlineDate.format(DISPLAY_DUE);
