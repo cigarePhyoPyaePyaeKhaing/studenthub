@@ -146,8 +146,36 @@ class AnnouncementContentIntegrityTest {
         }
     }
 
+    @Test
+    void validatesLongContentWithinLimitAndRejectsAboveLimit() {
+        String validLongBody = "START-LINE\n" + "A".repeat(9500) + "\nFINAL-LINE-MUST-BE-VISIBLE";
+        String error = PostValidation.validate("Test Title", validLongBody, 1L, "General News", "ALL", null);
+        assertNull(error, "Valid content under 10,000 characters should pass validation");
+
+        String overLimitBody = "B".repeat(10_001);
+        String overLimitError = PostValidation.validate("Test Title", overLimitBody, 1L, "General News", "ALL", null);
+        assertNotNull(overLimitError, "Content over 10,000 characters should return validation error");
+        assertTrue(overLimitError.contains("10,000 characters"));
+    }
+
+    @Test
+    void verifiesEditFlowPreservesFullContentUnchanged() {
+        String originalContent = "START-LINE\n"
+                + "Line 1: Detailed project requirements.\n"
+                + "Line 2: Team division and rubric.\n"
+                + "FINAL-LINE-MUST-BE-VISIBLE: Submit via StudentHub portal.";
+
+        String updatedTitle = "Updated Course Announcement";
+        Post post = new Post(
+                105L, 8L, 1L, "Admin", Role.ADMIN, "General News",
+                updatedTitle, originalContent, null, "ALL", LocalDateTime.now(), 2L, 1L, false
+        );
+
+        assertEquals(originalContent, post.getContent());
+        assertTrue(post.getContent().contains("FINAL-LINE-MUST-BE-VISIBLE"));
+    }
+
     private boolean isMobileTabletViewport(int width) {
-        // Standardized breakpoint: 0px - 1024px is Mobile/Tablet, 1025px+ is Desktop
         return width <= 1024;
     }
 }
