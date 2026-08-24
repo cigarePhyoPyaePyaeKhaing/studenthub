@@ -48,4 +48,14 @@ public record Notification(long notificationId, String type, String title, Strin
         if ("COMMENT".equals(type)) return "commented on your announcement.";
         return message;
     }
+
+    public String getIconType() {
+        return switch (type == null ? "" : type) {
+            case "REACTION" -> "heart";
+            case "COMMENT", "DISCUSSION" -> "comment";
+            case "ANNOUNCEMENT" -> "megaphone";
+            case "DEADLINE" -> "calendar";
+            default -> "system";
+        };
+    }
 }

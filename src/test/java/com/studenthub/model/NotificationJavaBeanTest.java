@@ -11,6 +11,16 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 
 class NotificationJavaBeanTest {
+
+    @Test
+    void exposesSemanticEventIconsAndKeepsLegacyNotificationsSafe() {
+        LocalDateTime now = LocalDateTime.now();
+        assertEquals("heart", new Notification(1, "REACTION", "Post", "", "/announcements", false, now).getIconType());
+        assertEquals("comment", new Notification(2, "COMMENT", "Post", "", "/announcements", false, now).getIconType());
+        Notification legacy = new Notification(3, "ANNOUNCEMENT", "News", "Message", "/announcements", false, now);
+        assertEquals("megaphone", legacy.getIconType());
+        assertFalse(legacy.isActorAvailable());
+    }
     @Test
     void exposesEveryPropertyUsedByNotificationsJspAsAJavaBeanGetter() throws Exception {
         Set<String> readableProperties = Arrays.stream(

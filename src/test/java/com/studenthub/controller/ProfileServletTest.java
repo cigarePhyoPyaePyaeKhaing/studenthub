@@ -104,6 +104,36 @@ class ProfileServletTest {
     }
 
     @Test
+    void authenticatedUserLoadsAnotherUsersPublicProfileSuccessfully() throws Exception {
+        UserProfile publicProfile = new UserProfile(77L, "UIT-0077", "Public Student", "private@example.com",
+                Role.STUDENT, true, 4, "B", 1L, "University of Information Technology", "UIT", true, true);
+        ProfileServlet servlet = createServlet(new FakeProfileDAO(publicProfile));
+        sessionAttributes.put("userId", 42L);
+        requestParameters.put("userId", "77");
+
+        servlet.doGet(createRequest("GET", true), createResponse());
+
+        assertEquals(200, responseStatus);
+        assertEquals("/WEB-INF/views/profile.jsp", forwardedPath);
+        assertSame(publicProfile, requestAttributes.get("profile"));
+        assertEquals(true, requestAttributes.get("publicProfile"));
+        assertEquals(false, requestAttributes.get("editing"));
+    }
+
+    @Test
+    void invalidPublicProfileIdReturnsNotFoundWithoutInvalidatingSession() throws Exception {
+        ProfileServlet servlet = createServlet(new FakeProfileDAO(null));
+        sessionAttributes.put("userId", 42L);
+        requestParameters.put("userId", "not-a-number");
+
+        servlet.doGet(createRequest("GET", true), createResponse());
+
+        assertEquals(HttpServletResponse.SC_NOT_FOUND, responseStatus);
+        assertFalse(sessionInvalidated);
+        assertNull(forwardedPath);
+    }
+
+    @Test
     void missingOptionalAcademicInformationDoesNotCrashPage() throws Exception {
         UserProfile unassignedProfile = new UserProfile(99L, null, "New Student", "new@uit.edu",
                 Role.STUDENT, false, null, null, null, null, null, false, false);

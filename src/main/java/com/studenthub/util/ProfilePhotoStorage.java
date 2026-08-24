@@ -17,10 +17,11 @@ public class ProfilePhotoStorage {
     }
 
     ProfilePhotoStorage(Path directory) {
-        this.directory = directory.toAbsolutePath().normalize();
+        this.directory = directory == null ? null : directory.toAbsolutePath().normalize();
     }
 
     public String save(byte[] content, String extension) throws IOException {
+        if (directory == null) throw new IOException("Persistent profile storage is not configured");
         Files.createDirectories(directory);
         String filename = UUID.randomUUID() + "." + extension;
         Path destination = safePath(filename).orElseThrow(() -> new IOException("Invalid generated filename"));
@@ -39,7 +40,7 @@ public class ProfilePhotoStorage {
     }
 
     private Optional<Path> safePath(String filename) {
-        if (filename == null || !SAFE_FILENAME.matcher(filename).matches()) return Optional.empty();
+        if (directory == null || filename == null || !SAFE_FILENAME.matcher(filename).matches()) return Optional.empty();
         Path resolved = directory.resolve(filename).normalize();
         return resolved.getParent() != null && resolved.getParent().equals(directory)
                 ? Optional.of(resolved) : Optional.empty();
@@ -52,7 +53,7 @@ public class ProfilePhotoStorage {
         }
         String environment = System.getenv("APP_ENV");
         if (environment != null && environment.equalsIgnoreCase("production")) {
-            throw new IllegalStateException("STUDENTHUB_UPLOAD_DIR is required in production");
+            return null;
         }
         return Path.of(System.getProperty("java.io.tmpdir"), "studenthub-uploads", "profile");
     }
