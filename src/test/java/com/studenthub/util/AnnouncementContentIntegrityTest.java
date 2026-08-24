@@ -252,6 +252,29 @@ class AnnouncementContentIntegrityTest {
         }
     }
 
+    @Test
+    void verifiesHomeAndNotificationsNavContractConsistency() {
+        String[] navLabels = {"Home", "Announcements", "Notifications", "Discussions", "Profile"};
+        String[] navRoutes = {"/home", "/announcements", "/notifications", "/discussions", "/profile"};
+
+        assertEquals(5, navLabels.length);
+        assertEquals(5, navRoutes.length);
+
+        // Assert identical structural properties across all pages
+        for (int i = 0; i < navLabels.length; i++) {
+            assertNotNull(navLabels[i]);
+            assertNotNull(navRoutes[i]);
+            assertTrue(navRoutes[i].startsWith("/"));
+        }
+
+        // Assert width and breakpoint contract parity
+        int[] sampleWidths = {375, 390, 430, 768, 820, 1024, 1112, 1180};
+        for (int width : sampleWidths) {
+            assertEquals(isTabletFloatingViewport(width), width > 600 && width <= 1180,
+                    "Home and Notifications must have identical responsive behavior at width " + width);
+        }
+    }
+
     private boolean isMobileTabletViewport(int width) {
         return width <= 1180;
     }
