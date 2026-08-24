@@ -244,6 +244,8 @@ public class ProfileServlet extends HttpServlet {
             return updated;
         } catch (IOException exception) {
             if (filename != null) photoStorage.delete(filename);
+            logSafe("Profile photo storage failed: " + exception.getClass().getName()
+                    + ", storageConfigured=" + photoStorage.isConfigured());
             return null;
         } catch (SQLException exception) {
             if (filename != null) photoStorage.delete(filename);

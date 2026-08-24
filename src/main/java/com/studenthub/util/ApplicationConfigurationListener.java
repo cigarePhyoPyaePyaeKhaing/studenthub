@@ -28,6 +28,15 @@ public class ApplicationConfigurationListener implements ServletContextListener 
         context.setAttribute("buildVersion", commit);
         context.setAttribute("assetVersion", commit.length() > 12 ? commit.substring(0, 12) : commit);
 
+        ProfilePhotoStorage profileStorage = new ProfilePhotoStorage();
+        boolean profileStorageConfigured = profileStorage.isConfigured();
+        boolean profileStorageWritable = profileStorage.ensureWritable();
+        context.setAttribute("profileStorageConfigured", profileStorageConfigured);
+        context.setAttribute("profileStorageWritable", profileStorageWritable);
+        if (!profileStorageWritable) {
+            context.log("Profile photo uploads unavailable: persistent storage is not configured or writable.");
+        }
+
         ensureTablesExist(context);
     }
 

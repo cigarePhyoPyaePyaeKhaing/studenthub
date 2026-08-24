@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Map;
+import java.util.LinkedHashMap;
 
 @WebServlet(name = "HealthServlet", urlPatterns = "/health")
 public class HealthServlet extends HttpServlet {
@@ -24,7 +25,12 @@ public class HealthServlet extends HttpServlet {
             if (results.next() && results.getInt(1) == 1) {
                 response.setStatus(200);
                 Object version = getServletContext().getAttribute("buildVersion");
-                JSON.writeValue(response.getWriter(), Map.of("status", "ok", "version", String.valueOf(version)));
+                Map<String,Object> health = new LinkedHashMap<>();
+                health.put("status", "ok");
+                health.put("version", String.valueOf(version));
+                health.put("profileStorageConfigured", Boolean.TRUE.equals(getServletContext().getAttribute("profileStorageConfigured")));
+                health.put("profileStorageWritable", Boolean.TRUE.equals(getServletContext().getAttribute("profileStorageWritable")));
+                JSON.writeValue(response.getWriter(), health);
                 return;
             }
         } catch (Exception exception) {

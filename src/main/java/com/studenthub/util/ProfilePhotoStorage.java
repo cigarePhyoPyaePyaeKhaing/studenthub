@@ -39,6 +39,18 @@ public class ProfilePhotoStorage {
         });
     }
 
+    public boolean isConfigured() { return directory != null; }
+
+    public boolean ensureWritable() {
+        if (directory == null) return false;
+        try {
+            Files.createDirectories(directory);
+            return Files.isDirectory(directory) && Files.isWritable(directory);
+        } catch (IOException | SecurityException exception) {
+            return false;
+        }
+    }
+
     private Optional<Path> safePath(String filename) {
         if (directory == null || filename == null || !SAFE_FILENAME.matcher(filename).matches()) return Optional.empty();
         Path resolved = directory.resolve(filename).normalize();
