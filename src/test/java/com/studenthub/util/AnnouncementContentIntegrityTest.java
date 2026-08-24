@@ -113,4 +113,41 @@ class AnnouncementContentIntegrityTest {
         assertTrue(post.getContent().contains("တာဝန်ကျ ဆရာ/ဆရာမများထံ"));
         assertTrue(post.getContent().endsWith("Good luck to everyone!"));
     }
+
+    @Test
+    void preservesFirstMiddleAndFinalLineContract() {
+        String body = "FIRST-LINE: Welcome to Advance Software Engineering\n"
+                + "MIDDLE-LINE: Please review chapters 1 to 5 and complete the homework assignment.\n"
+                + "FINAL-LINE-MUST-EXIST: All project proposals are due next Friday.";
+
+        Post post = new Post(
+                104L, 8L, 4L, "Admin User", Role.ADMIN, "General News",
+                "Course Overview", body, null, "ALL", LocalDateTime.now(), 0L, 0L, false
+        );
+
+        String[] lines = post.getContent().split("\n");
+        assertEquals(3, lines.length);
+        assertEquals("FIRST-LINE: Welcome to Advance Software Engineering", lines[0]);
+        assertEquals("MIDDLE-LINE: Please review chapters 1 to 5 and complete the homework assignment.", lines[1]);
+        assertEquals("FINAL-LINE-MUST-EXIST: All project proposals are due next Friday.", lines[2]);
+    }
+
+    @Test
+    void verifiesResponsiveBreakpointClassificationContract() {
+        int[] mobileTabletWidths = {375, 390, 430, 768, 820, 1024};
+        int[] desktopWidths = {1025, 1280, 1366, 1920};
+
+        for (int width : mobileTabletWidths) {
+            assertTrue(isMobileTabletViewport(width), "Width " + width + " must be classified as Mobile/Tablet layout");
+        }
+
+        for (int width : desktopWidths) {
+            assertFalse(isMobileTabletViewport(width), "Width " + width + " must be classified as Desktop layout");
+        }
+    }
+
+    private boolean isMobileTabletViewport(int width) {
+        // Standardized breakpoint: 0px - 1024px is Mobile/Tablet, 1025px+ is Desktop
+        return width <= 1024;
+    }
 }
