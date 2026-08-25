@@ -49,6 +49,23 @@ class MessagingUiContractTest {
     }
 
     @Test
+    void academicDiscussionsLayoutMaintainsScrollOwnershipAndComposerReachability() throws IOException {
+        String css = source("src/main/webapp/assets/css/dashboard.css");
+        // Chat panel must not force height:100% which pushes composer out of bounds
+        assertTrue(css.contains(".chat-panel{display:flex;flex-direction:column;flex:1 1 0;min-height:0;height:auto"));
+        // Message list is the single vertical scroll owner
+        assertTrue(css.contains(".message-list{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch"));
+        // Room tabs horizontal scrolling without wrapping or clipping
+        assertTrue(css.contains(".room-tabs{display:flex;gap:5px;padding:8px;border-inline:1px solid var(--border-glass);background:var(--surface-glass-strong);overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;flex:0 0 auto}"));
+        assertTrue(css.contains(".room-tabs a{flex:0 0 auto;min-width:max-content"));
+        // Responsive 100dvh height bounds for tablet and mobile
+        assertTrue(css.contains("height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important"));
+        assertTrue(css.contains("height:calc(100dvh - 68px - 66px - env(safe-area-inset-bottom))!important"));
+        // Body padding containment for discussions and private chat shells
+        assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){padding-bottom:0!important;overflow:hidden;height:100dvh}"));
+    }
+
+    @Test
     void deleteDiagnosticsUseStructuredSafeCodes() throws IOException {
         String servlet = source("src/main/java/com/studenthub/controller/DeletePrivateConversationServlet.java");
         String service = source("src/main/java/com/studenthub/service/PrivateConversationDeletionService.java");
