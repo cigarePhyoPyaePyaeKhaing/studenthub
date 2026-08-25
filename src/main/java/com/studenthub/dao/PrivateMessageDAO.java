@@ -17,7 +17,18 @@ public class PrivateMessageDAO {
   }catch(SQLException e){c.rollback();throw e;}}
  }
  public boolean isParticipant(long conversation,long user)throws SQLException{try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("SELECT 1 FROM private_conversations WHERE conversation_id=? AND (user1_id=? OR user2_id=?)")){s.setLong(1,conversation);s.setLong(2,user);s.setLong(3,user);try(ResultSet r=s.executeQuery()){return r.next();}}}
- public void hide(long conversation,long user)throws SQLException{if(!isParticipant(conversation,user))throw new SecurityException("FORBIDDEN");try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("INSERT INTO private_conversation_visibility(conversation_id,user_id,deleted_at) VALUES(?,?,CURRENT_TIMESTAMP) ON DUPLICATE KEY UPDATE deleted_at=CURRENT_TIMESTAMP")){s.setLong(1,conversation);s.setLong(2,user);s.executeUpdate();}}
+ public void hide(long conversation,long user)throws SQLException{
+  String sql="""
+   INSERT INTO private_conversation_visibility(conversation_id,user_id,deleted_at)
+   SELECT conversation_id,?,CURRENT_TIMESTAMP FROM private_conversations
+   WHERE conversation_id=? AND (user1_id=? OR user2_id=?)
+   ON DUPLICATE KEY UPDATE deleted_at=CURRENT_TIMESTAMP
+   """;
+  try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(sql)){
+   s.setLong(1,user);s.setLong(2,conversation);s.setLong(3,user);s.setLong(4,user);
+   if(s.executeUpdate()==0)throw new SecurityException("FORBIDDEN");
+  }
+ }
  public void restore(long conversation,long user)throws SQLException{if(!isParticipant(conversation,user))throw new SecurityException("FORBIDDEN");try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement("INSERT INTO private_conversation_visibility(conversation_id,user_id,deleted_at) VALUES(?,?,NULL) ON DUPLICATE KEY UPDATE deleted_at=NULL")){s.setLong(1,conversation);s.setLong(2,user);s.executeUpdate();}}
  public List<PrivateConversation> list(long user)throws SQLException{
   String q="""

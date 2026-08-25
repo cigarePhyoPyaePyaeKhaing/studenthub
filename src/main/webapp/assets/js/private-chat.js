@@ -299,8 +299,20 @@ function initializeConversationMenu(form, list, csrf) {
             if (dialog.returnValue !== "delete") { dialog.remove(); return; }
             deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
             try {
-                const response = await fetch(form.action.replace(/\/messages\/send$/, "/messages/delete"), {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})});
-                if (response.ok) { location.href = form.action.replace(/\/messages\/send$/, "/messages"); return; }
+                const response = await fetch(new URL("delete", form.action), {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})});
+                if (response.ok) {
+                    document.querySelector(`.conversation-item[href*="conversationId=${list.dataset.conversation}"]`)?.remove();
+                    dialog.remove();
+                    history.replaceState(null, "", new URL("../messages", form.action));
+                    const thread = document.querySelector(".private-thread");
+                    thread.replaceChildren();
+                    const empty = document.createElement("div");
+                    empty.className = "private-empty thread-empty";
+                    empty.innerHTML = "<h2>Your private messages</h2><p>Select a conversation to start chatting.</p>";
+                    thread.append(empty);
+                    document.querySelector(".conversation-list")?.classList.remove("has-selection");
+                    return;
+                }
             } catch (_ignored) {}
             deleteButton.disabled = false; deleteButton.textContent = "Delete";
             dialog.querySelector(".delete-error").hidden = false; dialog.showModal();

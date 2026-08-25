@@ -40,5 +40,9 @@ class MessagingUiContractTest {
         assertTrue(javascript.contains("Deleting..."));
         assertTrue(css.contains(".private-composer textarea::-webkit-scrollbar"));
         assertTrue(css.contains(".delete-conversation-dialog button.danger:disabled"));
+        assertTrue(css.contains(".discussions-shell{width:100%;max-width:none}"));
+        assertTrue(css.contains(".discussion-mode-switch{margin:14px 0}"));
+        assertTrue(css.contains("-ms-overflow-style:none"));
+        assertTrue(source("src/main/webapp/assets/js/discussion-chat.js").contains("textarea.scrollHeight"));
     }
 }
