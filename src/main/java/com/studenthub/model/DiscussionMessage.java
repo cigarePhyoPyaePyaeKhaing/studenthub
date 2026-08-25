@@ -16,6 +16,7 @@ public record DiscussionMessage(long messageId, long senderId, String authorName
     public String getMessage() { return message; }
     public String getAuthorAvatarUrl() { return authorAvatarUrl; }
     public String getCreatedLabel() { return YangonTime.label(createdAt); }
+    public String getDateGroupLabel() { return YangonTime.dateGroup(createdAt); }
 
     public DiscussionMessage(long messageId, long senderId, String authorName, String authorRole,
                              String message, LocalDateTime createdAt) {

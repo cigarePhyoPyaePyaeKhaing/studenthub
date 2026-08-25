@@ -17,6 +17,16 @@ public final class YangonTime {
         if(value.toLocalDate().equals(current.toLocalDate().minusDays(1)))return "Yesterday";
         return value.format(OLDER);
     }
+    public static String dateGroup(LocalDateTime utc) { return dateGroup(utc, Instant.now()); }
+    static String dateGroup(LocalDateTime utc, Instant now) {
+        if (utc == null) return "";
+        ZonedDateTime value = fromUtc(utc), current = now.atZone(ZONE);
+        LocalDate date = value.toLocalDate(), today = current.toLocalDate();
+        if (date.equals(today)) return "Today";
+        if (date.equals(today.minusDays(1))) return "Yesterday";
+        if (date.getYear() == today.getYear()) return date.format(DateTimeFormatter.ofPattern("MMM d"));
+        return date.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
+    }
     public static boolean active(LocalDateTime utc) { return utc != null && utc.isAfter(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(3)); }
     public static String presence(LocalDateTime utc) {
         if(utc==null)return "Last seen unavailable";if(active(utc))return "Active now";

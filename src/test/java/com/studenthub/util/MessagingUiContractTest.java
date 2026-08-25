@@ -59,16 +59,21 @@ class MessagingUiContractTest {
         // Message list is the single vertical scroll owner
         assertTrue(css.contains(".message-list{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch"));
         // Room tabs horizontal scrolling without wrapping or clipping
-        assertTrue(css.contains(".room-tabs{display:flex;gap:5px;padding:6px 8px;border-inline:1px solid var(--border-glass);background:var(--surface-glass-strong);overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;flex:0 0 auto;white-space:nowrap}"));
+        assertTrue(css.contains(".room-tabs{display:flex;gap:6px;padding:6px 10px;border-inline:1px solid var(--border-glass);background:var(--surface-glass-strong);overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;flex:0 0 auto;white-space:nowrap}"));
         assertTrue(css.contains(".room-tabs a{flex:0 0 auto!important;min-width:max-content!important"));
         // Active scope tab auto-scrolled smoothly into view
         assertTrue(discussionJs.contains("activeRoomTab.scrollIntoView({ behavior: \"auto\", block: \"nearest\", inline: \"center\" })"));
         assertTrue(discussionsJsp.contains("activeTab.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })"));
+        // Telegram bubble incoming and outgoing corner radius
+        assertTrue(css.contains(".message-bubble{display:flex;flex-direction:column;width:fit-content;max-width:min(80%,36rem);min-width:100px;padding:8px 12px;border-radius:5px 18px 18px 18px"));
+        assertTrue(css.contains(".message-bubble.outgoing{border-radius:18px 5px 18px 18px"));
+        // Date separator pill
+        assertTrue(css.contains(".chat-date-separator"));
         // Responsive 100dvh height bounds for tablet and mobile
         assertTrue(css.contains("height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important"));
         assertTrue(css.contains("height:calc(100dvh - 68px - 68px - env(safe-area-inset-bottom))!important"));
         // Safe gap above bottom navigation via padding containment
-        assertTrue(css.contains("padding:6px 8px 0 8px!important"));
+        assertTrue(css.contains("padding:4px 8px 0 8px!important"));
         // Body padding containment for discussions and private chat shells
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){padding-bottom:0!important;overflow:hidden;height:100dvh}"));
     }
