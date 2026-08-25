@@ -66,7 +66,9 @@ class MessagingUiContractTest {
         assertTrue(discussionsJsp.contains("activeTab.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })"));
         // Responsive 100dvh height bounds for tablet and mobile
         assertTrue(css.contains("height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important"));
-        assertTrue(css.contains("height:calc(100dvh - 68px - 66px - env(safe-area-inset-bottom))!important"));
+        assertTrue(css.contains("height:calc(100dvh - 68px - 68px - env(safe-area-inset-bottom))!important"));
+        // Safe gap above bottom navigation via padding containment
+        assertTrue(css.contains("padding:6px 8px 0 8px!important"));
         // Body padding containment for discussions and private chat shells
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){padding-bottom:0!important;overflow:hidden;height:100dvh}"));
     }
