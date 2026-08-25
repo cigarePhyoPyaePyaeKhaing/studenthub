@@ -84,12 +84,22 @@
             messageList.scrollTop = messageList.scrollHeight;
         }
     }
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', scrollToBottom);
-    } else {
-        scrollToBottom();
+    function scrollActiveRoomTab() {
+        var activeTab = document.querySelector('.room-tabs a.active');
+        if (activeTab && typeof activeTab.scrollIntoView === 'function') {
+            activeTab.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' });
+        }
     }
-    window.addEventListener('load', scrollToBottom);
+    function initScrolls() {
+        scrollToBottom();
+        scrollActiveRoomTab();
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initScrolls);
+    } else {
+        initScrolls();
+    }
+    window.addEventListener('load', initScrolls);
 })();
 </script>
 </body></html>

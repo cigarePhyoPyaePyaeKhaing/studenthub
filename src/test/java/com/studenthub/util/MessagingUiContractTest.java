@@ -51,13 +51,19 @@ class MessagingUiContractTest {
     @Test
     void academicDiscussionsLayoutMaintainsScrollOwnershipAndComposerReachability() throws IOException {
         String css = source("src/main/webapp/assets/css/dashboard.css");
+        String discussionJs = source("src/main/webapp/assets/js/discussion-chat.js");
+        String discussionsJsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+
         // Chat panel must not force height:100% which pushes composer out of bounds
         assertTrue(css.contains(".chat-panel{display:flex;flex-direction:column;flex:1 1 0;min-height:0;height:auto"));
         // Message list is the single vertical scroll owner
         assertTrue(css.contains(".message-list{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch"));
         // Room tabs horizontal scrolling without wrapping or clipping
-        assertTrue(css.contains(".room-tabs{display:flex;gap:5px;padding:8px;border-inline:1px solid var(--border-glass);background:var(--surface-glass-strong);overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;flex:0 0 auto}"));
-        assertTrue(css.contains(".room-tabs a{flex:0 0 auto;min-width:max-content"));
+        assertTrue(css.contains(".room-tabs{display:flex;gap:5px;padding:6px 8px;border-inline:1px solid var(--border-glass);background:var(--surface-glass-strong);overflow-x:auto;overflow-y:hidden;overscroll-behavior-inline:contain;scrollbar-width:none;-ms-overflow-style:none;-webkit-overflow-scrolling:touch;touch-action:pan-x;flex:0 0 auto;white-space:nowrap}"));
+        assertTrue(css.contains(".room-tabs a{flex:0 0 auto!important;min-width:max-content!important"));
+        // Active scope tab auto-scrolled smoothly into view
+        assertTrue(discussionJs.contains("activeRoomTab.scrollIntoView({ behavior: \"auto\", block: \"nearest\", inline: \"center\" })"));
+        assertTrue(discussionsJsp.contains("activeTab.scrollIntoView({ behavior: 'auto', block: 'nearest', inline: 'center' })"));
         // Responsive 100dvh height bounds for tablet and mobile
         assertTrue(css.contains("height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important"));
         assertTrue(css.contains("height:calc(100dvh - 68px - 66px - env(safe-area-inset-bottom))!important"));
