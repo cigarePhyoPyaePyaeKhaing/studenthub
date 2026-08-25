@@ -80,35 +80,12 @@ function initializeChat(form, list) {
     const field = form.querySelector("textarea");
     const fileInput = form.querySelector("[type=file]");
     const send = form.querySelector("button[type=submit]");
-    const preview = form.querySelector(".attachment-preview");
+    const composer = window.StudentHubMessageComposer?.initialize(form);
     const csrf = list.dataset.csrf;
     let last = Math.max(0, ...[...list.querySelectorAll("[data-message-id]")].map(element => +element.dataset.messageId));
     let pending;
     let xhr;
     const size = bytes => bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
-
-    function renderPreview(file) {
-        preview.replaceChildren();
-        if (!file) { preview.hidden = true; return; }
-        const icon = document.createElement("span");
-        icon.className = "attachment-preview-icon";
-        icon.textContent = file.type.startsWith("image/") ? "IMG" : file.type.startsWith("video/") ? "VID" : file.type.startsWith("audio/") ? "AUD" : "FILE";
-        const copy = document.createElement("span");
-        copy.className = "attachment-preview-copy";
-        const name = document.createElement("strong");
-        name.textContent = file.name;
-        const details = document.createElement("small");
-        details.textContent = `${file.type || "File"} · ${size(file.size)}`;
-        copy.append(name, details);
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "attachment-preview-remove";
-        remove.setAttribute("aria-label", "Remove attachment");
-        remove.textContent = "×";
-        remove.addEventListener("click", () => { fileInput.value = ""; renderPreview(null); });
-        preview.append(icon, copy, remove);
-        preview.hidden = false;
-    }
 
     function mark(element, status) {
         let receipt = element.querySelector(".message-receipt");
@@ -184,7 +161,9 @@ function initializeChat(form, list) {
     }
 
     function resetComposer() {
-        field.value = ""; field.style.height = "auto"; fileInput.value = ""; renderPreview(null);
+        field.value = "";
+        composer?.resetHeight();
+        composer?.clearAttachment();
     }
 
     function fail(message) {
@@ -256,11 +235,9 @@ function initializeChat(form, list) {
         pending = {file, body, element, upload: file ? uploadCard(element, file) : null};
         resetComposer(); sendPending();
     });
-    field.addEventListener("input", () => { field.style.height = "auto"; field.style.height = `${Math.min(field.scrollHeight, 120)}px`; });
     field.addEventListener("keydown", event => {
         if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
     });
-    fileInput.addEventListener("change", () => renderPreview(fileInput.files[0]));
 
     const seen = () => {
         if (document.hidden) return;
@@ -299,7 +276,12 @@ function initializeConversationMenu(form, list, csrf) {
             if (dialog.returnValue !== "delete") { dialog.remove(); return; }
             deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
             try {
-                const response = await fetch(new URL("delete", form.action), {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})});
+                const response = await fetch(new URL("delete", form.action), {
+                    method: "POST",
+                    credentials: "same-origin",
+                    headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
+                    body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})
+                });
                 if (response.ok) {
                     document.querySelector(`.conversation-item[href*="conversationId=${list.dataset.conversation}"]`)?.remove();
                     dialog.remove();
@@ -313,7 +295,16 @@ function initializeConversationMenu(form, list, csrf) {
                     document.querySelector(".conversation-list")?.classList.remove("has-selection");
                     return;
                 }
-            } catch (_ignored) {}
+                let code = "DELETE_REQUEST_FAILED";
+                try {
+                    const payload = await response.json();
+                    if (typeof payload.code === "string") code = payload.code;
+                } catch (_ignored) {}
+                console.error("Private conversation delete failed", {status: response.status, code});
+                dialog.querySelector(".delete-error").dataset.errorCode = code;
+            } catch (error) {
+                console.error("Private conversation delete request failed", {name: error.name});
+            }
             deleteButton.disabled = false; deleteButton.textContent = "Delete";
             dialog.querySelector(".delete-error").hidden = false; dialog.showModal();
         });

@@ -68,12 +68,13 @@
                     </div>
                 </div></c:forEach></div></c:otherwise>
             </c:choose>
-            <c:if test="${not empty room and room.available}"><form class="chat-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><label class="attachment-button" title="Attach image, video, audio or file">📎<input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"></label><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="2" maxlength="2000" placeholder="Type a message..."></textarea><button class="btn btn-primary" type="submit">Send</button></form></c:if>
+            <c:if test="${not empty room and room.available}"><form class="chat-composer message-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><div class="attachment-preview-area" hidden></div><div class="composer-controls-row"><label class="attachment-button" title="Attach image, video, audio or file" aria-label="Attach image, video, audio or file">📎<input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"></label><span class="composer-input"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Type a message..."></textarea></span><button class="btn btn-primary" type="submit">Send</button></div></form></c:if>
         </section>
     </main>
 </div>
 <jsp:include page="../partials/mobile-bottom-nav.jsp" />
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="${pageContext.request.contextPath}/assets/js/message-composer.js?v=${applicationScope.assetVersion}" defer></script>
 <script src="${pageContext.request.contextPath}/assets/js/discussion-chat.js?v=${applicationScope.assetVersion}" defer></script>
 <script>
 (function() {

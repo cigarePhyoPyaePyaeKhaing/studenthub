@@ -20,9 +20,10 @@ class DeletePrivateConversationServletTest {
         AtomicLong hiddenConversation = new AtomicLong();
         AtomicLong hiddenForUser = new AtomicLong();
         PrivateMessageDAO dao = new PrivateMessageDAO() {
-            @Override public void hide(long conversation, long user) {
+            @Override public HideResult hideWithDiagnostics(long conversation, long user) {
                 hiddenConversation.set(conversation);
                 hiddenForUser.set(user);
+                return new HideResult(true, 1);
             }
         };
         Map<String,Object> sessionValues = new HashMap<>();

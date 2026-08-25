@@ -1,6 +1,7 @@
 package com.studenthub.controller;
 
 import com.studenthub.dao.PrivateMessageDAO;
+import com.studenthub.service.PrivateConversationDeletionService;
 import com.studenthub.util.CsrfToken;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -11,47 +12,77 @@ import java.sql.SQLException;
 
 @WebServlet(name = "DeletePrivateConversationServlet", urlPatterns = "/messages/delete")
 public class DeletePrivateConversationServlet extends HttpServlet {
-    private final PrivateMessageDAO dao;
+    private final PrivateConversationDeletionService service;
 
     public DeletePrivateConversationServlet() {
-        this(new PrivateMessageDAO());
+        this(new PrivateConversationDeletionService());
     }
 
     DeletePrivateConversationServlet(PrivateMessageDAO dao) {
-        this.dao = dao;
+        this(new PrivateConversationDeletionService(dao));
+    }
+
+    DeletePrivateConversationServlet(PrivateConversationDeletionService service) {
+        this.service = service;
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        if (!CsrfToken.isValid(request)) {
-            getServletContext().log("Private conversation delete rejected: CSRF_INVALID");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+        auditLog("Private conversation delete: REQUEST_REACHED");
+        boolean csrfValid = CsrfToken.isValid(request);
+        auditLog("Private conversation delete: CSRF_VALID=" + csrfValid);
+        if (!csrfValid) {
+            writeError(response, HttpServletResponse.SC_FORBIDDEN, "DELETE_CSRF_INVALID");
             return;
         }
-        Object sessionUser = request.getSession(false).getAttribute("userId");
+        Object sessionUser = request.getSession(false) == null ? null : request.getSession(false).getAttribute("userId");
         if (!(sessionUser instanceof Long userId)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            auditLog("Private conversation delete rejected: AUTHENTICATED=false");
+            writeError(response, HttpServletResponse.SC_UNAUTHORIZED, "DELETE_UNAUTHENTICATED");
             return;
         }
+        auditLog("Private conversation delete: AUTHENTICATED=true, userId=" + userId);
         final long conversationId;
         try {
             conversationId = Long.parseLong(request.getParameter("conversationId"));
         } catch (RuntimeException exception) {
-            getServletContext().log("Private conversation delete rejected: INVALID_CONVERSATION_ID");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            auditLog("Private conversation delete rejected: INVALID_CONVERSATION_ID");
+            writeError(response, HttpServletResponse.SC_BAD_REQUEST, "DELETE_INVALID_ID");
             return;
         }
+        auditLog("Private conversation delete: conversationId=" + conversationId + ", DAO_CALLED=true");
         try {
-            dao.hide(conversationId, userId);
+            PrivateConversationDeletionService.DeleteResult result = service.deleteForUser(conversationId, userId);
+            auditLog("Private conversation delete: conversationId=" + conversationId
+                    + ", userId=" + userId + ", MEMBERSHIP=" + result.participant()
+                    + ", affectedRows=" + result.affectedRows() + ", code=" + result.code());
+            if (!result.participant()) {
+                writeError(response, HttpServletResponse.SC_FORBIDDEN, result.code());
+                return;
+            }
+            if (result.affectedRows() < 1) {
+                writeError(response, HttpServletResponse.SC_NOT_FOUND, result.code());
+                return;
+            }
             response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        } catch (SecurityException exception) {
-            getServletContext().log("Private conversation delete rejected: NOT_PARTICIPANT");
-            response.sendError(HttpServletResponse.SC_FORBIDDEN);
         } catch (SQLException exception) {
-            getServletContext().log("Private conversation delete failed: DATABASE_ERROR, SQLState="
-                    + safeSqlState(exception), exception);
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            auditLog("Private conversation delete failed: DATABASE_ERROR, conversationId="
+                    + conversationId + ", userId=" + userId + ", exceptionClass="
+                    + exception.getClass().getName() + ", SQLState=" + safeSqlState(exception)
+                    + ", vendorCode=" + exception.getErrorCode());
+            writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "DELETE_DB_ERROR");
         }
+    }
+
+    private void writeError(HttpServletResponse response, int status, String code) throws IOException {
+        response.setStatus(status);
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("{\"code\":\"" + code + "\"}");
+    }
+
+    private void auditLog(String message) {
+        if (getServletConfig() != null) getServletContext().log(message);
     }
 
     private String safeSqlState(SQLException exception) {
