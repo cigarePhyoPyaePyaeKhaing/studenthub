@@ -8,20 +8,21 @@ import java.util.List;
 import java.util.Optional;
 
 public class AdminDAO {
+    private static final String ACTIVE_ACCOUNT = "email NOT LIKE 'deleted-%@invalid.studenthub'";
     public AdminDashboardStats loadStats() throws SQLException {
         String sql = """
                 SELECT
-                  (SELECT COUNT(*) FROM users) total_users,
-                  (SELECT COUNT(*) FROM users WHERE role='STUDENT') students,
-                  (SELECT COUNT(*) FROM users WHERE role='CR') crs,
-                  (SELECT COUNT(*) FROM users WHERE role='ADMIN') admins,
+                  (SELECT COUNT(*) FROM users WHERE email NOT LIKE 'deleted-%@invalid.studenthub') total_users,
+                  (SELECT COUNT(*) FROM users WHERE role='STUDENT' AND email NOT LIKE 'deleted-%@invalid.studenthub') students,
+                  (SELECT COUNT(*) FROM users WHERE role='CR' AND email NOT LIKE 'deleted-%@invalid.studenthub') crs,
+                  (SELECT COUNT(*) FROM users WHERE role='ADMIN' AND email NOT LIKE 'deleted-%@invalid.studenthub') admins,
                   (SELECT COUNT(*) FROM posts) announcements,
                   (SELECT COUNT(*) FROM deadlines) deadlines,
                   (SELECT COUNT(*) FROM messages) discussion_messages,
                   (SELECT COUNT(*) FROM comments) comments,
                   (SELECT COUNT(*) FROM reactions) reactions,
-                  (SELECT COUNT(*) FROM users WHERE email_verified=TRUE) verified_users,
-                  (SELECT COUNT(*) FROM users WHERE email_verified=FALSE) unverified_users
+                  (SELECT COUNT(*) FROM users WHERE email_verified=TRUE AND email NOT LIKE 'deleted-%@invalid.studenthub') verified_users,
+                  (SELECT COUNT(*) FROM users WHERE email_verified=FALSE AND email NOT LIKE 'deleted-%@invalid.studenthub') unverified_users
                 """;
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql);
@@ -55,7 +56,7 @@ public class AdminDAO {
     }
 
     public long countUsers(String search) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM users" + searchClause(search);
+        String sql = "SELECT COUNT(*) FROM users WHERE " + ACTIVE_ACCOUNT + searchClause(search);
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             bindSearch(statement, search);
@@ -65,7 +66,7 @@ public class AdminDAO {
 
     public Optional<AdminUserSummary> findUser(long userId) throws SQLException {
         try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(baseUserSelect() + " WHERE user_id=?")) {
+             PreparedStatement statement = connection.prepareStatement(baseUserSelect() + " AND user_id=?")) {
             statement.setLong(1, userId);
             try (ResultSet result = statement.executeQuery()) {
                 return result.next() ? Optional.of(map(result)) : Optional.empty();
@@ -101,10 +102,10 @@ public class AdminDAO {
     }
 
     private String baseUserSelect() {
-        return "SELECT user_id,student_id,full_name,email,role,email_verified,semester,section_name,created_at FROM users";
+        return "SELECT user_id,student_id,full_name,email,role,email_verified,semester,section_name,created_at FROM users WHERE " + ACTIVE_ACCOUNT;
     }
     private String searchClause(String search) {
-        return search == null ? "" : " WHERE student_id LIKE ? OR full_name LIKE ? OR email LIKE ?";
+        return search == null ? "" : " AND (student_id LIKE ? OR full_name LIKE ? OR email LIKE ?)";
     }
     private int bindSearch(PreparedStatement statement, String search) throws SQLException {
         if (search == null) return 1;

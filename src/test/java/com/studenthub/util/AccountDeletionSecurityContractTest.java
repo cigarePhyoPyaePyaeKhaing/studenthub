@@ -28,4 +28,20 @@ class AccountDeletionSecurityContractTest {
   assertFalse(source.contains("DELETE FROM private_messages"));
   assertTrue(source.contains("FOR UPDATE"));assertTrue(source.contains("rollback()"));assertTrue(source.contains("commit()"));
  }
+ @Test void clientUsesExplicitUrlEncodedCsrfAndClassifiesEveryFailureStage()throws Exception{
+  String js=Files.readString(Path.of("src/main/webapp/assets/js/account-deletion.js"));
+  assertTrue(js.contains("new URLSearchParams()"));
+  assertTrue(js.contains("body.set(\"currentPassword\",password.value)"));
+  assertTrue(js.contains("body.set(\"csrfToken\",csrf.value)"));
+  assertFalse(js.contains("new FormData(form)"));
+  assertTrue(js.contains("application/x-www-form-urlencoded"));
+  assertTrue(js.contains("ACCOUNT_DELETE_BEFORE_FETCH"));assertTrue(js.contains("ACCOUNT_DELETE_AFTER_FETCH"));
+  assertTrue(js.contains("ACCOUNT_DELETE_BEFORE_PARSE"));assertTrue(js.contains("ACCOUNT_DELETE_AFTER_PARSE"));
+  assertTrue(js.contains("ACCOUNT_DELETE_NETWORK_FAILED"));assertTrue(js.contains("ACCOUNT_DELETE_RESPONSE_INVALID"));assertTrue(js.contains("ACCOUNT_DELETE_CLIENT_ERROR"));
+ }
+ @Test void deletedTombstonesAreExcludedFromActiveAdminUsers()throws Exception{
+  String dao=Files.readString(Path.of("src/main/java/com/studenthub/dao/AdminDAO.java"));
+  assertTrue(dao.contains("email NOT LIKE 'deleted-%@invalid.studenthub'"));
+  assertTrue(dao.contains("baseUserSelect() + \" AND user_id=?\""));
+ }
 }
