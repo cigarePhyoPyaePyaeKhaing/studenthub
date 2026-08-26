@@ -38,7 +38,16 @@ public class AuthenticationFilter implements Filter {
         }
         if (isPublicPath(path) || !isProtectedPath(path)) { chain.doFilter(request, response); return; }
         HttpSession session = http.getSession(false);
-        if (session == null || session.getAttribute("userId") == null) { ((HttpServletResponse) response).sendRedirect(http.getContextPath() + "/login"); return; }
+        if (session == null || session.getAttribute("userId") == null) {
+            HttpServletResponse output = (HttpServletResponse) response;
+            if (path.equals("/messages/delete")) {
+                output.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                output.setContentType("application/json");
+                output.setCharacterEncoding("UTF-8");
+                output.getWriter().write("{\"success\":false,\"code\":\"DELETE_UNAUTHENTICATED\",\"message\":\"Sign in again to continue.\"}");
+            } else output.sendRedirect(http.getContextPath() + "/login");
+            return;
+        }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
         request.setAttribute("activeNav", NavigationSection.resolve(http));
         touchPresence(session, (Long) session.getAttribute("userId"), http);

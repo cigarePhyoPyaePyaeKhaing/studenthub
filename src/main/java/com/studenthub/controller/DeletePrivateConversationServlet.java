@@ -68,6 +68,11 @@ public class DeletePrivateConversationServlet extends HttpServlet {
                     + exception.getClass().getName() + ", SQLState=" + safeSqlState(exception)
                     + ", vendorCode=" + exception.getErrorCode());
             writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "DELETE_DB_ERROR");
+        } catch (RuntimeException exception) {
+            auditLog("Private conversation delete failed: SERVER_ERROR, conversationId="
+                    + conversationId + ", userId=" + userId + ", exceptionClass="
+                    + exception.getClass().getName());
+            writeError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "DELETE_SERVER_ERROR");
         }
     }
 

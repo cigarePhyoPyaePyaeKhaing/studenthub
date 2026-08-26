@@ -23,6 +23,9 @@ class MessagingUiContractTest {
         assertFalse(main.contains("flex:1 0 100%"));
         assertTrue(composer.contains("const initialized = new WeakSet()"));
         assertTrue(composer.contains("input.addEventListener(\"change\""));
+        assertTrue(composer.contains("let selectedAttachment = null"));
+        assertTrue(composer.contains("function render(file) {\n            releasePreview();"));
+        assertFalse(composer.contains("function render(file) {\n            clearAttachment();"));
         assertFalse(privateChat.contains("fileInput.addEventListener(\"change\""));
         assertFalse(discussion.contains("input.addEventListener(\"change\""));
     }
@@ -95,10 +98,45 @@ class MessagingUiContractTest {
         assertFalse(servlet.contains("csrfToken="));
         assertFalse(servlet.contains("sessionId"));
         for (String code : new String[]{"DELETE_CSRF_INVALID", "DELETE_UNAUTHENTICATED",
-                "DELETE_INVALID_ID", "DELETE_FORBIDDEN", "DELETE_NOT_FOUND", "DELETE_DB_ERROR"}) {
+                "DELETE_INVALID_ID", "DELETE_FORBIDDEN", "DELETE_NOT_FOUND", "DELETE_DB_ERROR", "DELETE_SERVER_ERROR"}) {
             assertTrue(client.contains(code));
         }
         assertTrue(client.contains("errorMessage.textContent = deleteConversationErrorMessage(code)"));
+        assertTrue(client.contains("redirect: \"error\""));
+        assertTrue(client.contains("DELETE_NETWORK_FAILED"));
+        assertTrue(client.contains("DELETE_RESPONSE_INVALID"));
+        assertTrue(client.contains("DELETE_HTTP_ERROR"));
+        assertTrue(client.contains("contentType.toLowerCase().includes(\"application/json\")"));
+        assertTrue(client.contains("const body = await response.text()"));
+    }
+
+    @Test
+    void attachmentAndCaptionShareOneMultipartSubmissionAndClearOnlyAfterSuccess() throws IOException {
+        String composer = source("src/main/webapp/assets/js/message-composer.js");
+        String privateChat = source("src/main/webapp/assets/js/private-chat.js");
+        String discussionJsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        String discussionClient = source("src/main/webapp/assets/js/discussion-chat.js");
+        String privateServlet = source("src/main/java/com/studenthub/controller/SendPrivateMessageServlet.java");
+        String discussionServlet = source("src/main/java/com/studenthub/controller/SendDiscussionMessageServlet.java");
+
+        assertTrue(composer.contains("selectedAttachment = file || null"));
+        assertTrue(privateChat.contains("const body = new FormData(form)"));
+        assertTrue(privateChat.contains("last = Math.max(last, +data.messageId); resetComposer();"));
+        assertFalse(privateChat.contains("resetComposer(); sendPending();"));
+        assertTrue(discussionJsp.contains("enctype=\"multipart/form-data\""));
+        assertTrue(discussionJsp.contains("name=\"attachment\""));
+        assertTrue(discussionJsp.contains("name=\"message\""));
+        assertTrue(privateServlet.contains("getPart(\"attachment\")"));
+        assertTrue(privateServlet.contains("getParameter(\"message\")"));
+        assertTrue(discussionServlet.contains("getPart(\"attachment\")"));
+        assertTrue(discussionServlet.contains("getParameter(\"message\")"));
+        assertTrue(discussionClient.contains("body: new FormData(form)"));
+        assertTrue(discussionClient.contains("if (submitting) return"));
+        assertTrue(discussionClient.contains("payload?.success !== true"));
+        assertTrue(discussionClient.indexOf("payload?.success !== true")
+                < discussionClient.indexOf("composer?.clearAttachment()"));
+        assertTrue(discussionServlet.contains("acceptsJson(request)"));
+        assertTrue(discussionServlet.contains("\"{\\\"success\\\":true"));
     }
 
     @Test

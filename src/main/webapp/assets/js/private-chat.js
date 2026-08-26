@@ -216,7 +216,7 @@ function initializeChat(form, list) {
             pending.element.dataset.messageId = data.messageId;
             pending.element.querySelector("time").textContent = data.createdLabel;
             pending.upload?.remove(); media(pending.element, data); mark(pending.element, data.status);
-            last = Math.max(last, +data.messageId); pending = null; xhr = null; send.disabled = false;
+            last = Math.max(last, +data.messageId); resetComposer(); pending = null; xhr = null; send.disabled = false;
         };
         xhr.onerror = () => { xhr = null; fail("Upload failed"); };
         xhr.onabort = () => { xhr = null; fail("Upload cancelled"); };
@@ -233,7 +233,7 @@ function initializeChat(form, list) {
         const body = new FormData(form);
         const element = bubble({message: text, status: "SENDING"}, true, true);
         pending = {file, body, element, upload: file ? uploadCard(element, file) : null};
-        resetComposer(); sendPending();
+        sendPending();
     });
     field.addEventListener("keydown", event => {
         if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
@@ -275,14 +275,25 @@ function initializeConversationMenu(form, list, csrf) {
         dialog.addEventListener("close", async () => {
             if (dialog.returnValue !== "delete") { dialog.remove(); return; }
             deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
+            let response;
             try {
-                const response = await fetch(new URL("delete", form.action), {
+                response = await fetch(new URL("delete", form.action), {
                     method: "POST",
                     credentials: "same-origin",
+                    redirect: "error",
                     headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
                     body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})
                 });
-                if (response.ok) {
+            } catch (error) {
+                console.error("Private conversation delete network failure", {name: error.name});
+                showDeleteConversationError(dialog, "DELETE_NETWORK_FAILED");
+                deleteButton.disabled = false; deleteButton.textContent = "Delete";
+                dialog.showModal();
+                return;
+            }
+
+            const result = await parseDeleteConversationResponse(response);
+            if (response.ok && result.payload?.success === true && result.payload.code === "DELETE_OK") {
                     document.querySelector(`.conversation-item[href*="conversationId=${list.dataset.conversation}"]`)?.remove();
                     dialog.remove();
                     history.replaceState(null, "", new URL("../messages", form.action));
@@ -294,25 +305,43 @@ function initializeConversationMenu(form, list, csrf) {
                     thread.append(empty);
                     document.querySelector(".conversation-list")?.classList.remove("has-selection");
                     return;
-                }
-                let code = "DELETE_REQUEST_FAILED";
-                try {
-                    const payload = await response.json();
-                    if (typeof payload.code === "string") code = payload.code;
-                } catch (_ignored) {}
-                console.error("Private conversation delete failed", {status: response.status, code});
-                const errorMessage = dialog.querySelector(".delete-error");
-                errorMessage.dataset.errorCode = code;
-                errorMessage.textContent = deleteConversationErrorMessage(code);
-            } catch (error) {
-                console.error("Private conversation delete request failed", {name: error.name});
-                dialog.querySelector(".delete-error").textContent = deleteConversationErrorMessage("DELETE_REQUEST_FAILED");
             }
+            const code = result.code || (response.ok ? "DELETE_RESPONSE_INVALID" : "DELETE_HTTP_ERROR");
+            console.error("Private conversation delete failed", {
+                status: response.status,
+                contentType: response.headers.get("Content-Type") || "missing",
+                code
+            });
+            showDeleteConversationError(dialog, code);
             deleteButton.disabled = false; deleteButton.textContent = "Delete";
-            dialog.querySelector(".delete-error").hidden = false; dialog.showModal();
+            dialog.showModal();
         });
         dialog.showModal();
     });
+}
+
+async function parseDeleteConversationResponse(response) {
+    const contentType = response.headers.get("Content-Type") || "";
+    if (!contentType.toLowerCase().includes("application/json")) {
+        return {payload: null, code: "DELETE_RESPONSE_INVALID"};
+    }
+    const body = await response.text();
+    if (!body.trim()) return {payload: null, code: "DELETE_RESPONSE_INVALID"};
+    try {
+        const payload = JSON.parse(body);
+        if (!payload || typeof payload !== "object") return {payload: null, code: "DELETE_RESPONSE_INVALID"};
+        if (!response.ok && typeof payload.code === "string") return {payload, code: payload.code};
+        return {payload, code: null};
+    } catch (_ignored) {
+        return {payload: null, code: "DELETE_RESPONSE_INVALID"};
+    }
+}
+
+function showDeleteConversationError(dialog, code) {
+    const errorMessage = dialog.querySelector(".delete-error");
+    errorMessage.dataset.errorCode = code;
+    errorMessage.textContent = deleteConversationErrorMessage(code);
+    errorMessage.hidden = false;
 }
 
 function deleteConversationErrorMessage(code) {
@@ -322,7 +351,11 @@ function deleteConversationErrorMessage(code) {
         DELETE_INVALID_ID: "This conversation could not be identified. Refresh the page and try again. (DELETE_INVALID_ID)",
         DELETE_FORBIDDEN: "You no longer have access to this conversation. (DELETE_FORBIDDEN)",
         DELETE_NOT_FOUND: "This conversation is no longer available. (DELETE_NOT_FOUND)",
-        DELETE_DB_ERROR: "The conversation could not be removed right now. Please try again shortly. (DELETE_DB_ERROR)"
+        DELETE_DB_ERROR: "The conversation could not be removed right now. Please try again shortly. (DELETE_DB_ERROR)",
+        DELETE_SERVER_ERROR: "StudentHub could not complete the delete request right now. Please retry. (DELETE_SERVER_ERROR)",
+        DELETE_NETWORK_FAILED: "The delete request could not reach StudentHub. Check your connection and retry. (DELETE_NETWORK_FAILED)",
+        DELETE_RESPONSE_INVALID: "StudentHub returned an unexpected response. Refresh the page and retry. (DELETE_RESPONSE_INVALID)",
+        DELETE_HTTP_ERROR: "StudentHub could not complete the delete request. Please retry. (DELETE_HTTP_ERROR)"
     };
-    return messages[code] || "Could not delete this conversation. Check your connection and try again. (DELETE_REQUEST_FAILED)";
+    return messages[code] || messages.DELETE_HTTP_ERROR;
 }

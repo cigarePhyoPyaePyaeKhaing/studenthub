@@ -77,6 +77,18 @@ class DeletePrivateConversationServletTest {
         assertFalse(exchange.body.toString().contains("42000"));
     }
 
+    @Test void unexpectedRuntimeFailureStillReturnsStructuredJson() throws Exception {
+        PrivateConversationDeletionService service = new PrivateConversationDeletionService(new PrivateMessageDAO()) {
+            @Override public DeleteResult deleteForUser(long conversationId, long userId) {
+                throw new IllegalStateException("sensitive runtime detail");
+            }
+        };
+        Exchange exchange = exchange(41L, "csrf-value", "csrf-value", "77");
+        new DeletePrivateConversationServlet(service).doPost(exchange.request, exchange.response);
+        assertError(exchange, 500, "DELETE_SERVER_ERROR");
+        assertFalse(exchange.body.toString().contains("sensitive"));
+    }
+
     private static PrivateConversationDeletionService serviceReturning(PrivateConversationDeletionService.DeleteResult result) {
         return new PrivateConversationDeletionService(new PrivateMessageDAO()) {
             @Override public DeleteResult deleteForUser(long conversationId, long userId) { return result; }

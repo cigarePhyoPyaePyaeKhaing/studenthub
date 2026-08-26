@@ -14,4 +14,7 @@ class DiscussionValidationTest {
         assertNull(DiscussionValidation.validate(input));
         assertEquals("မင်္ဂလာပါ 👋", DiscussionValidation.normalize(input));
     }
+    @Test void attachmentOnlyIsAccepted() { assertNull(DiscussionValidation.validate(null, true)); }
+    @Test void emptyCaptionWithAttachmentIsAccepted() { assertNull(DiscussionValidation.validate("", true)); }
+    @Test void attachmentWithCaptionIsAccepted() { assertNull(DiscussionValidation.validate("lecture note", true)); }
 }

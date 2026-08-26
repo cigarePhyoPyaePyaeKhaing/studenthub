@@ -18,22 +18,29 @@ window.StudentHubMessageComposer = (() => {
         initialized.add(form);
         form.dataset.composerInitialized = "true";
         let objectUrl;
+        let selectedAttachment = null;
 
         function resize() {
             textarea.style.height = "auto";
             textarea.style.height = `${Math.min(textarea.scrollHeight, 140)}px`;
         }
 
-        function clearAttachment() {
+        function releasePreview() {
             if (objectUrl) URL.revokeObjectURL(objectUrl);
             objectUrl = undefined;
-            input.value = "";
             preview.replaceChildren();
             preview.hidden = true;
         }
 
+        function clearAttachment() {
+            releasePreview();
+            selectedAttachment = null;
+            input.value = "";
+        }
+
         function render(file) {
-            clearAttachment();
+            releasePreview();
+            selectedAttachment = file || null;
             if (!file) return;
             const media = document.createElement(file.type.startsWith("image/") ? "img"
                 : file.type.startsWith("video/") ? "video" : "span");
@@ -69,7 +76,11 @@ window.StudentHubMessageComposer = (() => {
         window.addEventListener("pagehide", () => {
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         }, {once: true});
-        return {clearAttachment, resetHeight: () => { textarea.style.height = "auto"; }};
+        return {
+            clearAttachment,
+            selectedAttachment: () => selectedAttachment,
+            resetHeight: () => { textarea.style.height = "auto"; }
+        };
     }
 
     return {initialize};
