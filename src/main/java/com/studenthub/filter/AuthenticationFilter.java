@@ -40,11 +40,12 @@ public class AuthenticationFilter implements Filter {
         HttpSession session = http.getSession(false);
         if (session == null || session.getAttribute("userId") == null) {
             HttpServletResponse output = (HttpServletResponse) response;
-            if (path.equals("/messages/delete")) {
+            if (path.equals("/messages/delete") || path.equals("/profile/delete-account")) {
                 output.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 output.setContentType("application/json");
                 output.setCharacterEncoding("UTF-8");
-                output.getWriter().write("{\"success\":false,\"code\":\"DELETE_UNAUTHENTICATED\",\"message\":\"Sign in again to continue.\"}");
+                String code=path.equals("/profile/delete-account")?"ACCOUNT_DELETE_UNAUTHENTICATED":"DELETE_UNAUTHENTICATED";
+                output.getWriter().write("{\"success\":false,\"code\":\""+code+"\",\"message\":\"Sign in again to continue.\"}");
             } else output.sendRedirect(http.getContextPath() + "/login");
             return;
         }

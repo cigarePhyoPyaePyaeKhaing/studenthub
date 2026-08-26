@@ -42,6 +42,20 @@ class AdminUserManagementUiContractTest {
         assertTrue(css.contains(".role-section-admin .admin-role-icon"));
     }
 
+    @Test void roleTabsAreAccessibleEqualWidthAndStudentsAreTheOnlyInitialPanel() throws IOException {
+        String jsp=Files.readString(Path.of("src/main/webapp/WEB-INF/views/admin/users.jsp"));
+        String css=Files.readString(Path.of("src/main/webapp/assets/css/dashboard.css"));
+        String js=Files.readString(Path.of("src/main/webapp/assets/js/admin-users.js"));
+        assertTrue(jsp.contains("role=\"tablist\""));
+        assertEquals(3,occurrences(jsp,"role=\"tab\""));
+        assertEquals(3,occurrences(jsp,"role=\"tabpanel\""));
+        assertTrue(jsp.contains("id=\"student-tab\" aria-controls=\"student-panel\" aria-selected=\"true\""));
+        assertEquals(2,occurrences(jsp,"data-role-section=\"")-occurrences(jsp,"data-role-section=\"STUDENT\""));
+        assertEquals(2,occurrences(jsp," hidden>"));
+        assertTrue(css.contains("grid-template-columns:repeat(3,minmax(0,1fr))"));
+        assertTrue(js.contains("ArrowRight")); assertTrue(js.contains("ArrowLeft"));
+    }
+
     private static int occurrences(String value, String token) {
         int count = 0;
         for (int index = 0; (index = value.indexOf(token, index)) >= 0; index += token.length()) count++;

@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script>
     <script src="${pageContext.request.contextPath}/assets/js/profile-photo.js?v=${applicationScope.assetVersion}" defer></script>
+    <script src="${pageContext.request.contextPath}/assets/js/account-deletion.js?v=${applicationScope.assetVersion}" defer></script>
     <link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
@@ -273,6 +274,10 @@
                     </div>
                 </c:otherwise>
             </c:choose>
+        </c:if>
+        <c:if test="${not publicProfile and not editing and not empty profile}">
+            <section class="profile-card profile-danger-zone"><div><p class="eyebrow mb-1">Danger Zone</p><h2>Delete account</h2><p>Permanently delete your StudentHub account and associated personal data. This action cannot be undone.</p></div><button class="btn btn-danger" type="button" data-open-delete-account>Delete Account</button></section>
+            <div class="account-delete-modal" data-delete-account-modal hidden role="dialog" aria-modal="true" aria-labelledby="delete-account-title"><div class="account-delete-dialog"><h2 id="delete-account-title">Delete your account?</h2><p>This permanently deletes your StudentHub account and associated personal data. This action cannot be undone.</p><form method="post" action="${pageContext.request.contextPath}/profile/delete-account" data-delete-account-form><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><label for="deleteCurrentPassword">Current password</label><input class="form-control" id="deleteCurrentPassword" name="currentPassword" type="password" autocomplete="current-password" required><p class="account-delete-error" data-delete-account-error role="alert"></p><div class="account-delete-actions"><button class="btn btn-light" type="button" data-close-delete-account>Cancel</button><button class="btn btn-danger" type="submit">Permanently Delete Account</button></div></form></div></div>
         </c:if>
     </main>
 </div>
