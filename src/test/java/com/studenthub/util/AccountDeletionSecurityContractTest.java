@@ -26,7 +26,25 @@ class AccountDeletionSecurityContractTest {
   assertFalse(source.contains("DELETE FROM users"));
   assertFalse(source.contains("DELETE FROM private_conversations"));
   assertFalse(source.contains("DELETE FROM private_messages"));
+  assertFalse(source.contains("UPDATE universities"));
+  assertFalse(source.contains("DELETE FROM universities"));
   assertTrue(source.contains("FOR UPDATE"));assertTrue(source.contains("rollback()"));assertTrue(source.contains("commit()"));
+ }
+ @Test void everyCleanupTableAndColumnMatchesAnActiveSchemaSource()throws Exception{
+  String service=Files.readString(Path.of("src/main/java/com/studenthub/service/AccountDeletionService.java"));
+  String schema=Files.readString(Path.of("database/schema.sql"));
+  String runtime=Files.readString(Path.of("src/main/java/com/studenthub/util/ApplicationConfigurationListener.java"));
+  String privateMessaging=Files.readString(Path.of("database/migrations/V9__private_messaging.sql"));
+  String visibility=Files.readString(Path.of("database/migrations/V11__private_conversation_visibility.sql"));
+  assertCleanupContract(service,schema,"verification_codes","user_id");
+  assertCleanupContract(service,schema,"notification_reads","user_id");
+  assertCleanupContract(service,privateMessaging,"private_message_reads","user_id");
+  assertCleanupContract(service,visibility+runtime,"private_conversation_visibility","user_id");
+  assertCleanupContract(service,schema,"reactions","user_id");
+  assertCleanupContract(service,schema+runtime,"academic_change_requests","user_id");
+  assertCleanupContract(service,schema+runtime,"academic_change_requests","reviewed_by");
+  assertCleanupContract(service,schema,"notifications","target_user_id");
+  assertFalse(service.contains("universities\", \"UPDATE"));
  }
  @Test void clientUsesExplicitUrlEncodedCsrfAndClassifiesEveryFailureStage()throws Exception{
   String js=Files.readString(Path.of("src/main/webapp/assets/js/account-deletion.js"));
@@ -43,5 +61,11 @@ class AccountDeletionSecurityContractTest {
   String dao=Files.readString(Path.of("src/main/java/com/studenthub/dao/AdminDAO.java"));
   assertTrue(dao.contains("email NOT LIKE 'deleted-%@invalid.studenthub'"));
   assertTrue(dao.contains("baseUserSelect() + \" AND user_id=?\""));
+ }
+ private void assertCleanupContract(String service,String schemaSource,String table,String column){
+  assertTrue(service.contains(table),"Deletion plan must name "+table);
+  assertTrue(service.contains(column+"=?"),"Deletion plan must scope "+table+" by "+column);
+  assertTrue(schemaSource.contains(table),"Schema source must define "+table);
+  assertTrue(schemaSource.contains(column),"Schema source must define "+table+"."+column);
  }
 }

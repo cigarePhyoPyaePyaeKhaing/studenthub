@@ -40,8 +40,6 @@ public class AccountDeletionService {
                 executeOptional(connection, "reactions", "DELETE FROM reactions WHERE user_id=?", userId);
                 executeOptional(connection, "academic_change_requests", "DELETE FROM academic_change_requests WHERE user_id=?", userId);
                 executeOptional(connection, "academic_change_requests", "UPDATE academic_change_requests SET reviewed_by=NULL WHERE reviewed_by=?", userId);
-                executeOptional(connection, "universities", "UPDATE universities SET requested_by=NULL WHERE requested_by=?", userId);
-                executeOptional(connection, "universities", "UPDATE universities SET approved_by=NULL WHERE approved_by=?", userId);
                 executeOptional(connection, "notifications", "DELETE FROM notifications WHERE target_user_id=?", userId);
 
                 String token = UUID.randomUUID().toString().replace("-", "");
