@@ -34,7 +34,9 @@ public class DeleteAccountServlet extends HttpServlet {
             response.setStatus(200);
             response.getWriter().write("{\"success\":true,\"code\":\"ACCOUNT_DELETE_OK\",\"redirectUrl\":\""+escape(request.getContextPath()+"/login?accountDeleted=1")+"\"}");
         } catch(SQLException exception) {
-            logSafe("Account deletion failed: userId="+userId+", stage=transaction, exception="+exception.getClass().getName()+", SQLState="+exception.getSQLState()+", errorCode="+exception.getErrorCode());
+            String stage="transaction",table="unknown";
+            if(exception instanceof AccountDeletionService.AccountDeletionDatabaseException detail){stage=detail.stage();table=detail.table();}
+            logSafe("Account deletion failed: userId="+userId+", stage="+stage+", table="+table+", exception="+exception.getClass().getName()+", SQLState="+exception.getSQLState()+", errorCode="+exception.getErrorCode());
             write(response,500,"ACCOUNT_DELETE_DB_ERROR","Your account could not be deleted right now.");
         } catch(RuntimeException exception) {
             logSafe("Account deletion failed: userId="+userId+", stage=transaction, exception="+exception.getClass().getName());

@@ -33,16 +33,16 @@ public class AccountDeletionService {
                 }
 
                 // Owned personal state. Shared authored content and private conversations remain intact.
-                execute(connection, "DELETE FROM verification_codes WHERE user_id=?", userId);
-                execute(connection, "DELETE FROM notification_reads WHERE user_id=?", userId);
-                execute(connection, "DELETE FROM private_message_reads WHERE user_id=?", userId);
-                execute(connection, "DELETE FROM private_conversation_visibility WHERE user_id=?", userId);
-                execute(connection, "DELETE FROM reactions WHERE user_id=?", userId);
-                execute(connection, "DELETE FROM academic_change_requests WHERE user_id=?", userId);
-                execute(connection, "UPDATE academic_change_requests SET reviewed_by=NULL WHERE reviewed_by=?", userId);
-                execute(connection, "UPDATE universities SET requested_by=NULL WHERE requested_by=?", userId);
-                execute(connection, "UPDATE universities SET approved_by=NULL WHERE approved_by=?", userId);
-                execute(connection, "DELETE FROM notifications WHERE target_user_id=?", userId);
+                executeRequired(connection, "verification_codes", "DELETE FROM verification_codes WHERE user_id=?", userId);
+                executeOptional(connection, "notification_reads", "DELETE FROM notification_reads WHERE user_id=?", userId);
+                executeOptional(connection, "private_message_reads", "DELETE FROM private_message_reads WHERE user_id=?", userId);
+                executeOptional(connection, "private_conversation_visibility", "DELETE FROM private_conversation_visibility WHERE user_id=?", userId);
+                executeOptional(connection, "reactions", "DELETE FROM reactions WHERE user_id=?", userId);
+                executeOptional(connection, "academic_change_requests", "DELETE FROM academic_change_requests WHERE user_id=?", userId);
+                executeOptional(connection, "academic_change_requests", "UPDATE academic_change_requests SET reviewed_by=NULL WHERE reviewed_by=?", userId);
+                executeOptional(connection, "universities", "UPDATE universities SET requested_by=NULL WHERE requested_by=?", userId);
+                executeOptional(connection, "universities", "UPDATE universities SET approved_by=NULL WHERE approved_by=?", userId);
+                executeOptional(connection, "notifications", "DELETE FROM notifications WHERE target_user_id=?", userId);
 
                 String token = UUID.randomUUID().toString().replace("-", "");
                 try (PreparedStatement statement = connection.prepareStatement("""
@@ -54,7 +54,7 @@ public class AccountDeletionService {
                     statement.setString(2, PasswordUtil.hash(UUID.randomUUID().toString()));
                     statement.setLong(3, userId);
                     if (statement.executeUpdate() != 1) throw new SQLException("Account changed during deletion", "40001");
-                }
+                } catch (SQLException exception) { throw databaseFailure("users_anonymize", "users", exception); }
                 connection.commit();
                 return new Result(true, "ACCOUNT_DELETE_OK", account.profileImage());
             } catch (SQLException | RuntimeException exception) {
@@ -81,11 +81,28 @@ public class AccountDeletionService {
              ResultSet results = statement.executeQuery()) { while(results.next()) count++; }
         return count;
     }
-    private void execute(Connection connection, String sql, long userId) throws SQLException {
-        try (PreparedStatement statement = connection.prepareStatement(sql)) { statement.setLong(1, userId); statement.executeUpdate(); }
+    private void executeOptional(Connection connection,String table,String sql,long userId)throws SQLException {
+        if(tableExists(connection,table))executeRequired(connection,table,sql,userId);
+    }
+    private boolean tableExists(Connection connection,String table)throws SQLException {
+        try(PreparedStatement statement=connection.prepareStatement("SELECT 1 FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?")){
+            statement.setString(1,table);try(ResultSet results=statement.executeQuery()){return results.next();}
+        }catch(SQLException exception){throw databaseFailure("schema_check",table,exception);}
+    }
+    private void executeRequired(Connection connection,String table,String sql,long userId)throws SQLException {
+        try(PreparedStatement statement=connection.prepareStatement(sql)){statement.setLong(1,userId);statement.executeUpdate();}
+        catch(SQLException exception){throw databaseFailure("dependent_cleanup",table,exception);}
+    }
+    private AccountDeletionDatabaseException databaseFailure(String stage,String table,SQLException cause){
+        return new AccountDeletionDatabaseException(stage,table,cause);
     }
     private record Account(String passwordHash, String role, String profileImage) { }
     public record Result(boolean success, String code, String profileImage) {
         static Result passwordInvalid() { return new Result(false, "ACCOUNT_DELETE_PASSWORD_INVALID", null); }
+    }
+    public static final class AccountDeletionDatabaseException extends SQLException {
+        private final String stage;private final String table;
+        AccountDeletionDatabaseException(String stage,String table,SQLException cause){super("Account deletion database failure",cause.getSQLState(),cause.getErrorCode(),cause);this.stage=stage;this.table=table;}
+        public String stage(){return stage;}public String table(){return table;}
     }
 }
