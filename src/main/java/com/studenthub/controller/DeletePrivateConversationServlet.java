@@ -60,11 +60,8 @@ public class DeletePrivateConversationServlet extends HttpServlet {
                 writeError(response, HttpServletResponse.SC_FORBIDDEN, result.code());
                 return;
             }
-            if (result.affectedRows() < 1) {
-                writeError(response, HttpServletResponse.SC_NOT_FOUND, result.code());
-                return;
-            }
-            response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+            writeJson(response, HttpServletResponse.SC_OK,
+                    "{\"success\":true,\"code\":\"DELETE_OK\"}");
         } catch (SQLException exception) {
             auditLog("Private conversation delete failed: DATABASE_ERROR, conversationId="
                     + conversationId + ", userId=" + userId + ", exceptionClass="
@@ -75,10 +72,15 @@ public class DeletePrivateConversationServlet extends HttpServlet {
     }
 
     private void writeError(HttpServletResponse response, int status, String code) throws IOException {
+        writeJson(response, status, "{\"success\":false,\"code\":\"" + code
+                + "\",\"message\":\"Could not delete this conversation.\"}");
+    }
+
+    private void writeJson(HttpServletResponse response, int status, String json) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().write("{\"code\":\"" + code + "\"}");
+        response.getWriter().write(json);
     }
 
     private void auditLog(String message) {

@@ -84,10 +84,22 @@ class MessagingUiContractTest {
         String service = source("src/main/java/com/studenthub/service/PrivateConversationDeletionService.java");
         assertTrue(servlet.contains("DELETE_INVALID_ID"));
         assertTrue(service.contains("DELETE_FORBIDDEN"));
-        assertTrue(service.contains("DELETE_NOT_FOUND"));
+        assertFalse(service.contains("DELETE_NOT_FOUND"));
+        assertTrue(servlet.contains("{\\\"success\\\":true"));
         assertTrue(servlet.contains("DELETE_DB_ERROR"));
         assertTrue(servlet.contains("SQLState="));
         assertFalse(servlet.contains("csrfToken="));
         assertFalse(servlet.contains("sessionId"));
+    }
+
+    @Test
+    void desktopDiscussionControlsUseEqualPageScopedColumns() throws IOException {
+        String css = source("src/main/webapp/assets/css/dashboard.css");
+        String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        assertTrue(css.contains(".discussions-shell .discussion-mode-switch{grid-template-columns:repeat(2,minmax(0,1fr))}"));
+        assertTrue(css.contains(".discussions-shell .room-tabs-five{grid-template-columns:repeat(5,minmax(0,1fr))}"));
+        assertTrue(css.contains(".discussions-shell .room-tabs-three{grid-template-columns:repeat(3,minmax(0,1fr))}"));
+        assertTrue(jsp.contains("room-tabs-five"));
+        assertTrue(jsp.contains("room-tabs-three"));
     }
 }

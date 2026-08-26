@@ -36,7 +36,7 @@
             <a href="${pageContext.request.contextPath}/messages">Private Messages</a>
             <a class="active" href="${pageContext.request.contextPath}/discussions" aria-current="page">Academic Discussions</a>
         </nav>
-        <nav class="room-tabs" aria-label="Discussion rooms">
+        <nav class="room-tabs ${not empty room and room.crRoomsVisible ? 'room-tabs-five' : 'room-tabs-three'}" aria-label="Discussion rooms">
             <a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a>
             <a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a>
             <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
