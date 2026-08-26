@@ -301,13 +301,28 @@ function initializeConversationMenu(form, list, csrf) {
                     if (typeof payload.code === "string") code = payload.code;
                 } catch (_ignored) {}
                 console.error("Private conversation delete failed", {status: response.status, code});
-                dialog.querySelector(".delete-error").dataset.errorCode = code;
+                const errorMessage = dialog.querySelector(".delete-error");
+                errorMessage.dataset.errorCode = code;
+                errorMessage.textContent = deleteConversationErrorMessage(code);
             } catch (error) {
                 console.error("Private conversation delete request failed", {name: error.name});
+                dialog.querySelector(".delete-error").textContent = deleteConversationErrorMessage("DELETE_REQUEST_FAILED");
             }
             deleteButton.disabled = false; deleteButton.textContent = "Delete";
             dialog.querySelector(".delete-error").hidden = false; dialog.showModal();
         });
         dialog.showModal();
     });
+}
+
+function deleteConversationErrorMessage(code) {
+    const messages = {
+        DELETE_CSRF_INVALID: "Your security token expired. Refresh the page and try again. (DELETE_CSRF_INVALID)",
+        DELETE_UNAUTHENTICATED: "Your sign-in expired. Sign in again and retry. (DELETE_UNAUTHENTICATED)",
+        DELETE_INVALID_ID: "This conversation could not be identified. Refresh the page and try again. (DELETE_INVALID_ID)",
+        DELETE_FORBIDDEN: "You no longer have access to this conversation. (DELETE_FORBIDDEN)",
+        DELETE_NOT_FOUND: "This conversation is no longer available. (DELETE_NOT_FOUND)",
+        DELETE_DB_ERROR: "The conversation could not be removed right now. Please try again shortly. (DELETE_DB_ERROR)"
+    };
+    return messages[code] || "Could not delete this conversation. Check your connection and try again. (DELETE_REQUEST_FAILED)";
 }

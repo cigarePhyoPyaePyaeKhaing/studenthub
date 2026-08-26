@@ -42,8 +42,11 @@ class MessagingUiContractTest {
     @Test
     void chatWidthAndScrollOwnershipArePageScoped() throws IOException {
         String css = source("src/main/webapp/assets/css/dashboard.css");
-        assertTrue(css.contains(".dashboard-shell.private-chat-shell,.dashboard-shell.discussions-shell"));
+        assertTrue(css.contains("body>.dashboard-shell.private-chat-shell,body>.dashboard-shell.discussions-shell"));
         assertTrue(css.contains("max-width:none!important"));
+        assertTrue(css.contains("grid-template-columns:240px minmax(0,1fr)!important"));
+        assertTrue(css.contains("body>.private-chat-shell .private-chat-layout{width:100%;max-width:none;min-width:0;grid-template-columns:minmax(280px,320px) minmax(0,1fr)}"));
+        assertFalse(css.contains("grid-template-columns:minmax(320px,370px) minmax(0,1fr)"));
         assertTrue(css.contains(".composer-input{display:block;min-width:0;flex:1 1 auto}"));
         assertTrue(css.contains(".message-composer textarea::-webkit-scrollbar"));
     }
@@ -82,6 +85,7 @@ class MessagingUiContractTest {
     void deleteDiagnosticsUseStructuredSafeCodes() throws IOException {
         String servlet = source("src/main/java/com/studenthub/controller/DeletePrivateConversationServlet.java");
         String service = source("src/main/java/com/studenthub/service/PrivateConversationDeletionService.java");
+        String client = source("src/main/webapp/assets/js/private-chat.js");
         assertTrue(servlet.contains("DELETE_INVALID_ID"));
         assertTrue(service.contains("DELETE_FORBIDDEN"));
         assertFalse(service.contains("DELETE_NOT_FOUND"));
@@ -90,6 +94,11 @@ class MessagingUiContractTest {
         assertTrue(servlet.contains("SQLState="));
         assertFalse(servlet.contains("csrfToken="));
         assertFalse(servlet.contains("sessionId"));
+        for (String code : new String[]{"DELETE_CSRF_INVALID", "DELETE_UNAUTHENTICATED",
+                "DELETE_INVALID_ID", "DELETE_FORBIDDEN", "DELETE_NOT_FOUND", "DELETE_DB_ERROR"}) {
+            assertTrue(client.contains(code));
+        }
+        assertTrue(client.contains("errorMessage.textContent = deleteConversationErrorMessage(code)"));
     }
 
     @Test
