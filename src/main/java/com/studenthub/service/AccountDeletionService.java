@@ -73,12 +73,13 @@ public class AccountDeletionService {
             try (ResultSet results = statement.executeQuery()) {
                 return results.next() ? new Account(results.getString(1), results.getString(2), results.getString(3)) : null;
             }
-        }
+        } catch(SQLException exception){throw databaseFailure("account_lock","users",exception);}
     }
     private int countAdmins(Connection connection) throws SQLException {
         int count=0;
         try (PreparedStatement statement = connection.prepareStatement("SELECT user_id FROM users WHERE role='ADMIN' FOR UPDATE");
              ResultSet results = statement.executeQuery()) { while(results.next()) count++; }
+        catch(SQLException exception){throw databaseFailure("admin_lock","users",exception);}
         return count;
     }
     private void executeOptional(Connection connection,String table,String sql,long userId)throws SQLException {
@@ -102,7 +103,7 @@ public class AccountDeletionService {
     }
     public static final class AccountDeletionDatabaseException extends SQLException {
         private final String stage;private final String table;
-        AccountDeletionDatabaseException(String stage,String table,SQLException cause){super("Account deletion database failure",cause.getSQLState(),cause.getErrorCode(),cause);this.stage=stage;this.table=table;}
+        public AccountDeletionDatabaseException(String stage,String table,SQLException cause){super("Account deletion database failure",cause.getSQLState(),cause.getErrorCode(),cause);this.stage=stage;this.table=table;}
         public String stage(){return stage;}public String table(){return table;}
     }
 }

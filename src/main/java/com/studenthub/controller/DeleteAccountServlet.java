@@ -7,13 +7,16 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.sql.SQLException;
+import java.util.function.Consumer;
 
 @WebServlet(name="DeleteAccountServlet", urlPatterns="/profile/delete-account")
 public class DeleteAccountServlet extends HttpServlet {
     private final AccountDeletionService service;
     private final ProfilePhotoStorage photoStorage;
-    public DeleteAccountServlet() { this(new AccountDeletionService(), new ProfilePhotoStorage()); }
-    DeleteAccountServlet(AccountDeletionService service, ProfilePhotoStorage photoStorage) { this.service=service; this.photoStorage=photoStorage; }
+    private final Consumer<String> diagnostics;
+    public DeleteAccountServlet() { this(new AccountDeletionService(), new ProfilePhotoStorage(), System.err::println); }
+    DeleteAccountServlet(AccountDeletionService service, ProfilePhotoStorage photoStorage) { this(service,photoStorage,System.err::println); }
+    DeleteAccountServlet(AccountDeletionService service,ProfilePhotoStorage photoStorage,Consumer<String> diagnostics){this.service=service;this.photoStorage=photoStorage;this.diagnostics=diagnostics;}
 
     @Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         response.setContentType("application/json"); response.setCharacterEncoding("UTF-8");
@@ -46,5 +49,5 @@ public class DeleteAccountServlet extends HttpServlet {
     @Override protected void doGet(HttpServletRequest request,HttpServletResponse response)throws IOException { response.sendError(405); }
     private void write(HttpServletResponse response,int status,String code,String message)throws IOException { response.setStatus(status); response.getWriter().write("{\"success\":false,\"code\":\""+code+"\",\"message\":\""+escape(message)+"\"}"); }
     private String escape(String value){return value.replace("\\","\\\\").replace("\"","\\\"");}
-    private void logSafe(String value){try{if(getServletContext()!=null)getServletContext().log(value);else System.err.println(value);}catch(Exception ignored){System.err.println(value);}}
+    private void logSafe(String value){try{diagnostics.accept(value);}catch(Exception ignored){System.err.println(value);}}
 }
