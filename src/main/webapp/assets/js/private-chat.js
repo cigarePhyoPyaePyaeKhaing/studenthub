@@ -275,24 +275,53 @@ function initializeConversationMenu(form, list, csrf) {
         dialog.addEventListener("close", async () => {
             if (dialog.returnValue !== "delete") { dialog.remove(); return; }
             deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
+            let deleteUrl;
+            let requestBody;
+            try {
+                deleteUrl = form.action.replace(/\/send(?:\?.*)?$/, "/delete");
+                const conversationId = form.querySelector('[name="conversationId"]')?.value;
+                const csrfToken = form.querySelector('[name="csrfToken"]')?.value;
+                if (!deleteUrl || !conversationId || !csrfToken) throw new Error("Delete request state is incomplete.");
+                requestBody = new window.URLSearchParams({csrfToken, conversationId});
+                console.debug("Private conversation delete", {stage: "BEFORE_FETCH"});
+            } catch (error) {
+                console.error("Private conversation delete client failure", {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack
+                });
+                showDeleteConversationError(dialog, "DELETE_CLIENT_ERROR");
+                deleteButton.disabled = false; deleteButton.textContent = "Delete";
+                dialog.showModal();
+                return;
+            }
             let response;
             try {
-                response = await fetch(new URL("delete", form.action), {
+                response = await window.fetch(deleteUrl, {
                     method: "POST",
                     credentials: "same-origin",
                     redirect: "error",
                     headers: {"Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"},
-                    body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation})
+                    body: requestBody
                 });
+                console.debug("Private conversation delete", {stage: "AFTER_FETCH", status: response.status});
             } catch (error) {
-                console.error("Private conversation delete network failure", {name: error.name});
-                showDeleteConversationError(dialog, "DELETE_NETWORK_FAILED");
+                const code = error instanceof ReferenceError ? "DELETE_CLIENT_ERROR" : "DELETE_NETWORK_FAILED";
+                console.error("Private conversation delete request failure", {
+                    name: error.name,
+                    message: error.message,
+                    stack: error.stack,
+                    code
+                });
+                showDeleteConversationError(dialog, code);
                 deleteButton.disabled = false; deleteButton.textContent = "Delete";
                 dialog.showModal();
                 return;
             }
 
+            console.debug("Private conversation delete", {stage: "BEFORE_PARSE"});
             const result = await parseDeleteConversationResponse(response);
+            console.debug("Private conversation delete", {stage: "AFTER_PARSE", code: result.code || result.payload?.code});
             if (response.ok && result.payload?.success === true && result.payload.code === "DELETE_OK") {
                     document.querySelector(`.conversation-item[href*="conversationId=${list.dataset.conversation}"]`)?.remove();
                     dialog.remove();
@@ -353,6 +382,7 @@ function deleteConversationErrorMessage(code) {
         DELETE_NOT_FOUND: "This conversation is no longer available. (DELETE_NOT_FOUND)",
         DELETE_DB_ERROR: "The conversation could not be removed right now. Please try again shortly. (DELETE_DB_ERROR)",
         DELETE_SERVER_ERROR: "StudentHub could not complete the delete request right now. Please retry. (DELETE_SERVER_ERROR)",
+        DELETE_CLIENT_ERROR: "StudentHub could not prepare the delete request. Refresh the page and retry. (DELETE_CLIENT_ERROR)",
         DELETE_NETWORK_FAILED: "The delete request could not reach StudentHub. Check your connection and retry. (DELETE_NETWORK_FAILED)",
         DELETE_RESPONSE_INVALID: "StudentHub returned an unexpected response. Refresh the page and retry. (DELETE_RESPONSE_INVALID)",
         DELETE_HTTP_ERROR: "StudentHub could not complete the delete request. Please retry. (DELETE_HTTP_ERROR)"

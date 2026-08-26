@@ -106,6 +106,12 @@ class MessagingUiContractTest {
         assertTrue(client.contains("DELETE_NETWORK_FAILED"));
         assertTrue(client.contains("DELETE_RESPONSE_INVALID"));
         assertTrue(client.contains("DELETE_HTTP_ERROR"));
+        assertTrue(client.contains("DELETE_CLIENT_ERROR"));
+        assertTrue(client.contains("window.fetch(deleteUrl"));
+        assertTrue(client.contains("form.querySelector('[name=\"conversationId\"]')?.value"));
+        assertTrue(client.contains("form.querySelector('[name=\"csrfToken\"]')?.value"));
+        assertTrue(client.contains("error instanceof ReferenceError ? \"DELETE_CLIENT_ERROR\" : \"DELETE_NETWORK_FAILED\""));
+        assertFalse(client.contains("new URL(\"delete\", form.action)"));
         assertTrue(client.contains("contentType.toLowerCase().includes(\"application/json\")"));
         assertTrue(client.contains("const body = await response.text()"));
     }
