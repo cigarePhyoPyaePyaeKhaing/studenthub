@@ -79,7 +79,7 @@ class MessagingUiContractTest {
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){display:flex!important;flex-direction:column!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;padding:0!important;margin:0!important;overflow:hidden!important;box-sizing:border-box!important}"));
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell) .mobile-header,.dashboard-body:has(.private-chat-shell) .mobile-header{flex:0 0 auto!important;position:relative!important;top:auto!important;width:100%!important;box-sizing:border-box!important;z-index:20!important}"));
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell) .mobile-bottom-nav,.dashboard-body:has(.private-chat-shell) .mobile-bottom-nav{position:relative!important;flex:0 0 auto!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;z-index:20!important}"));
-        assertTrue(css.contains(".discussions-shell{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;width:100%!important;max-width:100%!important;margin:0!important;padding:8px 14px 4px 14px!important;overflow:hidden!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".discussions-shell{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;width:100%!important;max-width:none!important;margin:0!important;padding:8px 14px 4px 14px!important;overflow:hidden!important;box-sizing:border-box!important}"));
         assertTrue(css.contains(".discussions-shell,.private-chat-shell{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;padding:4px 8px 2px 8px!important}"));
     }
 
@@ -145,12 +145,17 @@ class MessagingUiContractTest {
     }
 
     @Test
-    void desktopDiscussionControlsUseEqualPageScopedColumns() throws IOException {
+    void desktopAndTabletDiscussionControlsUseEqualPageScopedColumns() throws IOException {
         String css = source("src/main/webapp/assets/css/dashboard.css");
         String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        // Desktop rules
         assertTrue(css.contains(".discussions-shell .discussion-mode-switch{grid-template-columns:repeat(2,minmax(0,1fr))}"));
         assertTrue(css.contains(".discussions-shell .room-tabs-five{grid-template-columns:repeat(5,minmax(0,1fr))}"));
         assertTrue(css.contains(".discussions-shell .room-tabs-three{grid-template-columns:repeat(3,minmax(0,1fr))}"));
+        // Tablet rules
+        assertTrue(css.contains(".discussions-shell .discussion-mode-switch{margin:4px 0!important;padding:3px!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;display:grid!important;width:100%!important;max-width:none!important}"));
+        assertTrue(css.contains(".discussions-shell .room-tabs-five{grid-template-columns:repeat(5,minmax(0,1fr))!important}"));
+        assertTrue(css.contains(".discussions-shell .room-tabs-three{grid-template-columns:repeat(3,minmax(0,1fr))!important}"));
         assertTrue(jsp.contains("room-tabs-five"));
         assertTrue(jsp.contains("room-tabs-three"));
     }
@@ -168,25 +173,20 @@ class MessagingUiContractTest {
         assertTrue(css.contains(".private-composer{display:block;padding:8px 12px;border-top:1px solid var(--border-glass);background:var(--surface-glass-strong);flex:0 0 auto;min-height:0;position:static;box-sizing:border-box}"));
 
         // Tablet rules (<=1180px)
-        assertTrue(css.contains(".private-chat-shell{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;width:100%!important;max-width:100%!important;margin:0!important;padding:8px 14px 4px 14px!important;overflow:hidden!important;box-sizing:border-box!important}"));
-        assertTrue(css.contains(".private-chat-shell .private-chat-layout{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:100%!important;width:100%!important;max-width:none!important;overflow:hidden!important;border-radius:18px!important}"));
-        assertTrue(css.contains(".private-chat-shell .private-thread{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:100%!important;overflow:hidden!important}"));
+        assertTrue(css.contains(".private-chat-shell{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;width:100%!important;max-width:none!important;margin:0!important;padding:8px 14px 4px 14px!important;overflow:hidden!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-chat-layout{display:grid!important;grid-template-columns:minmax(240px,34%) minmax(0,1fr)!important;flex:1 1 auto!important;min-height:0!important;height:100%!important;width:100%!important;max-width:none!important;overflow:hidden!important;border-radius:18px!important}"));
+        assertTrue(css.contains(".private-chat-shell .conversation-list{display:flex!important;flex-direction:column!important;width:100%!important;height:100%!important;min-height:0!important;border-right:1px solid var(--border-glass)!important;overflow-y:auto!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-thread{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important}"));
         assertTrue(css.contains(".private-chat-shell .private-message-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;-ms-overflow-style:none!important;scroll-padding-bottom:12px!important}"));
-        assertTrue(css.contains(".private-chat-shell .private-composer{position:static!important;bottom:auto!important;flex:0 0 auto!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-composer{position:static!important;bottom:auto!important;flex:0 0 auto!important;width:100%!important;box-sizing:border-box!important}"));
 
         // Mobile rules (<=600px)
         assertTrue(css.contains(".discussions-shell,.private-chat-shell{flex:1 1 auto!important;min-height:0!important;height:auto!important;max-height:none!important;padding:4px 8px 2px 8px!important}"));
         assertTrue(css.contains(".dashboard-body:has(.private-chat-shell) .mobile-bottom-nav,.dashboard-body:has(.discussions-shell) .mobile-bottom-nav{position:static!important;flex:0 0 auto!important;width:100%!important;max-width:none!important;margin:0!important;padding:3px 2px calc(3px + env(safe-area-inset-bottom))!important;border-radius:0!important;border-top:1px solid var(--border-glass)!important}"));
-        assertTrue(css.contains(".private-chat-shell .private-chat-layout{border-radius:16px!important}"));
-
-        // Responsive single-column switch (<=820px)
-        assertTrue(css.contains("@media(max-width:820px){.private-chat-layout{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;width:100%!important;overflow:hidden!important;border-radius:18px!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-chat-layout{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;width:100%!important;overflow:hidden!important;border-radius:16px!important}"));
         assertTrue(css.contains(".conversation-list.has-selection{display:none!important}"));
         assertTrue(css.contains(".conversation-list:not(.has-selection){display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:100%!important;min-height:0!important;border-right:0!important;overflow-y:auto!important}"));
-        assertTrue(css.contains(".private-thread{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:100%!important;min-height:0!important;overflow:hidden!important}"));
         assertTrue(css.contains(".thread-back{display:flex!important;align-items:center;justify-content:center}"));
-        assertFalse(css.contains("@media(max-width:820px){.private-chat-layout{display:block}"));
-        assertFalse(css.contains(".private-composer{position:sticky;bottom:0;z-index:5}"));
 
         // Body containment
         assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){display:flex!important;flex-direction:column!important;height:100vh!important;height:100dvh!important;min-height:100dvh!important;max-height:100dvh!important;padding:0!important;margin:0!important;overflow:hidden!important;box-sizing:border-box!important}"));
