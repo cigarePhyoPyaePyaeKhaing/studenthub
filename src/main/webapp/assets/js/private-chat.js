@@ -105,25 +105,32 @@ function initializeChat(form, list) {
         if (!box) {
             box = document.createElement("div");
             box.className = "private-file";
-            element.querySelector(".message-meta").before(box);
+            const meta = element.querySelector(".message-meta");
+            if (meta) meta.before(box);
+            else element.append(box);
         }
         box.replaceChildren();
         let view;
         if (data.attachmentType === "IMAGE") {
             view = document.createElement("img"); view.src = data.previewUrl; view.alt = data.originalFilename || "Image attachment";
             view.addEventListener("load", () => { list.scrollTop = list.scrollHeight; });
+            const link = document.createElement("a");
+            link.href = data.downloadUrl; link.textContent = "Download image";
+            box.append(view, link);
         } else if (data.attachmentType === "VIDEO") {
             view = document.createElement("video"); view.src = data.previewUrl; view.controls = true; view.preload = "metadata";
+            const link = document.createElement("a"); link.href = data.downloadUrl; link.textContent = "Download video";
+            box.append(view, link);
         } else if (data.attachmentType === "AUDIO") {
             view = document.createElement("audio"); view.src = data.previewUrl; view.controls = true; view.preload = "metadata";
+            const title = document.createElement("strong"); title.textContent = data.originalFilename;
+            const link = document.createElement("a"); link.href = data.downloadUrl; link.textContent = "Download audio";
+            box.append(title, view, link);
         } else {
-            view = document.createElement("strong"); view.textContent = data.originalFilename;
+            const link = document.createElement("a");
+            link.href = data.downloadUrl; link.textContent = `${data.originalFilename} · ${size(data.fileSize)}`;
+            box.append(link);
         }
-        const details = document.createElement("small");
-        details.textContent = `${data.originalFilename} · ${size(data.fileSize)}`;
-        const link = document.createElement("a");
-        link.href = data.downloadUrl; link.textContent = "Download";
-        box.append(view, details, link);
     }
 
     function bubble(data, own, temporary = false) {
@@ -134,7 +141,12 @@ function initializeChat(form, list) {
         element.className = `private-bubble ${own ? "outgoing" : "incoming"}`;
         if (!temporary) element.dataset.messageId = data.messageId;
         element.innerHTML = '<p></p><div class="message-meta"><time></time></div>';
-        element.querySelector("p").textContent = data.message || "";
+        const textNode = element.querySelector("p");
+        if (data.message) {
+            textNode.textContent = data.message;
+        } else {
+            textNode.remove();
+        }
         element.querySelector("time").textContent = data.createdLabel || "";
         media(element, data);
         if (own) mark(element, data.status || "SENDING");

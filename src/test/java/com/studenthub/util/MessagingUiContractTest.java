@@ -196,4 +196,38 @@ class MessagingUiContractTest {
         assertTrue(messagesJsp.contains("private-message-list"));
         assertTrue(messagesJsp.contains("private-composer"));
     }
+
+    @Test
+    void mobilePrivateChatImageAndAttachmentRenderingContracts() throws IOException {
+        String css = source("src/main/webapp/assets/css/dashboard.css");
+        String privateChatJs = source("src/main/webapp/assets/js/private-chat.js");
+        String messagesJsp = source("src/main/webapp/WEB-INF/views/messages/index.jsp");
+
+        // Mobile (<=600px) scoped private chat image attachment rules
+        assertTrue(css.contains(".private-chat-shell .private-bubble{display:flex!important;flex-direction:column!important;width:fit-content!important;max-width:86%!important;min-width:0!important;padding:7px 11px!important;font-size:.88rem!important;box-sizing:border-box!important;overflow-wrap:anywhere!important;word-break:break-word!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-bubble.outgoing{align-self:flex-end!important;margin-left:auto!important;margin-right:0!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-bubble.incoming{align-self:flex-start!important;margin-right:auto!important;margin-left:0!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-file{order:1!important;display:flex!important;flex-direction:column!important;width:fit-content!important;max-width:100%!important;min-width:0!important;gap:5px!important;margin:0 0 3px 0!important;overflow:hidden!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-file img{display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:min(48vh,320px)!important;object-fit:contain!important;border-radius:12px!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-file video{display:block!important;width:100%!important;max-width:100%!important;max-height:min(48vh,320px)!important;border-radius:12px!important;object-fit:contain!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-file audio{width:100%!important;max-width:100%!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-bubble p{order:2!important;margin:0 0 2px 0!important;font-size:.88rem!important;line-height:1.45!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important;word-break:break-word!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-bubble p:empty{display:none!important;margin:0!important;padding:0!important}"));
+        assertTrue(css.contains(".private-chat-shell .message-meta{order:3!important;display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;margin-top:2px!important;white-space:nowrap!important}"));
+
+        // Global responsive media containment
+        assertTrue(css.contains(".private-file img,.private-file video,.content-attachment img,.content-attachment video{width:auto;max-width:100%!important;height:auto;max-height:min(56vh,420px);object-fit:contain}"));
+        assertTrue(css.contains(".private-file strong,.private-file small{display:block;max-width:100%;overflow-wrap:anywhere;word-break:break-word;line-height:1.3}"));
+
+        // JSP Server-rendered attachment structure
+        assertTrue(messagesJsp.contains("<c:when test=\"${chatMessage.attachment.image}\"><img src=\"${fileUrl}\" alt=\"\"><a href=\"${fileUrl}?download=1\">Download image</a></c:when>"));
+        assertTrue(messagesJsp.contains("<c:when test=\"${chatMessage.attachment.video}\"><video controls preload=\"metadata\" src=\"${fileUrl}\"></video><a href=\"${fileUrl}?download=1\">Download video</a></c:when>"));
+        assertTrue(messagesJsp.contains("<c:when test=\"${chatMessage.attachment.audio}\"><strong><c:out value=\"${chatMessage.attachment.originalFilename}\"/></strong><audio controls preload=\"metadata\" src=\"${fileUrl}\"></audio><a href=\"${fileUrl}?download=1\">Download audio</a></c:when>"));
+
+        // JS Client-rendered attachment & auto-scroll
+        assertTrue(privateChatJs.contains("view = document.createElement(\"img\"); view.src = data.previewUrl; view.alt = data.originalFilename || \"Image attachment\";"));
+        assertTrue(privateChatJs.contains("view.addEventListener(\"load\", () => { list.scrollTop = list.scrollHeight; });"));
+        assertTrue(privateChatJs.contains("link.href = data.downloadUrl; link.textContent = \"Download image\";"));
+        assertTrue(privateChatJs.contains("if (data.message) {\n            textNode.textContent = data.message;\n        } else {\n            textNode.remove();\n        }"));
+    }
 }
