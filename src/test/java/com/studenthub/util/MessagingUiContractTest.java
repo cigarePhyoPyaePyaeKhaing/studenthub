@@ -155,4 +155,45 @@ class MessagingUiContractTest {
         assertTrue(jsp.contains("room-tabs-five"));
         assertTrue(jsp.contains("room-tabs-three"));
     }
+
+    @Test
+    void privateChatMobileAndTabletLayoutMaintainsScrollOwnershipAndComposerReachability() throws IOException {
+        String css = source("src/main/webapp/assets/css/dashboard.css");
+        String privateChatJs = source("src/main/webapp/assets/js/private-chat.js");
+        String messagesJsp = source("src/main/webapp/WEB-INF/views/messages/index.jsp");
+
+        // Base/Desktop rules
+        assertTrue(css.contains(".discussions-shell,.private-chat-shell{grid-template-columns:240px minmax(0,1fr);width:min(100%,1536px);max-width:1536px;height:100vh;height:100dvh;max-height:100dvh;min-height:0;padding:24px;box-sizing:border-box;overflow:hidden}"));
+        assertTrue(css.contains(".private-thread{display:flex;flex-direction:column;flex:1 1 0;min-width:0;min-height:0;height:100%;overflow:hidden}"));
+        assertTrue(css.contains(".private-message-list{display:flex;min-height:0;flex:1 1 auto;flex-direction:column;gap:8px;padding:18px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none;-ms-overflow-style:none;scroll-padding-bottom:14px}"));
+        assertTrue(css.contains(".private-composer{display:block;padding:8px 12px;border-top:1px solid var(--border-glass);background:var(--surface-glass-strong);flex:0 0 auto;min-height:0;position:static;box-sizing:border-box}"));
+
+        // Tablet rules (<=1180px)
+        assertTrue(css.contains(".private-chat-shell{display:flex!important;flex-direction:column!important;height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important;max-height:calc(100dvh - 68px - 84px - env(safe-area-inset-bottom))!important;min-height:0!important;padding:8px 14px 0 14px!important;overflow:hidden!important;box-sizing:border-box!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-chat-layout{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:100%!important;width:100%!important;max-width:none!important;overflow:hidden!important;border-radius:18px!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-thread{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;min-height:0!important;height:100%!important;overflow:hidden!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-message-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;-ms-overflow-style:none!important;scroll-padding-bottom:12px!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-composer{position:static!important;bottom:auto!important;flex:0 0 auto!important;box-sizing:border-box!important}"));
+
+        // Mobile rules (<=600px)
+        assertTrue(css.contains(".discussions-shell,.private-chat-shell{height:calc(100dvh - 68px - 68px - env(safe-area-inset-bottom))!important;max-height:calc(100dvh - 68px - 68px - env(safe-area-inset-bottom))!important;padding:4px 8px 0 8px!important}"));
+        assertTrue(css.contains(".private-chat-shell .private-chat-layout{border-radius:16px!important}"));
+
+        // Responsive single-column switch (<=820px)
+        assertTrue(css.contains("@media(max-width:820px){.private-chat-layout{display:flex!important;flex-direction:column!important;height:100%!important;min-height:0!important;width:100%!important;overflow:hidden!important;border-radius:18px!important}"));
+        assertTrue(css.contains(".conversation-list.has-selection{display:none!important}"));
+        assertTrue(css.contains(".conversation-list:not(.has-selection){display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:100%!important;min-height:0!important;border-right:0!important;overflow-y:auto!important}"));
+        assertTrue(css.contains(".private-thread{display:flex!important;flex-direction:column!important;flex:1 1 auto!important;height:100%!important;min-height:0!important;overflow:hidden!important}"));
+        assertTrue(css.contains(".thread-back{display:flex!important;align-items:center;justify-content:center}"));
+        assertFalse(css.contains("@media(max-width:820px){.private-chat-layout{display:block}"));
+        assertFalse(css.contains(".private-composer{position:sticky;bottom:0;z-index:5}"));
+
+        // Body containment
+        assertTrue(css.contains(".dashboard-body:has(.discussions-shell),.dashboard-body:has(.private-chat-shell){padding-bottom:0!important;overflow:hidden;height:100dvh}"));
+
+        // Auto-scroll contract in JS and structure in JSP
+        assertTrue(privateChatJs.contains("list.scrollTop = list.scrollHeight"));
+        assertTrue(messagesJsp.contains("private-message-list"));
+        assertTrue(messagesJsp.contains("private-composer"));
+    }
 }

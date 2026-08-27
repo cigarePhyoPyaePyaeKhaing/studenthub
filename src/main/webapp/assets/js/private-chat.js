@@ -111,6 +111,7 @@ function initializeChat(form, list) {
         let view;
         if (data.attachmentType === "IMAGE") {
             view = document.createElement("img"); view.src = data.previewUrl; view.alt = data.originalFilename || "Image attachment";
+            view.addEventListener("load", () => { list.scrollTop = list.scrollHeight; });
         } else if (data.attachmentType === "VIDEO") {
             view = document.createElement("video"); view.src = data.previewUrl; view.controls = true; view.preload = "metadata";
         } else if (data.attachmentType === "AUDIO") {
@@ -257,7 +258,9 @@ function initializeChat(form, list) {
     };
     setInterval(poll, 1500);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); seen(); } });
-    list.scrollTop = list.scrollHeight; seen(); initializeConversationMenu(form, list, csrf);
+    list.scrollTop = list.scrollHeight;
+    window.addEventListener("load", () => { list.scrollTop = list.scrollHeight; });
+    seen(); initializeConversationMenu(form, list, csrf);
 }
 
 function initializeConversationMenu(form, list, csrf) {
