@@ -3,6 +3,7 @@ WORKDIR /build
 COPY pom.xml .
 RUN mvn -B dependency:go-offline
 COPY src ./src
+COPY database ./database
 RUN mvn -B clean package
 
 FROM tomcat:10.1-jdk17-temurin
