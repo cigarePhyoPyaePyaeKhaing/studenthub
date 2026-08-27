@@ -62,6 +62,17 @@ class AccountDeletionSecurityContractTest {
   assertTrue(dao.contains("email NOT LIKE 'deleted-%@invalid.studenthub'"));
   assertTrue(dao.contains("baseUserSelect() + \" AND user_id=?\""));
  }
+ @Test void deletionGuaranteesSchemaDriftProtectionAndFineGrainedDiagnostics()throws Exception{
+  String service=Files.readString(Path.of("src/main/java/com/studenthub/service/AccountDeletionService.java"));
+  assertTrue(service.contains("columnExists"));
+  assertTrue(service.contains("tableExists"));
+  assertTrue(service.contains("users_anonymize"));
+  assertTrue(service.contains("account_lock"));
+  assertTrue(service.contains("admin_lock"));
+  assertTrue(service.contains("dependent_cleanup"));
+  assertFalse(service.contains("requested_by"));
+  assertFalse(service.contains("approved_by"));
+ }
  private void assertCleanupContract(String service,String schemaSource,String table,String column){
   assertTrue(service.contains(table),"Deletion plan must name "+table);
   assertTrue(service.contains(column+"=?"),"Deletion plan must scope "+table+" by "+column);

@@ -103,6 +103,7 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             context.log("Database tables verified/initialized: universities (UIT)");
 
             ensureUserUniversityColumn(connection, context);
+            ensureUserProfileImageColumn(connection, context);
             ensureUserPresenceColumn(connection, context);
             ensureNotificationTypeColumn(connection, context);
             ensurePostDeadlineColumn(connection, context);
@@ -253,21 +254,51 @@ public class ApplicationConfigurationListener implements ServletContextListener 
 
     private void ensureUserUniversityColumn(Connection connection, ServletContext context) {
         try {
-            boolean hasColumn = false;
             var metaData = connection.getMetaData();
+            boolean hasUniv = false, hasUnivLock = false, hasAcadLock = false;
             try (var rs = metaData.getColumns(null, null, "users", "university_id")) {
-                if (rs.next()) {
-                    hasColumn = true;
-                }
+                if (rs.next()) hasUniv = true;
             }
-            if (!hasColumn) {
-                try (Statement stmt = connection.createStatement()) {
+            try (var rs = metaData.getColumns(null, null, "users", "university_locked")) {
+                if (rs.next()) hasUnivLock = true;
+            }
+            try (var rs = metaData.getColumns(null, null, "users", "academic_info_locked")) {
+                if (rs.next()) hasAcadLock = true;
+            }
+            try (Statement stmt = connection.createStatement()) {
+                if (!hasUniv) {
                     stmt.execute("ALTER TABLE users ADD COLUMN university_id BIGINT NULL");
                     context.log("Added column users.university_id");
+                }
+                if (!hasUnivLock) {
+                    stmt.execute("ALTER TABLE users ADD COLUMN university_locked BOOLEAN NOT NULL DEFAULT FALSE");
+                    context.log("Added column users.university_locked");
+                }
+                if (!hasAcadLock) {
+                    stmt.execute("ALTER TABLE users ADD COLUMN academic_info_locked BOOLEAN NOT NULL DEFAULT FALSE");
+                    context.log("Added column users.academic_info_locked");
                 }
             }
         } catch (Exception e) {
             context.log("ensureUserUniversityColumn check: " + e.getMessage());
+        }
+    }
+
+    private void ensureUserProfileImageColumn(Connection connection, ServletContext context) {
+        try {
+            boolean hasColumn = false;
+            var metaData = connection.getMetaData();
+            try (var rs = metaData.getColumns(null, null, "users", "profile_image")) {
+                if (rs.next()) hasColumn = true;
+            }
+            if (!hasColumn) {
+                try (Statement stmt = connection.createStatement()) {
+                    stmt.execute("ALTER TABLE users ADD COLUMN profile_image VARCHAR(255) NULL");
+                    context.log("Added column users.profile_image");
+                }
+            }
+        } catch (Exception e) {
+            context.log("ensureUserProfileImageColumn check: " + e.getMessage());
         }
     }
 
