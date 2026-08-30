@@ -25,4 +25,13 @@ class AdminProfileUiContractTest {
         assertTrue(request.contains("SC_FORBIDDEN"));
         assertTrue(service.contains("currentProfile.getRole() == Role.ADMIN || currentProfile.academicInfoLocked()"));
     }
+
+    @Test void ownAdminProfileUsesOnlyExistingAuthorizedAdminRoutes() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
+        assertTrue(jsp.contains("${not publicProfile and profile.role eq 'ADMIN'}"));
+        assertTrue(jsp.contains("<h2>Admin tools</h2>"));
+        assertTrue(jsp.contains("${pageContext.request.contextPath}/admin/users"));
+        assertTrue(jsp.contains("${pageContext.request.contextPath}/admin/academic-changes"));
+        assertTrue(jsp.contains("${pageContext.request.contextPath}/admin"));
+    }
 }

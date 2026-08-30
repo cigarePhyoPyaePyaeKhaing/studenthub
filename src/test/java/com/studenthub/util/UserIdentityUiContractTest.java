@@ -39,7 +39,17 @@ class UserIdentityUiContractTest {
         assertTrue(css.contains(".profile-hero .profile-avatar{width:88px;height:88px;aspect-ratio:1/1"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
+        assertTrue(css.contains(".profile-message-action .btn{width:100%;min-height:44px}"));
         assertTrue(jsp.contains("<c:if test=\"${messageAllowed}\">"));
+    }
+
+    @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {
+        String css = source("src/main/webapp/assets/css/public.css");
+        assertTrue(css.contains("@keyframes pulse-ambient-drift"));
+        assertTrue(css.contains(".pulse-today::before"));
+        assertTrue(css.contains(".pulse-today::after"));
+        assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
+        assertTrue(css.contains(".pulse-today::after{animation:none"));
     }
 
     @Test void sharedAvatarRendererAlwaysCropsInsideItsParentShape() throws Exception {

@@ -271,6 +271,32 @@
                                 </c:otherwise>
                             </c:choose></c:if>
                         </section></c:if>
+                        <c:if test="${not publicProfile and profile.role eq 'ADMIN'}">
+                            <section class="profile-card admin-overview-card">
+                                <div class="profile-card-heading">
+                                    <div>
+                                        <p class="eyebrow mb-1">Administration</p>
+                                        <h2>Admin tools</h2>
+                                    </div>
+                                    <span class="role-badge role-ADMIN">ADMIN</span>
+                                </div>
+                                <dl class="profile-details admin-overview-details">
+                                    <div><dt>Role</dt><dd>Administrator</dd></div>
+                                    <div><dt>Account status</dt><dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd></div>
+                                </dl>
+                                <nav class="admin-profile-actions" aria-label="Administration shortcuts">
+                                    <a class="admin-profile-action" href="${pageContext.request.contextPath}/admin">
+                                        <span>Admin Dashboard</span><small>Open administration overview</small>
+                                    </a>
+                                    <a class="admin-profile-action" href="${pageContext.request.contextPath}/admin/users">
+                                        <span>Manage Users</span><small>Review StudentHub accounts</small>
+                                    </a>
+                                    <a class="admin-profile-action" href="${pageContext.request.contextPath}/admin/academic-changes">
+                                        <span>Academic Requests</span><small>Review existing change requests</small>
+                                    </a>
+                                </nav>
+                            </section>
+                        </c:if>
                     </div>
                 </c:otherwise>
             </c:choose>
