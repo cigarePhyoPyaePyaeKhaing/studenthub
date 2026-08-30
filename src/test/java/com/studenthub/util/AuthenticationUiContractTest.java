@@ -17,13 +17,19 @@ class AuthenticationUiContractTest {
         String css = source("src/main/webapp/assets/css/auth-refined.css");
         assertTrue(login.contains("class=\"auth-main auth-experience\""));
         assertTrue(register.contains("class=\"auth-main auth-experience\""));
-        assertTrue(login.contains("<jsp:include page=\"auth-brand-panel.jsp\"/>"));
-        assertTrue(register.contains("<jsp:include page=\"auth-brand-panel.jsp\"/>"));
+        assertTrue(login.contains("class=\"auth-page auth-page-refined auth-experience-page auth-login-page\""));
+        assertTrue(register.contains("class=\"auth-page auth-page-refined auth-experience-page auth-register-page\""));
+        assertTrue(login.contains("<jsp:include page=\"auth-brand-panel.jsp\">"));
+        assertTrue(register.contains("<jsp:include page=\"auth-brand-panel.jsp\">"));
         assertTrue(panel.contains("<jsp:include page=\"../partials/logo.jsp\" />"));
         assertTrue(css.contains(".auth-experience{"));
         assertTrue(css.contains("@media(max-width:900px)"));
         assertTrue(css.contains("@media(max-width:600px)"));
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
+        assertTrue(css.contains(".auth-login-page .auth-card{order:1}"));
+        assertTrue(css.contains(".auth-login-page .auth-brand-panel{order:2"));
+        assertTrue(css.contains(".auth-register-page .auth-brand-panel{order:1"));
+        assertTrue(css.contains("clip-path:polygon"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {
