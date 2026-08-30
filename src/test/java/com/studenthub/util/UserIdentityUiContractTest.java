@@ -45,11 +45,15 @@ class UserIdentityUiContractTest {
 
     @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {
         String css = source("src/main/webapp/assets/css/public.css");
-        assertTrue(css.contains("@keyframes pulse-ambient-drift"));
+        String home = source("src/main/webapp/WEB-INF/views/public/home.jsp");
+        assertTrue(home.contains("class=\"pulse-brand-motion\""));
+        assertTrue(home.contains("<jsp:include page=\"../partials/logo.jsp\">"));
+        assertTrue(css.contains("@keyframes studenthub-logo-float"));
         assertTrue(css.contains(".pulse-today::before"));
-        assertTrue(css.contains(".pulse-today::after"));
+        assertFalse(css.contains("background-size:34px 34px"));
+        assertFalse(css.contains("@keyframes pulse-ambient-drift"));
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
-        assertTrue(css.contains(".pulse-today::after{animation:none"));
+        assertTrue(css.contains(".pulse-brand-motion{animation:none"));
     }
 
     @Test void sharedAvatarRendererAlwaysCropsInsideItsParentShape() throws Exception {
