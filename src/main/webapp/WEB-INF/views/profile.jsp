@@ -49,8 +49,9 @@
                                 <c:when test="${not empty profile.studentId}"><c:out value="${profile.studentId}" /></c:when>
                                 <c:otherwise>Not assigned</c:otherwise>
                             </c:choose>
-                        </p><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p><c:if test="${messageAllowed}"><form method="post" action="${pageContext.request.contextPath}/messages/start" class="profile-message-action"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>"><input type="hidden" name="targetUserId" value="${profile.userId}"><button class="btn btn-primary" type="submit" aria-label="Start private conversation"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-3.8-.8L3 21l1.8-4.8A8.4 8.4 0 1 1 21 11.5Z"/></svg><span>Message</span></button></form></c:if>
+                        </p><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p>
                         </div>
+                        <c:if test="${messageAllowed}"><form method="post" action="${pageContext.request.contextPath}/messages/start" class="profile-message-action"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>"><input type="hidden" name="targetUserId" value="${profile.userId}"><button class="btn btn-primary" type="submit" aria-label="Start private conversation"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-3.8-.8L3 21l1.8-4.8A8.4 8.4 0 1 1 21 11.5Z"/></svg><span>Message</span></button></form></c:if>
                     </div>
                 </div>
                 <span class="profile-role role-${profile.role}"><c:out value="${profile.role}" /></span>
@@ -180,10 +181,10 @@
                                         </c:choose>
                                     </dd>
                                 </div>
-                                <div>
+                                <c:if test="${not publicProfile}"><div>
                                     <dt>Role</dt>
                                     <dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd>
-                                </div>
+                                </div></c:if>
                                 <c:if test="${not publicProfile}"><div><dt>Email status</dt><dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd></div></c:if>
                             </dl>
                         </section>
@@ -194,26 +195,26 @@
                                     <h2>Academic information</h2>
                                 </div>
                             </div>
-                            <dl class="profile-details">
-                                <div>
-                                    <dt>Semester</dt>
-                                    <dd>
-                                        <c:choose>
-                                            <c:when test="${empty profile.semester}">Not assigned</c:when>
-                                            <c:otherwise>Semester <c:out value="${profile.semester}" /></c:otherwise>
-                                        </c:choose>
-                                    </dd>
-                                </div>
-                                <div>
-                                    <dt>Section</dt>
-                                    <dd>
-                                        <c:choose>
-                                            <c:when test="${empty profile.sectionName}">Not assigned</c:when>
-                                            <c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise>
-                                        </c:choose>
-                                    </dd>
-                                </div>
-                            </dl>
+                            <c:choose>
+                                <c:when test="${publicProfile}">
+                                    <c:choose>
+                                        <c:when test="${not empty profile.semester and not empty profile.sectionName}">
+                                            <dl class="profile-details">
+                                                <div><dt>Semester</dt><dd>Semester <c:out value="${profile.semester}" /></dd></div>
+                                                <div><dt>Section</dt><dd><c:out value="${profile.sectionName}" /></dd></div>
+                                                <div><dt>Role</dt><dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd></div>
+                                            </dl>
+                                        </c:when>
+                                        <c:otherwise><p class="profile-overview-empty">Academic information has not been configured yet.</p></c:otherwise>
+                                    </c:choose>
+                                </c:when>
+                                <c:otherwise>
+                                    <dl class="profile-details">
+                                        <div><dt>Semester</dt><dd><c:choose><c:when test="${empty profile.semester}">Not assigned</c:when><c:otherwise>Semester <c:out value="${profile.semester}" /></c:otherwise></c:choose></dd></div>
+                                        <div><dt>Section</dt><dd><c:choose><c:when test="${empty profile.sectionName}">Not assigned</c:when><c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise></c:choose></dd></div>
+                                    </dl>
+                                </c:otherwise>
+                            </c:choose>
                             <c:if test="${not publicProfile}"><c:choose>
                                 <c:when test="${profile.academicInfoLocked}">
                                     <p class="profile-card-note">Academic information is locked. Changes require administrator approval.</p>
@@ -275,6 +276,24 @@
                                 </c:otherwise>
                             </c:choose></c:if>
                         </section></c:if>
+                        <c:if test="${publicProfile and profile.role eq 'ADMIN'}">
+                            <section class="profile-card admin-overview-card">
+                                <div class="profile-card-heading">
+                                    <div><p class="eyebrow mb-1">Profile overview</p><h2>Administrator</h2></div>
+                                    <span class="role-badge role-ADMIN">ADMIN</span>
+                                </div>
+                                <dl class="profile-details admin-overview-details">
+                                    <div><dt>Role</dt><dd>Administrator</dd></div>
+                                    <div><dt>Presence</dt><dd><c:out value="${presenceLabel}" /></dd></div>
+                                </dl>
+                                <c:if test="${sessionScope.role eq 'ADMIN'}">
+                                    <nav class="admin-profile-actions" aria-label="User management shortcuts">
+                                        <a class="admin-profile-action" href="${pageContext.request.contextPath}/admin/users/view?id=${profile.userId}"><span>Manage User</span><small>Open the existing user-management record</small></a>
+                                        <a class="admin-profile-action" href="${pageContext.request.contextPath}/admin/users"><span>Back to User Management</span><small>Return to all StudentHub accounts</small></a>
+                                    </nav>
+                                </c:if>
+                            </section>
+                        </c:if>
                         <c:if test="${not publicProfile and profile.role eq 'ADMIN'}">
                             <section class="profile-card admin-overview-card">
                                 <div class="profile-card-heading">

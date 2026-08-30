@@ -38,12 +38,19 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("class=\"eyebrow profile-hero-eyebrow\""));
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
         assertTrue(jsp.indexOf("profile-hero-eyebrow") < jsp.indexOf("profile-hero-identity"));
-        assertTrue(css.contains(".profile-hero-identity{display:flex;min-width:0;align-items:center"));
-        assertTrue(css.contains("flex:0 0 88px;width:88px;height:88px;aspect-ratio:1/1"));
+        assertTrue(css.contains(".profile-hero-identity{display:grid;min-width:0;grid-template-columns:88px minmax(0,1fr);align-items:center"));
+        assertTrue(css.contains("flex-shrink:0;width:88px;height:88px;aspect-ratio:1/1"));
+        assertTrue(css.contains(".profile-identity{grid-column:2;grid-row:1"));
+        assertTrue(css.contains(".profile-message-action{grid-column:2;grid-row:2;margin:0!important}"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
         assertTrue(css.contains(".profile-message-action .btn{width:100%;min-height:44px}"));
         assertTrue(jsp.contains("<c:if test=\"${messageAllowed}\">"));
+        assertTrue(jsp.indexOf("class=\"profile-identity\"") < jsp.indexOf("class=\"profile-message-action\""));
+        assertTrue(jsp.contains("Academic information has not been configured yet."));
+        assertTrue(jsp.contains("${publicProfile and profile.role eq 'ADMIN'}"));
+        assertTrue(jsp.contains("${sessionScope.role eq 'ADMIN'}"));
+        assertTrue(jsp.contains("/admin/users/view?id=${profile.userId}"));
         assertFalse(css.contains("margin-left:90px"));
         assertFalse(css.contains("margin-left:76px"));
     }
