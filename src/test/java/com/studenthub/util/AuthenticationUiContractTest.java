@@ -23,18 +23,18 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("<jsp:include page=\"auth-brand-panel.jsp\">"));
         assertTrue(panel.contains("<jsp:include page=\"../partials/logo.jsp\" />"));
         assertTrue(css.contains(".auth-experience{"));
-        assertTrue(css.contains("@media(max-width:900px)"));
-        assertTrue(css.contains("@media(max-width:600px)"));
+        assertTrue(css.contains("@media(min-width:960px)"));
+        assertTrue(css.contains("@media(min-width:720px)"));
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
+        assertTrue(css.contains(".auth-brand-panel{display:none}"));
+        assertTrue(css.contains("grid-template-columns:minmax(0,1fr)"));
         assertTrue(css.contains(".auth-login-page .auth-card{order:1}"));
         assertTrue(css.contains(".auth-login-page .auth-brand-panel{order:2"));
         assertTrue(css.contains(".auth-register-page .auth-brand-panel{order:1"));
-        assertTrue(css.contains("clip-path:polygon"));
-        assertTrue(css.contains("min-height:calc(100svh - 74px)"));
-        assertTrue(css.contains("grid-template-columns:minmax(0,46%) minmax(0,54%);gap:0"));
-        assertTrue(css.contains(".auth-experience-page .auth-brand-panel{min-height:0;height:100%"));
-        assertTrue(css.contains(".auth-experience-page .auth-brand-panel{min-height:190px;height:auto"));
-        assertFalse(css.contains(".auth-experience-page .auth-brand-panel{min-height:620px"));
+        assertTrue(css.contains("min-height:calc(100dvh - 66px)"));
+        assertTrue(css.contains("grid-template-columns:minmax(0,46%) minmax(0,54%)"));
+        assertFalse(css.contains("clip-path"));
+        assertFalse(css.contains("min-height:620px"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {
@@ -54,7 +54,7 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("<legend>Security</legend>"));
         assertFalse(register.contains("name=\"semester\""));
         assertFalse(register.contains("name=\"section"));
-        assertTrue(login.contains("Access your announcements, deadlines, discussions, and messages."));
-        assertTrue(register.contains("Get started with StudentHub"));
+        assertTrue(login.contains("Sign in to continue to StudentHub."));
+        assertTrue(register.contains("<h1 class=\"h2\">Join StudentHub</h1>"));
     }
 }
