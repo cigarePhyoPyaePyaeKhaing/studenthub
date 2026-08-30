@@ -15,9 +15,11 @@ function initializePeopleSearch(panel) {
     if (!input || !results) return;
     let timer;
     let request;
+    let searchSequence = 0;
     input.addEventListener("input", () => {
         clearTimeout(timer);
         request?.abort();
+        const sequence = ++searchSequence;
         const query = input.value.trim();
         panel.classList.toggle("searching", query.length > 0);
         if (query.length < 2) {
@@ -27,9 +29,12 @@ function initializePeopleSearch(panel) {
         }
         timer = setTimeout(async () => {
             request = new AbortController();
+            results.setAttribute("aria-busy", "true");
             try {
                 const response = await fetch(`${panel.dataset.searchUrl}?q=${encodeURIComponent(query)}`, {signal: request.signal});
-                const users = response.ok ? await response.json() : [];
+                if (!response.ok) throw new Error(`People search failed with HTTP ${response.status}.`);
+                const users = await response.json();
+                if (sequence !== searchSequence) return;
                 results.replaceChildren();
                 if (!users.length) {
                     const empty = document.createElement("p");
@@ -40,18 +45,25 @@ function initializePeopleSearch(panel) {
                 users.forEach(user => results.append(createSearchResult(panel, user)));
                 results.hidden = false;
             } catch (error) {
-                if (error.name !== "AbortError") results.hidden = true;
+                if (error.name !== "AbortError" && sequence === searchSequence) {
+                    console.error("People search request failed", {name: error.name, message: error.message});
+                    showPeopleSearchError(results, "Search is temporarily unavailable. Please try again.");
+                }
+            } finally {
+                if (sequence === searchSequence) results.removeAttribute("aria-busy");
             }
         }, 320);
     });
 }
 
 function createSearchResult(panel, user) {
+    const fullName = typeof user.fullName === "string" && user.fullName.trim() ? user.fullName.trim() : "StudentHub user";
     const button = document.createElement("button");
     button.type = "button";
     button.className = "people-result";
-    button.innerHTML = '<span class="search-avatar"><span class="avatar-fallback"></span></span><span><strong></strong><small></small></span>';
-    button.querySelector(".avatar-fallback").textContent = user.fullName.charAt(0).toUpperCase();
+    button.setAttribute("aria-selected", "false");
+    button.innerHTML = '<span class="search-avatar"><span class="avatar-fallback" aria-hidden="true"></span></span><span class="search-result-copy"><strong></strong><small></small></span>';
+    button.querySelector(".avatar-fallback").textContent = fullName.charAt(0).toUpperCase();
     if (user.avatarUrl) {
         const image = document.createElement("img");
         image.src = user.avatarUrl;
@@ -59,23 +71,38 @@ function createSearchResult(panel, user) {
         image.addEventListener("error", () => image.remove());
         button.querySelector(".search-avatar").append(image);
     }
-    button.querySelector("strong").textContent = user.fullName;
+    button.querySelector("strong").textContent = fullName;
     button.querySelector("small").textContent = [user.studentId, user.role, user.presenceLabel].filter(Boolean).join(" · ");
     button.addEventListener("click", async () => {
         button.disabled = true;
+        button.setAttribute("aria-selected", "true");
         try {
             const response = await fetch(panel.dataset.startUrl, {
                 method: "POST",
                 headers: {"Content-Type": "application/x-www-form-urlencoded"},
                 body: new URLSearchParams({csrfToken: panel.dataset.csrf, targetUserId: user.userId})
             });
-            if (response.ok) location.href = response.url;
-            else button.disabled = false;
-        } catch (_ignored) {
+            if (!response.ok) throw new Error(`Conversation start failed with HTTP ${response.status}.`);
+            location.href = response.url;
+        } catch (error) {
+            console.error("Conversation start request failed", {name: error.name, message: error.message});
             button.disabled = false;
+            button.setAttribute("aria-selected", "false");
+            showPeopleSearchError(button.closest(".people-results"), "Could not open this conversation. Please try again.");
         }
     });
     return button;
+}
+
+function showPeopleSearchError(results, message) {
+    if (!results) return;
+    results.querySelector(".people-search-error")?.remove();
+    const error = document.createElement("p");
+    error.className = "people-search-error";
+    error.setAttribute("role", "alert");
+    error.textContent = message;
+    results.append(error);
+    results.hidden = false;
 }
 
 function initializeChat(form, list) {
@@ -87,6 +114,8 @@ function initializeChat(form, list) {
     let last = Math.max(0, ...[...list.querySelectorAll("[data-message-id]")].map(element => +element.dataset.messageId));
     let pending;
     let xhr;
+    let seenFailureLogged = false;
+    let pollFailureLogged = false;
     const size = bytes => bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
 
     function mark(element, status) {
@@ -254,21 +283,33 @@ function initializeChat(form, list) {
         if (event.key === "Enter" && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); }
     });
 
-    const seen = () => {
+    const seen = async () => {
         if (document.hidden) return;
         const message = [...list.querySelectorAll(".incoming[data-message-id]")].at(-1);
-        if (message) fetch(list.dataset.seenUrl, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation, lastSeenMessageId: message.dataset.messageId})}).catch(() => {});
+        if (!message) return;
+        try {
+            const response = await fetch(list.dataset.seenUrl, {method: "POST", headers: {"Content-Type": "application/x-www-form-urlencoded"}, body: new URLSearchParams({csrfToken, conversationId: list.dataset.conversation, lastSeenMessageId: message.dataset.messageId})});
+            if (!response.ok) throw new Error(`Seen update failed with HTTP ${response.status}.`);
+            seenFailureLogged = false;
+        } catch (error) {
+            if (!seenFailureLogged) console.debug("Message seen update deferred", {name: error.name, message: error.message});
+            seenFailureLogged = true;
+        }
     };
     const poll = async () => {
         if (document.hidden) return;
         try {
             const response = await fetch(`${form.action.replace(/\/send$/, "/poll")}?conversationId=${list.dataset.conversation}&afterMessageId=${last}`);
-            if (!response.ok) return;
+            if (!response.ok) throw new Error(`Message poll failed with HTTP ${response.status}.`);
             const data = await response.json();
             data.messages.forEach(message => bubble(message, String(message.senderId) === list.dataset.currentUser));
             data.receipts.forEach(receipt => { const element = list.querySelector(`[data-message-id="${receipt.messageId}"]`); if (element) mark(element, receipt.status); });
             if (data.messages.some(message => String(message.senderId) !== list.dataset.currentUser)) seen();
-        } catch (_ignored) {}
+            pollFailureLogged = false;
+        } catch (error) {
+            if (!pollFailureLogged) console.debug("Message polling deferred", {name: error.name, message: error.message});
+            pollFailureLogged = true;
+        }
     };
     setInterval(poll, 1500);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); seen(); } });

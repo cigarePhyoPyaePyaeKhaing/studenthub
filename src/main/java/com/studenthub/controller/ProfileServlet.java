@@ -78,6 +78,7 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("profile", profile);
             request.setAttribute("editing", editing);
             request.setAttribute("publicProfile", publicProfile);
+            request.setAttribute("messageAllowed", publicProfile && profile.isEmailVerified());
             try {
                 setPresence(request, profileService.findLastActive(userId).orElse(null));
             } catch (Exception presenceException) {

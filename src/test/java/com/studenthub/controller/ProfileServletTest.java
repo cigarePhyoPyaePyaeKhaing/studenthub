@@ -118,6 +118,34 @@ class ProfileServletTest {
         assertSame(publicProfile, requestAttributes.get("profile"));
         assertEquals(true, requestAttributes.get("publicProfile"));
         assertEquals(false, requestAttributes.get("editing"));
+        assertEquals(true, requestAttributes.get("messageAllowed"));
+    }
+
+    @Test
+    void deletedOrUnverifiedPublicProfileDoesNotOfferNewConversation() throws Exception {
+        UserProfile deletedProfile = new UserProfile(78L, null, "Deleted User", "deleted@example.invalid",
+                Role.STUDENT, false, null, null);
+        ProfileServlet servlet = createServlet(new FakeProfileDAO(deletedProfile));
+        sessionAttributes.put("userId", 42L);
+        requestParameters.put("userId", "78");
+
+        servlet.doGet(createRequest("GET", true), createResponse());
+
+        assertEquals(200, responseStatus);
+        assertEquals(false, requestAttributes.get("messageAllowed"));
+    }
+
+    @Test
+    void nonexistentPublicProfileReturnsNotFoundWithoutInvalidatingSession() throws Exception {
+        ProfileServlet servlet = createServlet(new FakeProfileDAO(null));
+        sessionAttributes.put("userId", 42L);
+        requestParameters.put("userId", "77");
+
+        servlet.doGet(createRequest("GET", true), createResponse());
+
+        assertEquals(HttpServletResponse.SC_NOT_FOUND, responseStatus);
+        assertFalse(sessionInvalidated);
+        assertNull(forwardedPath);
     }
 
     @Test
