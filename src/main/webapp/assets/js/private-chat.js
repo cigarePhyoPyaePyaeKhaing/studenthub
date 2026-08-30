@@ -1,6 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
     const panel = document.querySelector(".conversation-list");
     if (panel) initializePeopleSearch(panel);
+    const conversationMenu = document.querySelector(".conversation-menu");
+    if (conversationMenu) initializeConversationMenu(conversationMenu);
     const form = document.querySelector(".private-composer");
     const list = document.querySelector(".private-message-list");
     if (!form || !list) return;
@@ -272,19 +274,14 @@ function initializeChat(form, list) {
     document.addEventListener("visibilitychange", () => { if (!document.hidden) { poll(); seen(); } });
     list.scrollTop = list.scrollHeight;
     window.addEventListener("load", () => { list.scrollTop = list.scrollHeight; });
-    seen(); initializeConversationMenu(form, list, csrf);
+    seen();
 }
 
-function initializeConversationMenu(form, list, csrf) {
-    const threadHeader = document.querySelector(".private-thread-header");
-    if (!threadHeader) return;
-    const menu = document.createElement("button");
-    menu.className = "conversation-menu"; menu.type = "button"; menu.textContent = "⋯"; menu.setAttribute("aria-label", "Conversation options");
-    threadHeader.append(menu);
+function initializeConversationMenu(menu) {
     menu.addEventListener("click", () => {
         const dialog = document.createElement("dialog");
         dialog.className = "delete-conversation-dialog";
-        dialog.innerHTML = '<form method="dialog"><h2>Delete this conversation?</h2><p>This will remove the conversation from your chat list. The other participant keeps their history.</p><p class="delete-error" role="alert" hidden>Could not delete this conversation. Please try again.</p><div><button value="cancel">Cancel</button><button value="delete" class="danger">Delete</button></div></form>';
+        dialog.innerHTML = '<form method="dialog"><h2>Delete this conversation?</h2><p>This will remove the conversation from your chat list. The other participant keeps their history.</p><p class="delete-error" role="alert" hidden>Could not delete this conversation. Please try again.</p><div><button value="cancel">Cancel</button><button value="delete" class="danger">Delete Conversation</button></div></form>';
         document.body.append(dialog);
         const deleteButton = dialog.querySelector(".danger");
         dialog.addEventListener("close", async () => {
@@ -293,9 +290,9 @@ function initializeConversationMenu(form, list, csrf) {
             let deleteUrl;
             let requestBody;
             try {
-                deleteUrl = form.action.replace(/\/send(?:\?.*)?$/, "/delete");
-                const conversationId = form.querySelector('[name="conversationId"]')?.value;
-                const csrfToken = form.querySelector('[name="csrfToken"]')?.value;
+                deleteUrl = menu.dataset.deleteUrl;
+                const conversationId = menu.dataset.conversationId;
+                const csrfToken = menu.dataset.csrf;
                 if (!deleteUrl || !conversationId || !csrfToken) throw new Error("Delete request state is incomplete.");
                 requestBody = new window.URLSearchParams({csrfToken, conversationId});
                 console.debug("Private conversation delete", {stage: "BEFORE_FETCH"});
@@ -306,7 +303,7 @@ function initializeConversationMenu(form, list, csrf) {
                     stack: error.stack
                 });
                 showDeleteConversationError(dialog, "DELETE_CLIENT_ERROR");
-                deleteButton.disabled = false; deleteButton.textContent = "Delete";
+                deleteButton.disabled = false; deleteButton.textContent = "Delete Conversation";
                 dialog.showModal();
                 return;
             }
@@ -329,7 +326,7 @@ function initializeConversationMenu(form, list, csrf) {
                     code
                 });
                 showDeleteConversationError(dialog, code);
-                deleteButton.disabled = false; deleteButton.textContent = "Delete";
+                deleteButton.disabled = false; deleteButton.textContent = "Delete Conversation";
                 dialog.showModal();
                 return;
             }
@@ -338,14 +335,14 @@ function initializeConversationMenu(form, list, csrf) {
             const result = await parseDeleteConversationResponse(response);
             console.debug("Private conversation delete", {stage: "AFTER_PARSE", code: result.code || result.payload?.code});
             if (response.ok && result.payload?.success === true && result.payload.code === "DELETE_OK") {
-                    document.querySelector(`.conversation-item[href*="conversationId=${list.dataset.conversation}"]`)?.remove();
+                    document.querySelector(`.conversation-item[href*="conversationId=${conversationId}"]`)?.remove();
                     dialog.remove();
-                    history.replaceState(null, "", new URL("../messages", form.action));
+                    history.replaceState(null, "", new URL("messages", document.baseURI));
                     const thread = document.querySelector(".private-thread");
                     thread.replaceChildren();
                     const empty = document.createElement("div");
                     empty.className = "private-empty thread-empty";
-                    empty.innerHTML = "<h2>Your private messages</h2><p>Select a conversation to start chatting.</p>";
+                    empty.innerHTML = "<h2>Conversation removed</h2><p>Select another conversation to continue messaging.</p>";
                     thread.append(empty);
                     document.querySelector(".conversation-list")?.classList.remove("has-selection");
                     return;
@@ -357,7 +354,7 @@ function initializeConversationMenu(form, list, csrf) {
                 code
             });
             showDeleteConversationError(dialog, code);
-            deleteButton.disabled = false; deleteButton.textContent = "Delete";
+            deleteButton.disabled = false; deleteButton.textContent = "Delete Conversation";
             dialog.showModal();
         });
         dialog.showModal();

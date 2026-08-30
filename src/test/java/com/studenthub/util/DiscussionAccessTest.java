@@ -21,6 +21,15 @@ class DiscussionAccessTest {
         assertNotNull(DiscussionAccess.denialReason(DiscussionScope.SEMESTER, null, null));
     }
 
+    @Test void semesterRoomAllowsMissingSection() {
+        assertNull(DiscussionAccess.denialReason(DiscussionScope.SEMESTER, 4, null));
+    }
+
+    @Test void invalidSemesterValuesAreRejected() {
+        assertNotNull(DiscussionAccess.denialReason(DiscussionScope.SEMESTER, 0, null));
+        assertNotNull(DiscussionAccess.denialReason(DiscussionScope.SECTION, 11, "A"));
+    }
+
     @Test void sectionDoesNotCrossSectionBoundary() {
         assertFalse(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "B", 4, "A"));
     }

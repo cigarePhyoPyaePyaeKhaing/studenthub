@@ -107,8 +107,14 @@ class MessagingUiContractTest {
         assertTrue(client.contains("DELETE_HTTP_ERROR"));
         assertTrue(client.contains("DELETE_CLIENT_ERROR"));
         assertTrue(client.contains("window.fetch(deleteUrl"));
-        assertTrue(client.contains("form.querySelector('[name=\"conversationId\"]')?.value"));
-        assertTrue(client.contains("form.querySelector('[name=\"csrfToken\"]')?.value"));
+        assertTrue(client.contains("const conversationId = menu.dataset.conversationId"));
+        assertTrue(client.contains("const csrfToken = menu.dataset.csrf"));
+        String jsp = source("src/main/webapp/WEB-INF/views/messages/index.jsp");
+        assertTrue(jsp.contains("class=\"conversation-menu\""));
+        assertTrue(jsp.contains("data-delete-url=\"${pageContext.request.contextPath}/messages/delete\""));
+        assertTrue(jsp.contains("data-conversation-id=\"${selectedConversation.conversationId}\""));
+        assertFalse(client.contains("document.createElement(\"button\");\n    menu.className = \"conversation-menu\""));
+        assertFalse(client.contains("form.querySelector('[name=\"csrfToken\"]')?.value"));
         assertTrue(client.contains("error instanceof ReferenceError ? \"DELETE_CLIENT_ERROR\" : \"DELETE_NETWORK_FAILED\""));
         assertFalse(client.contains("new URL(\"delete\", form.action)"));
         assertTrue(client.contains("contentType.toLowerCase().includes(\"application/json\")"));
@@ -158,6 +164,15 @@ class MessagingUiContractTest {
         assertTrue(css.contains(".discussions-shell .room-tabs-three{grid-template-columns:repeat(3,minmax(0,1fr))!important}"));
         assertTrue(jsp.contains("room-tabs-five"));
         assertTrue(jsp.contains("room-tabs-three"));
+    }
+
+    @Test
+    void discussionTabsReflectServerAuthorizedAcademicScopes() throws IOException {
+        String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        assertTrue(jsp.contains("room.sectionRoomAvailable"));
+        assertTrue(jsp.contains("room.semesterRoomAvailable"));
+        assertTrue(jsp.contains("room.crSemesterRoomAvailable"));
+        assertTrue(jsp.contains("scope=ALL\">All Students"));
     }
 
     @Test
@@ -228,6 +243,8 @@ class MessagingUiContractTest {
         assertTrue(privateChatJs.contains("view = document.createElement(\"img\"); view.src = data.previewUrl; view.alt = data.originalFilename || \"Image attachment\";"));
         assertTrue(privateChatJs.contains("view.addEventListener(\"load\", () => { list.scrollTop = list.scrollHeight; });"));
         assertTrue(privateChatJs.contains("link.href = data.downloadUrl; link.textContent = \"Download image\";"));
-        assertTrue(privateChatJs.contains("if (data.message) {\n            textNode.textContent = data.message;\n        } else {\n            textNode.remove();\n        }"));
+        assertTrue(privateChatJs.contains("if (data.message) {"));
+        assertTrue(privateChatJs.contains("textNode.textContent = data.message;"));
+        assertTrue(privateChatJs.contains("textNode.remove();"));
     }
 }

@@ -45,6 +45,7 @@ public class DeletePrivateConversationServlet extends HttpServlet {
         final long conversationId;
         try {
             conversationId = Long.parseLong(request.getParameter("conversationId"));
+            if (conversationId <= 0) throw new IllegalArgumentException("Conversation ID must be positive.");
         } catch (RuntimeException exception) {
             auditLog("Private conversation delete rejected: INVALID_CONVERSATION_ID");
             writeError(response, HttpServletResponse.SC_BAD_REQUEST, "DELETE_INVALID_ID");

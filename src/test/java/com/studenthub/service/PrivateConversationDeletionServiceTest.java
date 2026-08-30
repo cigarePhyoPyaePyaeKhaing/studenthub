@@ -25,6 +25,14 @@ class PrivateConversationDeletionServiceTest {
         assertFalse(result.participant());
     }
 
+    @Test void anonymizedPeerDoesNotChangeParticipantHideSemantics() throws Exception {
+        PrivateConversationDeletionService.DeleteResult result = new PrivateConversationDeletionService(
+                daoReturning(new PrivateMessageDAO.HideResult(true, 1))).deleteForUser(15L, 7L);
+        assertEquals("DELETE_OK", result.code());
+        assertTrue(result.participant());
+        assertEquals(1, result.affectedRows());
+    }
+
     @Test void sqlFailurePropagatesToServletBoundary() {
         PrivateMessageDAO dao = new PrivateMessageDAO() {
             @Override public HideResult hideWithDiagnostics(long conversation, long user) throws SQLException {

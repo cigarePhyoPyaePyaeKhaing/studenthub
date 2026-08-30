@@ -44,6 +44,12 @@ class DeletePrivateConversationServletTest {
         assertError(exchange, 400, "DELETE_INVALID_ID");
     }
 
+    @Test void nonPositiveConversationIdReturnsBadRequest() throws Exception {
+        Exchange exchange = exchange(41L, "csrf-value", "csrf-value", "0");
+        new DeletePrivateConversationServlet(new PrivateMessageDAO()).doPost(exchange.request, exchange.response);
+        assertError(exchange, 400, "DELETE_INVALID_ID");
+    }
+
     @Test void unauthenticatedRequestReturnsUnauthorized() throws Exception {
         Exchange exchange = exchange(null, "csrf-value", "csrf-value", "77");
         new DeletePrivateConversationServlet(new PrivateMessageDAO()).doPost(exchange.request, exchange.response);

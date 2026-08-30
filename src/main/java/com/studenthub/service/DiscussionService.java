@@ -12,13 +12,17 @@ import com.studenthub.dao.AttachmentDAO;
 
 public class DiscussionService {
     public record RoomView(DiscussionScope scope, Integer semester, String sectionName, boolean crRoomsVisible,
-                           String denialReason, List<DiscussionMessage> messages) {
+                           boolean semesterRoomAvailable, boolean sectionRoomAvailable,
+                           boolean crSemesterRoomAvailable, String denialReason, List<DiscussionMessage> messages) {
         public boolean available() { return denialReason == null; }
         public boolean isAvailable() { return available(); }
         public DiscussionScope getScope() { return scope; }
         public Integer getSemester() { return semester; }
         public String getSectionName() { return sectionName; }
         public boolean isCrRoomsVisible() { return crRoomsVisible; }
+        public boolean isSemesterRoomAvailable() { return semesterRoomAvailable; }
+        public boolean isSectionRoomAvailable() { return sectionRoomAvailable; }
+        public boolean isCrSemesterRoomAvailable() { return crSemesterRoomAvailable; }
         public String getDenialReason() { return denialReason; }
         public List<DiscussionMessage> getMessages() { return messages; }
         public String scopeLabel() {
@@ -32,17 +36,28 @@ public class DiscussionService {
     }
     public record OperationResult(boolean successful, String message) {}
 
-    private final DiscussionDAO dao = new DiscussionDAO();
+    private final DiscussionDAO dao;
+
+    public DiscussionService() { this(new DiscussionDAO()); }
+    DiscussionService(DiscussionDAO dao) { this.dao = dao; }
 
     public RoomView load(long userId, String requestedScope) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        if ((requestedScope == null || requestedScope.isBlank())
+                && DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
+            scope = DiscussionScope.ALL;
+        }
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
         String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());
         DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
-        return new RoomView(scope, profile.semester(), profile.sectionName(),
-                DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, profile.role()), denial,
+        boolean crRoomsVisible = DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, profile.role());
+        return new RoomView(scope, profile.semester(), profile.sectionName(), crRoomsVisible,
+                DiscussionAccess.denialReason(DiscussionScope.SEMESTER, profile.universityId(), profile.semester(), profile.sectionName()) == null,
+                DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) == null,
+                crRoomsVisible && DiscussionAccess.denialReason(DiscussionScope.CR_SEMESTER, profile.universityId(), profile.semester(), profile.sectionName()) == null,
+                denial,
                 denial == null ? dao.findRecent(target, 50) : List.of());
     }
 

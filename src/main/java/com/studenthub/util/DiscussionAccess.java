@@ -17,9 +17,10 @@ public final class DiscussionAccess {
     }
     public static String denialReason(DiscussionScope scope, Long universityId, Integer semester, String sectionName) {
         if (scope == DiscussionScope.ALL || scope == DiscussionScope.CR_ALL) return null;
-        if (universityId == null || universityId <= 0 || semester == null || sectionName == null || sectionName.isBlank()) {
-            return "Complete your university, semester and section information to join your academic discussion groups.";
-        }
+        if (universityId == null || universityId <= 0) return "Select your university to join its academic discussion groups.";
+        if (semester == null || semester < 1 || semester > 10) return "Select a valid semester to join this discussion group.";
+        if (scope == DiscussionScope.SECTION && (sectionName == null || sectionName.isBlank()))
+            return "Select your section to join this discussion group.";
         return null;
     }
 
