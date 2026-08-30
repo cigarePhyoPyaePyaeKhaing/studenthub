@@ -32,15 +32,18 @@ class UserIdentityUiContractTest {
         assertTrue(js.contains("return {payload: null, code: \"DELETE_RESPONSE_INVALID\"}"));
     }
 
-    @Test void profileHeroUsesExplicitResponsiveIdentityGridAndSafeMessageCondition() throws Exception {
+    @Test void profileHeroUsesOneSharedFlexIdentityAndSafeMessageCondition() throws Exception {
         String jsp = source("src/main/webapp/WEB-INF/views/profile.jsp");
         String css = source("src/main/webapp/assets/css/dashboard-refined.css");
-        assertTrue(css.contains("grid-template-columns:88px minmax(0,1fr) auto"));
-        assertTrue(css.contains(".profile-hero .profile-avatar{width:88px;height:88px;aspect-ratio:1/1"));
+        assertTrue(jsp.contains("class=\"profile-hero-identity\""));
+        assertTrue(css.contains(".profile-hero-identity{display:flex;min-width:0;align-items:center"));
+        assertTrue(css.contains("flex:0 0 88px;width:88px;height:88px;aspect-ratio:1/1"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
         assertTrue(css.contains(".profile-message-action .btn{width:100%;min-height:44px}"));
         assertTrue(jsp.contains("<c:if test=\"${messageAllowed}\">"));
+        assertFalse(css.contains("margin-left:90px"));
+        assertFalse(css.contains("margin-left:76px"));
     }
 
     @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {
