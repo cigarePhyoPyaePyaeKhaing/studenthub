@@ -32,19 +32,19 @@ class UserIdentityUiContractTest {
         assertTrue(js.contains("return {payload: null, code: \"DELETE_RESPONSE_INVALID\"}"));
     }
 
-    @Test void profileHeroUsesOneSharedFlexIdentityAndSafeMessageCondition() throws Exception {
+    @Test void profileHeroAlignsAvatarToTheCompleteIdentityBlockAndKeepsSafeActions() throws Exception {
         String jsp = source("src/main/webapp/WEB-INF/views/profile.jsp");
         String css = source("src/main/webapp/assets/css/dashboard-refined.css");
         assertTrue(jsp.contains("class=\"eyebrow profile-hero-eyebrow\""));
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
-        assertTrue(jsp.indexOf("profile-hero-eyebrow") < jsp.indexOf("profile-hero-identity"));
-        assertTrue(css.contains(".profile-hero-identity{display:grid;min-width:0;grid-template-columns:88px minmax(0,1fr);align-items:center"));
+        assertTrue(jsp.contains("class=\"profile-identity-block\""));
+        assertTrue(jsp.indexOf("profile-hero-identity") < jsp.indexOf("profile-hero-eyebrow"));
+        assertTrue(css.contains(".profile-hero-identity{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}"));
+        assertTrue(css.contains(".profile-identity-block{display:grid;min-width:0;align-content:center}"));
         assertTrue(css.contains("flex-shrink:0;width:88px;height:88px;aspect-ratio:1/1"));
-        assertTrue(css.contains(".profile-identity{grid-column:2;grid-row:1"));
-        assertTrue(css.contains(".profile-message-action{grid-column:2;grid-row:2;margin:0!important}"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
-        assertTrue(css.contains(".profile-message-action .btn{width:100%;min-height:44px}"));
+        assertTrue(css.contains(".profile-identity-block .profile-message-action .btn{width:100%}"));
         assertTrue(jsp.contains("<c:if test=\"${messageAllowed}\">"));
         assertTrue(jsp.indexOf("class=\"profile-identity\"") < jsp.indexOf("class=\"profile-message-action\""));
         assertTrue(jsp.contains("Academic information has not been configured yet."));

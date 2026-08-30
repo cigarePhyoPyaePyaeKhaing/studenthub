@@ -10,22 +10,24 @@ import org.junit.jupiter.api.Test;
 class AuthenticationUiContractTest {
     private static String source(String path) throws Exception { return Files.readString(Path.of(path)); }
 
-    @Test void loginAndRegisterUseTheStableCenteredResponsiveAuthSystem() throws Exception {
+    @Test void loginAndRegisterUseOneCanonicalResponsiveAuthSystem() throws Exception {
         String login = source("src/main/webapp/WEB-INF/views/auth/login.jsp");
         String register = source("src/main/webapp/WEB-INF/views/auth/register.jsp");
         String css = source("src/main/webapp/assets/css/auth-refined.css");
-        assertTrue(login.contains("class=\"auth-page auth-page-refined\""));
-        assertTrue(register.contains("class=\"auth-page auth-page-refined\""));
-        assertTrue(login.contains("<main class=\"auth-main\">"));
-        assertTrue(register.contains("<main class=\"auth-main\">"));
-        assertTrue(login.contains("<div class=\"auth-card-brand\">"));
-        assertTrue(register.contains("<div class=\"auth-card-brand\">"));
+        assertTrue(login.contains("class=\"account-auth-page\""));
+        assertTrue(register.contains("class=\"account-auth-page\""));
+        assertTrue(login.contains("<main class=\"account-auth-main\">"));
+        assertTrue(register.contains("<main class=\"account-auth-main\">"));
+        assertTrue(login.contains("account-auth-surface account-auth-login"));
+        assertTrue(register.contains("account-auth-surface account-auth-register"));
+        assertFalse(login.contains("class=\"auth-card"));
+        assertFalse(register.contains("class=\"auth-card"));
         assertFalse(login.contains("auth-brand-panel.jsp"));
         assertFalse(register.contains("auth-brand-panel.jsp"));
-        assertTrue(css.contains(".auth-page-refined .auth-card{width:min(100%,34rem)"));
-        assertTrue(css.contains(".auth-page-refined .auth-card-wide{width:min(100%,45rem)}"));
+        assertTrue(css.contains(".account-auth-surface{width:min(100%,48rem)"));
+        assertTrue(css.contains(".account-auth-login{width:min(100%,33rem)}"));
         assertTrue(css.contains("@media(max-width:600px)"));
-        assertTrue(css.contains(".auth-form-grid{grid-template-columns:minmax(0,1fr)}"));
+        assertTrue(css.contains(".account-auth-page .auth-form-grid{grid-template-columns:minmax(0,1fr)"));
         assertFalse(css.contains("clip-path"));
         assertFalse(css.contains(".auth-experience"));
         assertFalse(css.contains("grid-template-columns:minmax(0,46%)"));
@@ -46,7 +48,9 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("name=\"csrfToken\""));
         assertFalse(register.contains("name=\"semester\""));
         assertFalse(register.contains("name=\"section"));
-        assertTrue(login.contains("Sign in to continue to your StudentHub account."));
-        assertTrue(register.contains("<h1 class=\"h2\">Register</h1>"));
+        assertTrue(login.contains("Sign in to continue."));
+        assertTrue(register.contains(">Join StudentHub</h1>"));
+        assertTrue(register.contains("Create your account to access announcements, deadlines, discussions, and messages in one place."));
+        assertTrue(register.contains("Already have an account?"));
     }
 }
