@@ -16,6 +16,11 @@ public final class NavigationSection {
         if (path.equals("/profile") && (request.getParameter("userId") == null
                 || request.getParameter("userId").isBlank())) return "PROFILE";
         if (path.startsWith("/profile/") && !path.startsWith("/profile/photo/")) return "PROFILE";
+        if (path.equals("/admin") || path.equals("/admin/dashboard")) return "ADMIN_DASHBOARD";
+        if (path.equals("/admin/users") || path.startsWith("/admin/users/")) return "ADMIN_USERS";
+        if (path.equals("/admin/academic-changes") || path.startsWith("/admin/academic-changes/")) {
+            return "ADMIN_ACADEMIC_REQUESTS";
+        }
         return "NONE";
     }
 }
