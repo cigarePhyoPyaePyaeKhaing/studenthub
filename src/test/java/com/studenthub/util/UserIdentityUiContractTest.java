@@ -35,8 +35,10 @@ class UserIdentityUiContractTest {
     @Test void profileHeroUsesOneSharedFlexIdentityAndSafeMessageCondition() throws Exception {
         String jsp = source("src/main/webapp/WEB-INF/views/profile.jsp");
         String css = source("src/main/webapp/assets/css/dashboard-refined.css");
+        assertTrue(jsp.contains("class=\"eyebrow profile-hero-eyebrow\""));
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
-        assertTrue(css.contains(".profile-hero-identity{display:flex;min-width:0;align-items:flex-start"));
+        assertTrue(jsp.indexOf("profile-hero-eyebrow") < jsp.indexOf("profile-hero-identity"));
+        assertTrue(css.contains(".profile-hero-identity{display:flex;min-width:0;align-items:center"));
         assertTrue(css.contains("flex:0 0 88px;width:88px;height:88px;aspect-ratio:1/1"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));

@@ -4,7 +4,7 @@
     <div class="auth-brand-panel-copy">
         <jsp:include page="../partials/logo.jsp" />
         <p class="auth-brand-kicker">Your academic community</p>
-        <c:choose><c:when test="${param.mode eq 'login'}"><h2>Welcome back.</h2><p>Your academic community, announcements, deadlines, and discussions are all waiting in one focused place.</p></c:when><c:otherwise><h2>Join StudentHub.</h2><p>Create your account and connect with the academic community that matters to you.</p></c:otherwise></c:choose>
+        <c:choose><c:when test="${param.mode eq 'login'}"><h2>Welcome back.</h2><p>Stay connected with your academic community in one place.</p></c:when><c:otherwise><h2>Join StudentHub.</h2><p>Keep your academic updates, discussions, and communication together in one place.</p></c:otherwise></c:choose>
     </div>
     <div class="auth-brand-orbit" aria-hidden="true"><jsp:include page="../partials/logo.jsp"><jsp:param name="compact" value="true"/></jsp:include></div>
 </aside>

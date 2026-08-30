@@ -30,6 +30,11 @@ class AuthenticationUiContractTest {
         assertTrue(css.contains(".auth-login-page .auth-brand-panel{order:2"));
         assertTrue(css.contains(".auth-register-page .auth-brand-panel{order:1"));
         assertTrue(css.contains("clip-path:polygon"));
+        assertTrue(css.contains("min-height:calc(100svh - 74px)"));
+        assertTrue(css.contains("grid-template-columns:minmax(0,46%) minmax(0,54%);gap:0"));
+        assertTrue(css.contains(".auth-experience-page .auth-brand-panel{min-height:0;height:100%"));
+        assertTrue(css.contains(".auth-experience-page .auth-brand-panel{min-height:190px;height:auto"));
+        assertFalse(css.contains(".auth-experience-page .auth-brand-panel{min-height:620px"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {
@@ -49,5 +54,7 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("<legend>Security</legend>"));
         assertFalse(register.contains("name=\"semester\""));
         assertFalse(register.contains("name=\"section"));
+        assertTrue(login.contains("Access your announcements, deadlines, discussions, and messages."));
+        assertTrue(register.contains("Get started with StudentHub"));
     }
 }
