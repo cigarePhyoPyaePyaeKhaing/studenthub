@@ -14,9 +14,9 @@ public class AdminUsersServlet extends HttpServlet {
     private final AdminService service=new AdminService();
     @Override protected void doGet(HttpServletRequest request,HttpServletResponse response)throws ServletException,IOException{
         if(!AdminRequest.requireAdmin(request,response))return;
-        try {var page=service.users(request.getParameter("q"),request.getParameter("page"));request.setAttribute("users",page.users());request.setAttribute("query",page.search());request.setAttribute("currentPage",page.page());request.setAttribute("totalPages",page.totalPages());request.setAttribute("totalUsers",page.totalUsers());}
-        catch(IllegalArgumentException exception){request.setAttribute("users",List.of());request.setAttribute("error",exception.getMessage());request.setAttribute("currentPage",1);request.setAttribute("totalPages",1);}
-        catch(SQLException exception){getServletContext().log("Admin users load failed: "+exception.getClass().getName());request.setAttribute("users",List.of());request.setAttribute("error","Users are temporarily unavailable.");request.setAttribute("currentPage",1);request.setAttribute("totalPages",1);}
+        try {var directory=service.users(request.getParameter("q"));request.setAttribute("users",directory.users());request.setAttribute("query",directory.search());request.setAttribute("totalUsers",directory.totalUsers());}
+        catch(IllegalArgumentException exception){request.setAttribute("users",List.of());request.setAttribute("totalUsers",0L);request.setAttribute("error",exception.getMessage());}
+        catch(SQLException exception){getServletContext().log("Admin users load failed: "+exception.getClass().getName());request.setAttribute("users",List.of());request.setAttribute("totalUsers",0L);request.setAttribute("error","Users are temporarily unavailable.");}
         request.setAttribute("csrfToken",CsrfToken.getOrCreate(request.getSession()));moveFlash(request);
         request.getRequestDispatcher("/WEB-INF/views/admin/users.jsp").forward(request,response);
     }

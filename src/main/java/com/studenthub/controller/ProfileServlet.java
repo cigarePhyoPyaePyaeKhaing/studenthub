@@ -91,7 +91,7 @@ public class ProfileServlet extends HttpServlet {
                 request.setAttribute("availableUniversities", java.util.Collections.emptyList());
             }
 
-            if (!publicProfile && academicChangeDAO != null) {
+            if (!publicProfile && profile.getRole() != com.studenthub.model.Role.ADMIN && academicChangeDAO != null) {
                 try {
                     request.setAttribute("pendingAcademicRequest", academicChangeDAO.findPendingForUser(userId).orElse(null));
                 } catch (Exception academicException) {

@@ -45,22 +45,12 @@ public class AdminDAO {
         }
     }
 
-    public List<AdminUserSummary> findUsers(String search, int limit, int offset) throws SQLException {
-        String sql = baseUserSelect() + searchClause(search) + " ORDER BY created_at DESC,user_id DESC LIMIT ? OFFSET ?";
-        try (Connection connection = DBConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql)) {
-            int index = bindSearch(statement, search);
-            statement.setInt(index++, limit); statement.setInt(index, offset);
-            return readUsers(statement);
-        }
-    }
-
-    public long countUsers(String search) throws SQLException {
-        String sql = "SELECT COUNT(*) FROM users WHERE " + ACTIVE_ACCOUNT + searchClause(search);
+    public List<AdminUserSummary> findUsers(String search) throws SQLException {
+        String sql = baseUserSelect() + searchClause(search) + " ORDER BY role,full_name,user_id";
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             bindSearch(statement, search);
-            try (ResultSet result = statement.executeQuery()) { result.next(); return result.getLong(1); }
+            return readUsers(statement);
         }
     }
 

@@ -99,7 +99,7 @@
                                     </div>
                                 </c:otherwise>
                             </c:choose>
-                            <c:choose>
+                            <c:if test="${profile.role ne 'ADMIN'}"><c:choose>
                                 <c:when test="${profile.academicInfoLocked}">
                                     <div class="locked-field">
                                         <span>Semester</span>
@@ -127,7 +127,7 @@
                                     </div>
                                     <p class="profile-security-note">Semester and section control access to scoped announcements, deadlines, and discussions. Once saved, they will be locked.</p>
                                 </c:otherwise>
-                            </c:choose>
+                            </c:choose></c:if>
                             <div class="profile-form-actions">
                                 <button class="btn btn-primary" type="submit">Save changes</button>
                                 <a class="btn btn-light" href="${pageContext.request.contextPath}/profile">Cancel</a>
@@ -183,7 +183,7 @@
                                 <c:if test="${not publicProfile}"><div><dt>Email status</dt><dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd></div></c:if>
                             </dl>
                         </section>
-                        <section class="profile-card">
+                        <c:if test="${profile.role ne 'ADMIN'}"><section class="profile-card">
                             <div class="profile-card-heading">
                                 <div>
                                     <p class="eyebrow mb-1">Study scope</p>
@@ -270,7 +270,7 @@
                                     <p class="profile-card-note text-primary">Academic information is not set yet. Click "Edit profile" above to choose your Semester and Section.</p>
                                 </c:otherwise>
                             </c:choose></c:if>
-                        </section>
+                        </section></c:if>
                     </div>
                 </c:otherwise>
             </c:choose>

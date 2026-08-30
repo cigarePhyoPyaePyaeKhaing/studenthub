@@ -15,6 +15,26 @@ import static org.junit.jupiter.api.Assertions.*;
 class ProfileServiceAcademicLockTest {
 
     @Test
+    void adminUpdateNeverWritesStudentAcademicFields() throws Exception {
+        UserProfile admin = new UserProfile(30L, "ADM-0030", "Admin User", "admin@uit.edu",
+                Role.ADMIN, true, null, null);
+        AtomicReference<String> updatedFullName = new AtomicReference<>();
+        AtomicReference<ProfileUpdate> forbiddenAcademicUpdate = new AtomicReference<>();
+        UserDAO mockDao = new UserDAO() {
+            @Override public Optional<UserProfile> findProfileById(long userId) { return Optional.of(admin); }
+            @Override public int updateFullName(long userId, String fullName) { updatedFullName.set(fullName); return 1; }
+            @Override public int updateProfile(long userId, ProfileUpdate update) { forbiddenAcademicUpdate.set(update); return 1; }
+        };
+
+        ProfileService.UpdateResult result = new ProfileService(mockDao)
+                .updateOwnProfile(30L, "Renamed Admin", "8", "Z");
+
+        assertTrue(result.successful());
+        assertEquals("Renamed Admin", updatedFullName.get());
+        assertNull(forbiddenAcademicUpdate.get());
+    }
+
+    @Test
     void unlockedUserCanSetSemesterAndSectionOnce() throws Exception {
         UserProfile unlockedProfile = new UserProfile(
                 10L, "TNT-0010", "New Student", "new@uit.edu",

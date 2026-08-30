@@ -4,6 +4,7 @@ import com.studenthub.dao.UniversityDAO;
 import com.studenthub.dao.UserDAO;
 import com.studenthub.model.University;
 import com.studenthub.model.UserProfile;
+import com.studenthub.model.Role;
 import com.studenthub.util.ProfileValidation;
 import java.sql.SQLException;
 import java.util.Collections;
@@ -81,7 +82,7 @@ public class ProfileService {
         }
 
         // 2. Handle Academic info / Full name updates
-        if (currentProfile.academicInfoLocked()) {
+        if (currentProfile.getRole() == Role.ADMIN || currentProfile.academicInfoLocked()) {
             String normalized = fullName == null ? "" : fullName.trim();
             if (normalized.length() < 2 || normalized.length() > 100) {
                 return new UpdateResult(false, "Enter a full name between 2 and 100 characters.", null);
@@ -90,7 +91,10 @@ public class ProfileService {
                 return new UpdateResult(false, "NOT_FOUND", null);
             }
             UserProfile updated = userDAO.findProfileById(authenticatedUserId).orElse(null);
-            return new UpdateResult(true, "Profile name updated. Academic information remains locked.", updated);
+            String message = currentProfile.getRole() == Role.ADMIN
+                    ? "Profile updated successfully."
+                    : "Profile name updated. Academic information remains locked.";
+            return new UpdateResult(true, message, updated);
         }
 
         ProfileValidation.Result validation = ProfileValidation.validate(fullName, semester, section);

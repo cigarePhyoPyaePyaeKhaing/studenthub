@@ -107,7 +107,8 @@ class MessagingUiContractTest {
         assertTrue(client.contains("DELETE_HTTP_ERROR"));
         assertTrue(client.contains("DELETE_CLIENT_ERROR"));
         assertTrue(client.contains("window.fetch(deleteUrl"));
-        assertTrue(client.contains("const conversationId = menu.dataset.conversationId"));
+        assertTrue(client.contains("let conversationId;"));
+        assertTrue(client.contains("conversationId = menu.dataset.conversationId"));
         assertTrue(client.contains("const csrfToken = menu.dataset.csrf"));
         String jsp = source("src/main/webapp/WEB-INF/views/messages/index.jsp");
         assertTrue(jsp.contains("class=\"conversation-menu\""));
@@ -119,6 +120,12 @@ class MessagingUiContractTest {
         assertFalse(client.contains("new URL(\"delete\", form.action)"));
         assertTrue(client.contains("contentType.toLowerCase().includes(\"application/json\")"));
         assertTrue(client.contains("const body = await response.text()"));
+        assertTrue(client.contains("conversation?.remove()"));
+        assertTrue(client.contains("history.replaceState"));
+        assertTrue(client.contains("conversationList?.classList.remove(\"has-selection\")"));
+        assertFalse(client.contains("window.location.reload"));
+        assertTrue(jsp.contains("title=\"Conversation options\""));
+        assertTrue(jsp.contains("&#8230;"));
     }
 
     @Test

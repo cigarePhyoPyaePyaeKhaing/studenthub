@@ -10,23 +10,19 @@ import java.util.Optional;
 
 public class AdminService {
     public record DashboardData(AdminDashboardStats stats, List<AdminUserSummary> recentUsers) {}
-    public record UserPage(List<AdminUserSummary> users, String search, int page,
-                           int totalPages, long totalUsers) {}
+    public record UserDirectory(List<AdminUserSummary> users, String search) {
+        public long totalUsers() { return users.size(); }
+    }
     public record OperationResult(boolean successful, String message) {}
     private final AdminDAO dao = new AdminDAO();
 
     public DashboardData dashboard() throws SQLException {
         return new DashboardData(dao.loadStats(), dao.findRecentUsers(8));
     }
-    public UserPage users(String searchInput, String pageInput) throws SQLException {
+    public UserDirectory users(String searchInput) throws SQLException {
         if (AdminValidation.searchTooLong(searchInput)) throw new IllegalArgumentException("Search is too long.");
         String search = AdminValidation.normalizeSearch(searchInput);
-        long total = dao.countUsers(search);
-        int totalPages = AdminValidation.totalPages(total);
-        int page = Math.min(AdminValidation.page(pageInput), totalPages);
-        int offset = (page - 1) * AdminValidation.PAGE_SIZE;
-        return new UserPage(dao.findUsers(search, AdminValidation.PAGE_SIZE, offset),
-                search, page, totalPages, total);
+        return new UserDirectory(dao.findUsers(search), search);
     }
     public Optional<AdminUserSummary> user(long userId) throws SQLException { return dao.findUser(userId); }
 

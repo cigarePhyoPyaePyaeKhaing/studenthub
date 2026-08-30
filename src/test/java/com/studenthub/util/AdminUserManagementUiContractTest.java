@@ -21,16 +21,30 @@ class AdminUserManagementUiContractTest {
         assertEquals(0, occurrences(jsp, "items=\"${adminUsers}\""));
     }
 
-    @Test void searchPaginationAndExistingViewRouteRemainIntact() throws IOException {
+    @Test void searchAndExistingViewRouteRemainIntactWithoutPagination() throws IOException {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/admin/users.jsp"));
         assertTrue(jsp.contains("action=\"${pageContext.request.contextPath}/admin/users\""));
         assertTrue(jsp.contains("name=\"q\""));
         assertTrue(jsp.contains("${pageContext.request.contextPath}/admin/users/view?id=${user.userId}"));
-        assertTrue(jsp.contains("currentPage"));
-        assertTrue(jsp.contains("totalPages"));
+        assertFalse(jsp.contains("currentPage"));
+        assertFalse(jsp.contains("totalPages"));
+        assertFalse(jsp.contains("admin-pagination"));
         assertFalse(jsp.contains("/admin/users/students"));
         assertFalse(jsp.contains("/admin/users/cr"));
         assertFalse(jsp.contains("/admin/users/admins"));
+    }
+
+    @Test void backendLoadsOneGlobalUnpaginatedPopulation() throws IOException {
+        String dao = Files.readString(Path.of("src/main/java/com/studenthub/dao/AdminDAO.java"));
+        String service = Files.readString(Path.of("src/main/java/com/studenthub/service/AdminService.java"));
+        String servlet = Files.readString(Path.of("src/main/java/com/studenthub/controller/AdminUsersServlet.java"));
+        assertTrue(dao.contains("findUsers(String search)"));
+        assertFalse(dao.contains("LIMIT ? OFFSET ?"));
+        assertFalse(dao.contains("actingAdminId"));
+        assertFalse(dao.contains("countUsers(String search)"));
+        assertTrue(service.contains("dao.findUsers(search)"));
+        assertFalse(servlet.contains("getParameter(\"page\")"));
+        assertTrue(servlet.contains("AdminRequest.requireAdmin"));
     }
 
     @Test void roleTablesUseResponsivePresentationOnly() throws IOException {

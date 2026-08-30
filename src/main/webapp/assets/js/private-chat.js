@@ -288,10 +288,11 @@ function initializeConversationMenu(menu) {
             if (dialog.returnValue !== "delete") { dialog.remove(); return; }
             deleteButton.disabled = true; deleteButton.textContent = "Deleting...";
             let deleteUrl;
+            let conversationId;
             let requestBody;
             try {
                 deleteUrl = menu.dataset.deleteUrl;
-                const conversationId = menu.dataset.conversationId;
+                conversationId = menu.dataset.conversationId;
                 const csrfToken = menu.dataset.csrf;
                 if (!deleteUrl || !conversationId || !csrfToken) throw new Error("Delete request state is incomplete.");
                 requestBody = new window.URLSearchParams({csrfToken, conversationId});
@@ -332,19 +333,42 @@ function initializeConversationMenu(menu) {
             }
 
             console.debug("Private conversation delete", {stage: "BEFORE_PARSE"});
-            const result = await parseDeleteConversationResponse(response);
+            let result;
+            try {
+                result = await parseDeleteConversationResponse(response);
+            } catch (error) {
+                console.error("Private conversation delete response failure", {name: error.name, message: error.message, stack: error.stack, code: "DELETE_RESPONSE_INVALID"});
+                showDeleteConversationError(dialog, "DELETE_RESPONSE_INVALID");
+                deleteButton.disabled = false; deleteButton.textContent = "Delete Conversation";
+                dialog.showModal();
+                return;
+            }
             console.debug("Private conversation delete", {stage: "AFTER_PARSE", code: result.code || result.payload?.code});
             if (response.ok && result.payload?.success === true && result.payload.code === "DELETE_OK") {
-                    document.querySelector(`.conversation-item[href*="conversationId=${conversationId}"]`)?.remove();
+                    const conversation = [...document.querySelectorAll(".conversation-item")].find(item => {
+                        try { return new URL(item.href, document.baseURI).searchParams.get("conversationId") === conversationId; }
+                        catch (_ignored) { return false; }
+                    });
+                    conversation?.remove();
                     dialog.remove();
-                    history.replaceState(null, "", new URL("messages", document.baseURI));
+                    history.replaceState(null, "", new URL(menu.dataset.messagesUrl || "messages", document.baseURI));
                     const thread = document.querySelector(".private-thread");
-                    thread.replaceChildren();
+                    if (thread) thread.replaceChildren();
                     const empty = document.createElement("div");
                     empty.className = "private-empty thread-empty";
-                    empty.innerHTML = "<h2>Conversation removed</h2><p>Select another conversation to continue messaging.</p>";
-                    thread.append(empty);
-                    document.querySelector(".conversation-list")?.classList.remove("has-selection");
+                    const hasConversations = document.querySelector(".conversation-item") !== null;
+                    empty.innerHTML = hasConversations
+                        ? "<h2>Conversation removed</h2><p>Select another conversation to continue messaging.</p>"
+                        : "<h2>Your private messages</h2><p>Open a student's profile and choose Message to begin.</p>";
+                    if (thread) thread.append(empty);
+                    const conversationList = document.querySelector(".conversation-list");
+                    conversationList?.classList.remove("has-selection");
+                    if (!hasConversations && conversationList && !conversationList.querySelector(".private-empty")) {
+                        const listEmpty = document.createElement("p");
+                        listEmpty.className = "private-empty";
+                        listEmpty.textContent = "Open a student's profile and choose Message to begin.";
+                        conversationList.append(listEmpty);
+                    }
                     return;
             }
             const code = result.code || (response.ok ? "DELETE_RESPONSE_INVALID" : "DELETE_HTTP_ERROR");

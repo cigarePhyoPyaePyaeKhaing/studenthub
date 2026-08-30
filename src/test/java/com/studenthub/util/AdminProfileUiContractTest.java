@@ -1,0 +1,28 @@
+package com.studenthub.util;
+
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import org.junit.jupiter.api.Test;
+
+class AdminProfileUiContractTest {
+    @Test void adminAcademicControlsAreHiddenWhileStudentAndCrMarkupRemains() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
+        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><c:choose>"));
+        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><section class=\"profile-card\">"));
+        assertTrue(jsp.contains("Request Academic Info Change"));
+        assertTrue(jsp.contains("name=\"semester\""));
+        assertTrue(jsp.contains("name=\"sectionName\""));
+    }
+
+    @Test void backendDoesNotLoadOrAcceptAcademicRequestsForAdmins() throws Exception {
+        String profile = Files.readString(Path.of("src/main/java/com/studenthub/controller/ProfileServlet.java"));
+        String request = Files.readString(Path.of("src/main/java/com/studenthub/controller/AcademicChangeRequestServlet.java"));
+        String service = Files.readString(Path.of("src/main/java/com/studenthub/service/ProfileService.java"));
+        assertTrue(profile.contains("profile.getRole() != com.studenthub.model.Role.ADMIN"));
+        assertTrue(request.contains("currentProfile.get().getRole() == Role.ADMIN"));
+        assertTrue(request.contains("SC_FORBIDDEN"));
+        assertTrue(service.contains("currentProfile.getRole() == Role.ADMIN || currentProfile.academicInfoLocked()"));
+    }
+}

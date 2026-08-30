@@ -2,6 +2,7 @@ package com.studenthub.controller;
 
 import com.studenthub.dao.AcademicChangeDAO;
 import com.studenthub.model.UserProfile;
+import com.studenthub.model.Role;
 import com.studenthub.service.ProfileService;
 import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
@@ -51,6 +52,11 @@ public class AcademicChangeRequestServlet extends HttpServlet {
 
         long userId = (Long) session.getAttribute("userId");
         try {
+            Optional<UserProfile> currentProfile = profileService.findOwnProfile(userId);
+            if (currentProfile.isPresent() && currentProfile.get().getRole() == Role.ADMIN) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return;
+            }
             String semesterParam = request.getParameter("semester");
             if (semesterParam == null || semesterParam.isBlank()) {
                 throw new IllegalArgumentException("Semester is required.");
@@ -63,7 +69,6 @@ public class AcademicChangeRequestServlet extends HttpServlet {
                 throw new IllegalArgumentException("Enter a valid semester (1-10), section, and reason between 10 and 1000 characters.");
             }
 
-            Optional<UserProfile> currentProfile = profileService.findOwnProfile(userId);
             if (currentProfile.isPresent()) {
                 UserProfile profile = currentProfile.get();
                 if (profile.getSemester() != null && profile.getSemester().equals(semester)
