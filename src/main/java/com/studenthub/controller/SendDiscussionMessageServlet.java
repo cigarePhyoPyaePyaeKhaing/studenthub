@@ -33,7 +33,8 @@ public class SendDiscussionMessageServlet extends HttpServlet {
             return;
         } catch (SQLException exception) {
             com.studenthub.util.AttachmentRequest.discard(attachment.upload());
-            getServletContext().log("Discussion message send failed: " + exception.getClass().getName());
+            getServletContext().log(String.format("Discussion send failed: stage=insert scope=%s role=%s sqlState=%s errorCode=%d exception=%s",
+                    scope, request.getSession().getAttribute("role"), exception.getSQLState(), exception.getErrorCode(), exception.getClass().getName()));
             fail(request,response,json,HttpServletResponse.SC_INTERNAL_SERVER_ERROR,"The message could not be sent right now.");
             if(json)return;
         }

@@ -43,10 +43,12 @@ public class DiscussionDAO {
                 LEFT JOIN attachments a ON a.message_id=m.message_id
                 WHERE r.room_type = ?
                 """);
-        if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL && target.scope() != DiscussionScope.CR_ADMIN) sql.append(" AND r.university_id = ?");
+        if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL
+                && target.scope() != DiscussionScope.CR_ADMIN && target.scope() != DiscussionScope.ALL_STUDENTS_ADMIN) sql.append(" AND r.university_id = ?");
         if (target.scope() == DiscussionScope.SEMESTER || target.scope() == DiscussionScope.CR_SEMESTER) sql.append(" AND r.semester = ? AND r.section_name IS NULL");
         if (target.scope() == DiscussionScope.SECTION) sql.append(" AND r.semester = ? AND r.section_name = ?");
-        if (target.scope() == DiscussionScope.ALL || target.scope() == DiscussionScope.CR_ALL || target.scope() == DiscussionScope.CR_ADMIN) sql.append(" AND r.semester IS NULL AND r.section_name IS NULL");
+        if (target.scope() == DiscussionScope.ALL || target.scope() == DiscussionScope.CR_ALL
+                || target.scope() == DiscussionScope.CR_ADMIN || target.scope() == DiscussionScope.ALL_STUDENTS_ADMIN) sql.append(" AND r.semester IS NULL AND r.section_name IS NULL");
         sql.append(" ORDER BY m.created_at DESC, m.message_id DESC LIMIT ?");
 
         List<DiscussionMessage> messages = new ArrayList<>();
@@ -54,7 +56,8 @@ public class DiscussionDAO {
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             int index = 1;
             statement.setString(index++, target.scope().name());
-            if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL && target.scope() != DiscussionScope.CR_ADMIN) {
+            if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL
+                    && target.scope() != DiscussionScope.CR_ADMIN && target.scope() != DiscussionScope.ALL_STUDENTS_ADMIN) {
                 statement.setLong(index++, target.universityId());
                 statement.setInt(index++, target.semester());
             }
@@ -169,6 +172,7 @@ public class DiscussionDAO {
             case CR_SEMESTER -> "CR Semester " + target.semester();
             case CR_ALL -> "CR All Chat";
             case CR_ADMIN -> "CR - Admin Chat";
+            case ALL_STUDENTS_ADMIN -> "All Students - Admin Chat";
         };
     }
 

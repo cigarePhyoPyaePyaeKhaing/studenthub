@@ -26,10 +26,11 @@ public class DiscussionService {
         public String getDenialReason() { return denialReason; }
         public List<DiscussionMessage> getMessages() { return messages; }
         public String scopeLabel() {
-            if (scope == DiscussionScope.ALL) return "All StudentHub users";
+            if (scope == DiscussionScope.ALL) return "All Students";
+            if (scope == DiscussionScope.ALL_STUDENTS_ADMIN) return "All Students – Admin";
             if (scope == DiscussionScope.CR_ALL) return "CRs across all semesters";
             if (scope == DiscussionScope.CR_SEMESTER) return "CRs in Semester " + semester;
-            if (scope == DiscussionScope.CR_ADMIN) return "CRs and Administrators";
+            if (scope == DiscussionScope.CR_ADMIN) return "CR – Admin";
             if (scope == DiscussionScope.SEMESTER) return "Semester " + semester;
             return "Semester " + semester + " / Section " + sectionName;
         }
@@ -37,17 +38,28 @@ public class DiscussionService {
     }
     public record OperationResult(boolean successful, String message) {}
 
-    private final DiscussionDAO dao;
+    @FunctionalInterface
+    public interface ConnectionSupplier {
+        Connection get() throws SQLException;
+    }
 
-    public DiscussionService() { this(new DiscussionDAO()); }
-    DiscussionService(DiscussionDAO dao) { this.dao = dao; }
+    private final DiscussionDAO dao;
+    private final ConnectionSupplier connectionSupplier;
+
+    public DiscussionService() { this(new DiscussionDAO(), DBConnection::getConnection); }
+    public DiscussionService(DiscussionDAO dao) { this(dao, DBConnection::getConnection); }
+    public DiscussionService(DiscussionDAO dao, ConnectionSupplier connectionSupplier) {
+        this.dao = dao;
+        this.connectionSupplier = connectionSupplier != null ? connectionSupplier : DBConnection::getConnection;
+    }
 
     public RoomView load(long userId, String requestedScope) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
         if (requestedScope == null || requestedScope.isBlank()) {
-            if ("ADMIN".equals(profile.role())
-                    || DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
+            if ("ADMIN".equals(profile.role())) {
+                scope = DiscussionScope.ALL_STUDENTS_ADMIN;
+            } else if (DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
                 scope = DiscussionScope.ALL;
             }
         }
@@ -77,7 +89,7 @@ public class DiscussionService {
         if (denial != null) return new OperationResult(false, denial);
         DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
-        try (Connection connection = DBConnection.getConnection()) {
+        try (Connection connection = connectionSupplier.get()) {
             connection.setAutoCommit(false);
             try {
                 long id = dao.insert(connection, target, DiscussionValidation.normalize(rawMessage));

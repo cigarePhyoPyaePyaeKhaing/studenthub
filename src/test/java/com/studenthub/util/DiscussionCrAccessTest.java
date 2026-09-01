@@ -44,9 +44,10 @@ class DiscussionCrAccessTest {
         assertTrue(DiscussionAccess.matches(DiscussionScope.CR_ADMIN, null, null, null, null));
     }
 
-    @Test void adminCanOnlyAccessAllAndCrAdmin() {
-        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.ALL, "ADMIN"));
+    @Test void adminCanOnlyAccessAllStudentsAdminAndCrAdmin() {
+        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.ALL_STUDENTS_ADMIN, "ADMIN"));
         assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "ADMIN"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.ALL, "ADMIN"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.SECTION, "ADMIN"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.SEMESTER, "ADMIN"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_SEMESTER, "ADMIN"));

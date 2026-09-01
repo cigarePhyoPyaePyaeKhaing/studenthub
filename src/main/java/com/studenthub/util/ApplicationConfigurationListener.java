@@ -110,6 +110,7 @@ public class ApplicationConfigurationListener implements ServletContextListener 
             ensureStandardCategories(connection, context);
             ensureAttachmentsTable(connection, context);
             ensureDiscussionUniversityColumn(connection, context);
+            ensureDiscussionScopeEnum(connection, context);
             ensurePrivateMessagingTables(connection, context);
             ensurePrivateMessageReceipts(connection, context);
             ensurePrivateConversationVisibility(connection, context);
@@ -137,6 +138,15 @@ public class ApplicationConfigurationListener implements ServletContextListener 
                 statement.execute("CREATE INDEX idx_chat_rooms_university_scope ON chat_rooms(university_id,room_type,semester,section_name)");
             }
         } catch(SQLException exception){context.log("ensureDiscussionUniversityColumn check: "+exception.getClass().getName());}
+    }
+
+    private void ensureDiscussionScopeEnum(Connection connection, ServletContext context) {
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("ALTER TABLE chat_rooms MODIFY COLUMN room_type ENUM('SECTION', 'SEMESTER', 'ALL', 'CR_SEMESTER', 'CR_ALL', 'CR_ADMIN', 'ALL_STUDENTS_ADMIN') NOT NULL");
+            context.log("Ensured chat_rooms.room_type ENUM includes CR_ADMIN and ALL_STUDENTS_ADMIN");
+        } catch (SQLException exception) {
+            context.log("ensureDiscussionScopeEnum check: " + exception.getClass().getName() + ": " + exception.getMessage());
+        }
     }
 
     private void ensurePrivateMessagingTables(Connection connection, ServletContext context) {

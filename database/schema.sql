@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS reactions (
 CREATE TABLE IF NOT EXISTS chat_rooms (
     room_id BIGINT AUTO_INCREMENT PRIMARY KEY,
     room_name VARCHAR(100) NOT NULL,
-    room_type ENUM('SECTION', 'SEMESTER', 'ALL', 'CR_SEMESTER', 'CR_ALL', 'CR_ADMIN') NOT NULL,
+    room_type ENUM('SECTION', 'SEMESTER', 'ALL', 'CR_SEMESTER', 'CR_ALL', 'CR_ADMIN', 'ALL_STUDENTS_ADMIN') NOT NULL,
     university_id BIGINT NULL,
     semester INT NULL,
     section_name VARCHAR(20) NULL,

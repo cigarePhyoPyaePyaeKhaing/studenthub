@@ -15,6 +15,7 @@ public record DiscussionTarget(long authorId, DiscussionScope scope, Long univer
                 scope == DiscussionScope.SECTION ? sectionName : null);
     }
     private static boolean isGlobal(DiscussionScope scope) {
-        return scope == DiscussionScope.ALL || scope == DiscussionScope.CR_ALL || scope == DiscussionScope.CR_ADMIN;
+        return scope == DiscussionScope.ALL || scope == DiscussionScope.CR_ALL
+                || scope == DiscussionScope.CR_ADMIN || scope == DiscussionScope.ALL_STUDENTS_ADMIN;
     }
 }
