@@ -9,11 +9,13 @@ class DiscussionCrAccessTest {
     @Test void studentCannotAccessEitherCrRoom() {
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_SEMESTER, "STUDENT"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, "STUDENT"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "STUDENT"));
     }
 
-    @Test void crCanAccessBothCrRooms() {
+    @Test void crCanAccessAllCrRooms() {
         assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_SEMESTER, "CR"));
         assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, "CR"));
+        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "CR"));
     }
 
     @Test void existingStudentRoomsRemainAvailableToStudents() {
@@ -36,9 +38,19 @@ class DiscussionCrAccessTest {
         assertTrue(DiscussionAccess.matches(DiscussionScope.CR_ALL, 4, "B", null, null));
     }
 
-    @Test void adminRetainsModerationAccessWithoutBeingPresentedAsCr() {
-        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, "ADMIN"));
-        assertNotEquals("CR", "ADMIN");
+    @Test void crAdminIsGlobalRoom() {
+        assertNull(DiscussionAccess.denialReason(DiscussionScope.CR_ADMIN, null, null));
+        assertTrue(DiscussionAccess.matches(DiscussionScope.CR_ADMIN, 4, "B", null, null));
+        assertTrue(DiscussionAccess.matches(DiscussionScope.CR_ADMIN, null, null, null, null));
+    }
+
+    @Test void adminCanOnlyAccessAllAndCrAdmin() {
+        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.ALL, "ADMIN"));
+        assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "ADMIN"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.SECTION, "ADMIN"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.SEMESTER, "ADMIN"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_SEMESTER, "ADMIN"));
+        assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, "ADMIN"));
     }
 
     @Test void roleSemesterAndUserRequestFieldsCannotAlterAuthenticatedTarget() {

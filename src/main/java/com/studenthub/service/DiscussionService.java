@@ -29,6 +29,7 @@ public class DiscussionService {
             if (scope == DiscussionScope.ALL) return "All StudentHub users";
             if (scope == DiscussionScope.CR_ALL) return "CRs across all semesters";
             if (scope == DiscussionScope.CR_SEMESTER) return "CRs in Semester " + semester;
+            if (scope == DiscussionScope.CR_ADMIN) return "CRs and Administrators";
             if (scope == DiscussionScope.SEMESTER) return "Semester " + semester;
             return "Semester " + semester + " / Section " + sectionName;
         }
@@ -44,9 +45,11 @@ public class DiscussionService {
     public RoomView load(long userId, String requestedScope) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
-        if ((requestedScope == null || requestedScope.isBlank())
-                && DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
-            scope = DiscussionScope.ALL;
+        if (requestedScope == null || requestedScope.isBlank()) {
+            if ("ADMIN".equals(profile.role())
+                    || DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
+                scope = DiscussionScope.ALL;
+            }
         }
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
         String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());

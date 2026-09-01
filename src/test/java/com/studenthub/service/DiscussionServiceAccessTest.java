@@ -41,15 +41,30 @@ class DiscussionServiceAccessTest {
         assertTrue(fixture.service.load(7L, "SECTION").available());
         assertThrows(SecurityException.class, () -> fixture.service.load(7L, "CR_SEMESTER"));
         assertThrows(SecurityException.class, () -> fixture.service.load(7L, "CR_ALL"));
+        assertThrows(SecurityException.class, () -> fixture.service.load(7L, "CR_ADMIN"));
     }
 
     @Test void crAllDoesNotRequireSemesterButCrSemesterDoes() throws Exception {
         Fixture withoutSemester = fixture("CR", null, null);
         assertTrue(withoutSemester.service.load(7L, "CR_ALL").available());
         assertFalse(withoutSemester.service.load(7L, "CR_SEMESTER").available());
+        assertTrue(withoutSemester.service.load(7L, "CR_ADMIN").available());
         Fixture withSemester = fixture("CR", 3, null);
         assertTrue(withSemester.service.load(7L, "CR_ALL").available());
         assertTrue(withSemester.service.load(7L, "CR_SEMESTER").available());
+        assertTrue(withSemester.service.load(7L, "CR_ADMIN").available());
+    }
+
+    @Test void adminLoadsOnlyAllAndCrAdminAndDefaultsToAll() throws Exception {
+        Fixture admin = fixture("ADMIN", null, null);
+        assertEquals(DiscussionScope.ALL, admin.service.load(7L, null).scope());
+        assertEquals(DiscussionScope.ALL, admin.service.load(7L, "").scope());
+        assertTrue(admin.service.load(7L, "ALL").available());
+        assertTrue(admin.service.load(7L, "CR_ADMIN").available());
+        assertThrows(SecurityException.class, () -> admin.service.load(7L, "SECTION"));
+        assertThrows(SecurityException.class, () -> admin.service.load(7L, "SEMESTER"));
+        assertThrows(SecurityException.class, () -> admin.service.load(7L, "CR_SEMESTER"));
+        assertThrows(SecurityException.class, () -> admin.service.load(7L, "CR_ALL"));
     }
 
     private Fixture fixture(String role, Integer semester, String section) {
