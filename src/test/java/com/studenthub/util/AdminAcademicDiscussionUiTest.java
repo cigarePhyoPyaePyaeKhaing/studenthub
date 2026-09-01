@@ -20,17 +20,16 @@ class AdminAcademicDiscussionUiTest {
         // The admin branch must exist and contain exactly the two admin communication scopes
         assertTrue(jsp.contains("sessionScope.role eq 'ADMIN'"));
         assertTrue(jsp.contains("room-tabs-two"));
-        assertTrue(jsp.contains("scope=ALL_STUDENTS_ADMIN\">All Students – Admin</a>"));
-        assertTrue(jsp.contains("scope=CR_ADMIN\">CR – Admin</a>"));
-
         // Admin branch must not contain Section/Semester/CR_SEMESTER/CR_ALL/scope=ALL inside it
         int adminStart = jsp.indexOf("sessionScope.role eq 'ADMIN'");
         int crStart = jsp.indexOf("sessionScope.role eq 'CR'", adminStart);
         assertTrue(adminStart > 0 && crStart > adminStart);
         String adminBranch = jsp.substring(adminStart, crStart);
 
-        assertTrue(adminBranch.contains("All Students – Admin"));
-        assertTrue(adminBranch.contains("CR – Admin"));
+        assertTrue(adminBranch.contains("scope=ALL_STUDENTS_ADMIN\">All Students</a>"));
+        assertTrue(adminBranch.contains("scope=CR_ADMIN\">CR Community</a>"));
+        assertFalse(adminBranch.contains("All Students – Admin"));
+        assertFalse(adminBranch.contains("CR – Admin"));
         assertFalse(adminBranch.contains("scope=ALL\""));
         assertFalse(adminBranch.contains("scope=SECTION"));
         assertFalse(adminBranch.contains("scope=SEMESTER"));
@@ -55,6 +54,30 @@ class AdminAcademicDiscussionUiTest {
         String css = source("src/main/webapp/assets/css/dashboard.css");
         assertTrue(css.contains(".discussions-shell .room-tabs-two{grid-template-columns:repeat(2,minmax(0,1fr))}"));
         assertTrue(css.contains(".discussions-shell .room-tabs-two{grid-template-columns:repeat(2,minmax(0,1fr))!important}"));
+    }
+
+    @Test
+    void adminModerationIdentityAndControlsAreRoleScoped() throws IOException {
+        String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        String css = source("src/main/webapp/assets/css/dashboard-refined.css");
+
+        assertTrue(jsp.contains("discussion-admin-mode"));
+        assertTrue(jsp.contains("admin-moderation-badge"));
+        assertTrue(jsp.contains("<strong>ADMIN</strong><span>Admin Moderation</span>"));
+        assertTrue(jsp.contains("sessionScope.role eq 'ADMIN' or isOwn"));
+        assertTrue(jsp.contains("admin-message-actions"));
+        assertTrue(jsp.contains("admin-moderation-delete"));
+        assertTrue(jsp.contains("Remove as moderator"));
+        assertTrue(jsp.contains("own-message-delete"));
+        assertTrue(jsp.contains("Delete message"));
+        assertTrue(css.contains(".message-actions-menu summary"));
+        assertTrue(css.contains(".message-actions-popover"));
+
+        assertTrue(DiscussionAuthorization.canDelete("ADMIN", 7L, 8L));
+        assertFalse(DiscussionAuthorization.canDelete("STUDENT", 7L, 8L));
+        assertFalse(DiscussionAuthorization.canDelete("CR", 7L, 8L));
+        assertTrue(DiscussionAuthorization.canDelete("STUDENT", 7L, 7L));
+        assertTrue(DiscussionAuthorization.canDelete("CR", 7L, 7L));
     }
 
     @Test
