@@ -155,7 +155,7 @@
                                     <dt>${profile.role eq 'ADMIN' ? 'Admin ID' : 'Student ID'}</dt>
                                     <dd>
                                         <c:choose>
-                                            <c:when test="${not empty profile.displayId}"><c:out value="${profile.displayId}" /></c:when>
+                                            <c:when test="${not empty profileDisplayId}"><c:out value="${profileDisplayId}" /></c:when>
                                             <c:otherwise>Not assigned</c:otherwise>
                                         </c:choose>
                                     </dd>

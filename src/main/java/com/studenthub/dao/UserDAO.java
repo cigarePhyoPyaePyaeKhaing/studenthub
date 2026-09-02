@@ -224,6 +224,25 @@ public class UserDAO {
         }
     }
 
+    public int findAdminDisplayNumber(long userId) throws SQLException {
+        try (Connection connection = DBConnection.getConnection()) {
+            return findAdminDisplayNumber(connection, userId);
+        }
+    }
+
+    public int findAdminDisplayNumber(Connection connection, long userId) throws SQLException {
+        String sql = "SELECT COUNT(a.user_id) AS admin_number "
+                + "FROM users target "
+                + "JOIN users a ON a.role = 'ADMIN' AND a.user_id <= target.user_id "
+                + "WHERE target.user_id = ? AND target.role = 'ADMIN'";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? results.getInt("admin_number") : 0;
+            }
+        }
+    }
+
     public int updateUniversityIfUnset(long userId, long universityId) throws SQLException {
         try (Connection connection = DBConnection.getConnection()) {
             return updateUniversityIfUnset(connection, userId, universityId);

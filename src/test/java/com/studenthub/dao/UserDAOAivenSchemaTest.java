@@ -130,6 +130,21 @@ class UserDAOAivenSchemaTest {
     }
 
     @Test
+    void adminDisplayNumberUsesAdminOnlyUserIdOrder() throws Exception {
+        UserDAO dao = new UserDAO();
+        AtomicReference<String> executedSql = new AtomicReference<>();
+
+        Connection firstAdmin = createMockConnection(executedSql, Map.of("admin_number", 1), true);
+        assertEquals(1, dao.findAdminDisplayNumber(firstAdmin, 5L));
+        assertTrue(executedSql.get().contains("a.role = 'ADMIN'"));
+        assertTrue(executedSql.get().contains("a.user_id <= target.user_id"));
+        assertTrue(executedSql.get().contains("target.role = 'ADMIN'"));
+
+        Connection secondAdmin = createMockConnection(executedSql, Map.of("admin_number", 2), true);
+        assertEquals(2, dao.findAdminDisplayNumber(secondAdmin, 8L));
+    }
+
+    @Test
     void updateProfileTargetsProductionColumns() throws Exception {
         UserDAO dao = new UserDAO();
         AtomicReference<String> executedSql = new AtomicReference<>();

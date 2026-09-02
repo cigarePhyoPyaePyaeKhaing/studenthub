@@ -23,7 +23,6 @@ class UserProfileJavaBeanTest {
         assertEquals(101L, profile.getUserId());
         assertEquals(101L, profile.getId());
         assertEquals("TNT-0101", profile.getStudentId());
-        assertEquals("TNT-0101", profile.getDisplayId());
         assertEquals("Student One", profile.getFullName());
         assertEquals("student1@uit.edu", profile.getEmail());
         assertEquals(Role.STUDENT, profile.getRole());
@@ -60,7 +59,6 @@ class UserProfileJavaBeanTest {
         assertTrue(crProfile.isEmailVerified());
         assertEquals(5, crProfile.getSemester());
         assertEquals("B", crProfile.getSectionName());
-        assertEquals("TNT-0202", crProfile.getDisplayId());
     }
 
     @Test
@@ -81,7 +79,6 @@ class UserProfileJavaBeanTest {
         assertNull(adminProfile.getUniversityShortName());
         assertFalse(adminProfile.isUniversityLocked());
         assertFalse(adminProfile.isAcademicInfoLocked());
-        assertEquals("ADMIN-1", adminProfile.getDisplayId());
     }
 
     @Test
@@ -104,7 +101,6 @@ class UserProfileJavaBeanTest {
         assertFalse(profile.isUniversityLocked());
         assertFalse(profile.isAcademicInfoLocked());
         assertEquals("N", profile.getInitial());
-        assertNull(profile.getDisplayId());
     }
 
     @Test

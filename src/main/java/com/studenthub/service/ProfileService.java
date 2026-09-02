@@ -42,6 +42,10 @@ public class ProfileService {
         return userDAO.findLastActive(userId);
     }
 
+    public int findAdminDisplayNumber(long userId) throws SQLException {
+        return userDAO.findAdminDisplayNumber(userId);
+    }
+
     public List<University> listAvailableUniversities() {
         if (universityDAO == null) {
             return Collections.emptyList();

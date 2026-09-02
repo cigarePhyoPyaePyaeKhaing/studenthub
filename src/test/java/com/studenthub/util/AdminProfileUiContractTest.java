@@ -37,11 +37,15 @@ class AdminProfileUiContractTest {
 
     @Test void adminAccountIdAndRealActivityMetadataAreShownOnlyInAccountInformation() throws Exception {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
+        String controller = Files.readString(Path.of("src/main/java/com/studenthub/controller/ProfileServlet.java"));
+        String dao = Files.readString(Path.of("src/main/java/com/studenthub/dao/UserDAO.java"));
         String hero = jsp.substring(jsp.indexOf("<section class=\"profile-hero\">"),
                 jsp.indexOf("</section>", jsp.indexOf("<section class=\"profile-hero\">")));
         assertTrue(!hero.contains("profile.studentId"));
         assertTrue(jsp.contains("${profile.role eq 'ADMIN' ? 'Admin ID' : 'Student ID'}"));
-        assertTrue(jsp.contains("${profile.displayId}"));
+        assertTrue(jsp.contains("${profileDisplayId}"));
+        assertTrue(controller.contains("profileService.findAdminDisplayNumber(profile.getUserId())"));
+        assertTrue(dao.contains("a.role = 'ADMIN' AND a.user_id <= target.user_id"));
         assertTrue(jsp.contains("<dt>Last active</dt>"));
         assertTrue(jsp.contains("<dt>Joined</dt>"));
         assertTrue(jsp.contains("not empty joinedLabel"));

@@ -16,9 +16,18 @@ class MessagingUiContractTest {
     @Test
     void discussionOwnershipLabelAndAttachmentBubbleShareServerOwnedPresentation() throws IOException {
         String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        String css = source("src/main/webapp/assets/css/dashboard.css");
         String refinedCss = source("src/main/webapp/assets/css/dashboard-refined.css");
         assertTrue(jsp.contains("sessionScope.userId eq chatMessage.senderId"));
-        assertTrue(jsp.contains("<strong class=\"current-user-message-label\">You<c:if test=\"${sessionScope.role eq 'ADMIN'}\"> (Admin)</c:if><c:if test=\"${sessionScope.role eq 'CR'}\"> (CR)</c:if></strong>"));
+        assertTrue(jsp.contains("<strong class=\"current-user-message-label\">You</strong><span class=\"role-badge role-${sessionScope.role}\"><c:out value=\"${sessionScope.role}\" /></span>"));
+        assertFalse(jsp.contains(" (Admin)"));
+        assertFalse(jsp.contains(" (CR)"));
+        assertTrue(css.contains(".role-STUDENT{color:#16734f;background:rgba(22,115,79,.12)}"));
+        assertTrue(css.contains(".role-CR{color:#946000;background:rgba(202,139,4,.15)}"));
+        assertTrue(css.contains(".role-ADMIN{color:#b42f3b;background:rgba(180,47,59,.12)}"));
+        assertTrue(css.contains("[data-theme=\"dark\"] .role-CR{color:#e8bd68"));
+        assertTrue(source("src/main/webapp/WEB-INF/views/home.jsp")
+                .contains("account-role role-${sessionScope.role}"));
         assertTrue(jsp.contains("<c:out value=\"${chatMessage.authorName}\" />"));
         assertTrue(jsp.contains("<jsp:include page=\"../partials/attachment.jsp\"/>"));
         assertTrue(refinedCss.contains("[data-theme=\"dark\"] .message-bubble.outgoing{border-color:#19d8d8"));

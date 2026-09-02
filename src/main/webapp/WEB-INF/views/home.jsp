@@ -28,7 +28,7 @@
     </main>
     <aside class="dashboard-right">
         <section class="side-card"><div class="side-card-heading"><h2>Upcoming Deadlines</h2><a href="${pageContext.request.contextPath}/announcements">View all</a></div><c:choose><c:when test="${empty deadlines}"><p class="empty-side-text">No upcoming deadlines.</p></c:when><c:otherwise><div class="deadline-list"><c:forEach var="deadline" items="${deadlines}"><div class="deadline-item"><span class="deadline-dot"></span><div><strong><c:out value="${deadline.title}" /></strong><small><c:out value="${deadline.relativeDueLabel}" /></small></div></div></c:forEach></div></c:otherwise></c:choose></section>
-        <section class="side-card account-card"><div class="avatar avatar-large"><jsp:include page="partials/avatar.jsp"><jsp:param name="photo" value="${dashboardProfile.avatarUrl}"/><jsp:param name="initial" value="${sessionScope.fullName.substring(0, 1)}"/></jsp:include></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role"><c:out value="${sessionScope.role}" /></span></section>
+        <section class="side-card account-card"><div class="avatar avatar-large"><jsp:include page="partials/avatar.jsp"><jsp:param name="photo" value="${dashboardProfile.avatarUrl}"/><jsp:param name="initial" value="${sessionScope.fullName.substring(0, 1)}"/></jsp:include></div><h2><c:out value="${sessionScope.fullName}" /></h2><p><c:out value="${sessionScope.studentId}" /></p><span class="account-role role-${sessionScope.role}"><c:out value="${sessionScope.role}" /></span></section>
     </aside>
 </div>
 <jsp:include page="partials/mobile-bottom-nav.jsp" />

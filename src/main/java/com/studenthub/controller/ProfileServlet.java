@@ -78,6 +78,9 @@ public class ProfileServlet extends HttpServlet {
             UserProfile profile = found.get();
             boolean editing = !publicProfile && "true".equalsIgnoreCase(request.getParameter("edit"));
             request.setAttribute("profile", profile);
+            request.setAttribute("profileDisplayId", profile.getRole() == com.studenthub.model.Role.ADMIN
+                    ? "ADMIN-" + profileService.findAdminDisplayNumber(profile.getUserId())
+                    : profile.getStudentId());
             request.setAttribute("editing", editing);
             request.setAttribute("publicProfile", publicProfile);
             request.setAttribute("messageAllowed", publicProfile && profile.isEmailVerified());
