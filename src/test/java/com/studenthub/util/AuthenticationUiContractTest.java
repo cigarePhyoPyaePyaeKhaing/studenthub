@@ -38,6 +38,8 @@ class AuthenticationUiContractTest {
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
         assertTrue(login.contains("<h2>Welcome Back</h2>"));
         assertTrue(register.contains("<h2>Join StudentHub</h2>"));
+        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:30rem}"));
+        assertTrue(css.contains(".account-auth-register .account-auth-content>*{max-width:34rem}"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {

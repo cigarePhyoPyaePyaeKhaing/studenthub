@@ -36,3 +36,4 @@
 .profile-hero-identity{grid-template-columns:88px minmax(0,1fr);align-items:start}.profile-hero .profile-avatar{align-self:start}.profile-identity-block{align-content:start}.profile-identity-block .profile-hero-eyebrow{margin:2px 0 7px}
 @media(max-width:700px){.profile-hero-identity{grid-template-columns:76px minmax(0,1fr);align-items:start}}
 @media(max-width:480px){.profile-hero-identity{grid-template-columns:64px minmax(0,1fr)}}
+.profile-hero-identity{width:fit-content;max-width:100%;column-gap:18px}

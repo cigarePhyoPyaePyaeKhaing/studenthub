@@ -15,7 +15,14 @@ public class DiscussionDAO {
     public record MessageRecord(long messageId, long senderId, DiscussionScope scope,
                                 Integer semester, String sectionName) {}
     public record RoomOption(long roomId, DiscussionScope scope, Long universityId,
-                             Integer semester, String sectionName, String roomName) {}
+                             Integer semester, String sectionName, String roomName) {
+        public long getRoomId() { return roomId; }
+        public DiscussionScope getScope() { return scope; }
+        public Long getUniversityId() { return universityId; }
+        public Integer getSemester() { return semester; }
+        public String getSectionName() { return sectionName; }
+        public String getRoomName() { return roomName; }
+    }
 
     public AcademicProfile findAcademicProfile(long userId) throws SQLException {
         String sql = "SELECT role, university_id, semester, section_name FROM users WHERE user_id = ?";

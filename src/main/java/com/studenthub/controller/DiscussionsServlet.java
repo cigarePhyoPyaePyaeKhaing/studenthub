@@ -14,15 +14,21 @@ public class DiscussionsServlet extends HttpServlet {
 
     @Override protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        long userId = (Long) request.getSession().getAttribute("userId");
+        HttpSession session = request.getSession(false);
+        Object sessionUserId = session == null ? null : session.getAttribute("userId");
+        if (!(sessionUserId instanceof Number number)) {
+            response.sendRedirect(request.getContextPath() + "/login");
+            return;
+        }
+        long userId = number.longValue();
         try {
             Long roomId = parsePositiveLong(request.getParameter("roomId"));
             request.setAttribute("room", service.load(userId, request.getParameter("scope"), roomId));
-            if ("ADMIN".equals(String.valueOf(request.getSession().getAttribute("role")))) {
+            if ("ADMIN".equals(String.valueOf(session.getAttribute("role")))) {
                 request.setAttribute("moderationRooms", service.moderationRooms(userId));
                 request.setAttribute("selectedRoomId", roomId);
-                if (roomId == null) request.getSession().removeAttribute("selectedDiscussionRoomId");
-                else request.getSession().setAttribute("selectedDiscussionRoomId", roomId);
+                if (roomId == null) session.removeAttribute("selectedDiscussionRoomId");
+                else session.setAttribute("selectedDiscussionRoomId", roomId);
             }
         } catch (SecurityException exception) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -31,16 +37,16 @@ public class DiscussionsServlet extends HttpServlet {
             getServletContext().log("Discussion load failed: " + exception.getClass().getName());
             request.setAttribute("error", "Discussions are temporarily unavailable.");
         }
-        request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
-        Object flash = request.getSession().getAttribute("flash");
+        request.setAttribute("csrfToken", CsrfToken.getOrCreate(session));
+        Object flash = session.getAttribute("flash");
         if (flash != null) {
             request.setAttribute("message", flash);
-            request.getSession().removeAttribute("flash");
+            session.removeAttribute("flash");
         }
-        Object flashError = request.getSession().getAttribute("flashError");
+        Object flashError = session.getAttribute("flashError");
         if (flashError != null) {
             request.setAttribute("error", flashError);
-            request.getSession().removeAttribute("flashError");
+            session.removeAttribute("flashError");
         }
         request.getRequestDispatcher("/WEB-INF/views/discussions/index.jsp").forward(request, response);
     }

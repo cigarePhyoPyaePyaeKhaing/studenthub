@@ -34,4 +34,10 @@ class AdminProfileUiContractTest {
         assertTrue(jsp.contains("${pageContext.request.contextPath}/admin/academic-changes"));
         assertTrue(jsp.contains("${pageContext.request.contextPath}/admin"));
     }
+
+    @Test void adminStudentIdIsOmittedFromHeroAndAccountInformation() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
+        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><p>"));
+        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><div>\n                                    <dt>Student ID</dt>"));
+    }
 }

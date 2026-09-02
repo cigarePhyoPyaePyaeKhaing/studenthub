@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.studenthub.model.DiscussionScope;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.beans.Introspector;
+import java.util.Arrays;
 import org.junit.jupiter.api.Test;
 
 class AdminAcademicDiscussionUiTest {
@@ -31,5 +33,13 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, "ADMIN"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.ALL_STUDENTS_ADMIN, "ADMIN"));
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "ADMIN"));
+    }
+
+    @Test void moderationRoomRecordExposesPropertiesRequiredByJakartaEl() throws Exception {
+        var properties = Arrays.stream(Introspector.getBeanInfo(com.studenthub.dao.DiscussionDAO.RoomOption.class)
+                .getPropertyDescriptors()).map(descriptor -> descriptor.getName()).toList();
+        assertTrue(properties.contains("roomId"));
+        assertTrue(properties.contains("roomName"));
+        assertTrue(properties.contains("scope"));
     }
 }
