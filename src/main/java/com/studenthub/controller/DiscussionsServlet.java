@@ -34,9 +34,6 @@ public class DiscussionsServlet extends HttpServlet {
                         .filter(option -> "SEMESTERS".equals(option.group())).toList());
                 request.setAttribute("moderationSections", options.stream()
                         .filter(option -> "SECTIONS".equals(option.group())).toList());
-                request.setAttribute("sectionSemesters", options.stream()
-                        .filter(option -> "SECTIONS".equals(option.group()))
-                        .map(DiscussionService.ModerationScopeOption::semester).distinct().sorted().toList());
                 DiscussionService.ModerationScopeOption selected = options.stream()
                         .filter(option -> option.key().equalsIgnoreCase(moderationScope)).findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("INVALID_MODERATION_SCOPE"));
@@ -81,18 +78,6 @@ public class DiscussionsServlet extends HttpServlet {
     static String canonicalModerationScope(HttpServletRequest request) {
         String direct = request.getParameter("moderationScope");
         if (direct != null && !direct.isBlank()) return direct.trim();
-        if (!"section".equalsIgnoreCase(request.getParameter("moderationMode"))) return "all_students";
-        String semester = request.getParameter("sectionSemester");
-        String section = request.getParameter("sectionName");
-        if (semester == null || semester.isBlank() || section == null || section.isBlank()) {
-            throw new IllegalArgumentException("MISSING_SECTION_SELECTION");
-        }
-        try {
-            int parsedSemester = Integer.parseInt(semester.trim());
-            if (parsedSemester < 1) throw new NumberFormatException();
-            return "section:" + parsedSemester + ":" + section.trim().toUpperCase(java.util.Locale.ROOT);
-        } catch (NumberFormatException exception) {
-            throw new IllegalArgumentException("INVALID_MODERATION_SCOPE");
-        }
+        return "all_students";
     }
 }

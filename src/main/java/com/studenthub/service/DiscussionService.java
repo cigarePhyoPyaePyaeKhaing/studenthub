@@ -147,9 +147,12 @@ public class DiscussionService {
             if (room.scope() == DiscussionScope.SEMESTER) {
                 continue;
             } else if (room.scope() == DiscussionScope.SECTION) {
-                options.add(new ModerationScopeOption("section:" + room.semester() + ":" + room.sectionName(),
-                        "SECTIONS", "Semester " + room.semester() + " / Section " + room.sectionName(),
-                        room.scope(), room.universityId(), room.semester(), room.sectionName()));
+                String sectionName = room.sectionName() == null ? "" : room.sectionName().trim().toUpperCase(java.util.Locale.ROOT);
+                if (sectionName.matches("[A-E]")) {
+                    options.add(new ModerationScopeOption("section:" + room.semester() + ":" + sectionName,
+                            "SECTIONS", "Semester " + room.semester() + " / Section " + sectionName,
+                            room.scope(), room.universityId(), room.semester(), sectionName));
+                }
             }
         }
         return List.copyOf(options);

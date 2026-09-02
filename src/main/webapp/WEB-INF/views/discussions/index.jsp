@@ -45,25 +45,21 @@
             <c:when test="${sessionScope.role eq 'ADMIN'}">
                 <section class="admin-discussion-controls" aria-label="Admin discussion navigation">
                     <nav class="admin-global-scopes" aria-label="Global discussion scopes">
-                        <a class="${selectedModerationScope eq 'all_students' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_students" ${selectedModerationScope eq 'all_students' ? 'aria-current="page"' : ''}>All Students</a>
-                        <a class="${selectedModerationScope eq 'all_cr' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_cr" ${selectedModerationScope eq 'all_cr' ? 'aria-current="page"' : ''}>All CRs</a>
+                        <a class="admin-scope-card ${selectedModerationScope eq 'all_students' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_students" ${selectedModerationScope eq 'all_students' ? 'aria-current="page"' : ''}>
+                            <span class="admin-scope-card-icon" aria-hidden="true">A</span><span><strong>All Students</strong><small>University-wide student discussion</small></span>
+                        </a>
+                        <a class="admin-scope-card ${selectedModerationScope eq 'all_cr' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_cr" ${selectedModerationScope eq 'all_cr' ? 'aria-current="page"' : ''}>
+                            <span class="admin-scope-card-icon" aria-hidden="true">CR</span><span><strong>All CRs</strong><small>Authorized class representative discussion</small></span>
+                        </a>
                     </nav>
-                    <div class="admin-academic-selectors">
-                        <form class="admin-scope-form admin-semester-form" method="get" action="${pageContext.request.contextPath}/discussions">
-                            <label for="moderation-semester">Semester</label>
-                            <select class="form-select" id="moderation-semester" name="moderationScope" onchange="this.form.submit()">
-                                <option value="">Select semester</option>
-                                <c:forEach var="option" items="${moderationSemesters}"><option value="<c:out value='${option.key}'/>" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.label}" /></option></c:forEach>
-                            </select>
-                            <noscript><button class="btn btn-primary" type="submit">Open semester</button></noscript>
+                    <section class="admin-academic-groups" aria-labelledby="academic-groups-title">
+                        <div class="admin-academic-heading"><h2 id="academic-groups-title">Academic Groups</h2><p>Select a semester, then a section when needed.</p></div>
+                        <form class="admin-scope-form admin-academic-selectors" action="${pageContext.request.contextPath}/discussions" data-admin-academic-form>
+                            <div><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-academic-semester><option value="">Select semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
+                            <div><label for="section-name">Section</label><select class="form-select" id="section-name" data-academic-section aria-describedby="academic-group-help"><option value="">Select section</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select></div>
                         </form>
-                        <form class="admin-scope-form admin-section-form" method="get" action="${pageContext.request.contextPath}/discussions" data-admin-section-form>
-                            <input type="hidden" name="moderationMode" value="section">
-                            <div><label for="section-semester">Section semester</label><select class="form-select" id="section-semester" name="sectionSemester" data-section-semester><option value="">Select semester</option><c:forEach var="semester" items="${sectionSemesters}"><option value="${semester}" ${selectedModerationSemester eq semester and not empty selectedModerationSection ? 'selected' : ''}>Semester ${semester}</option></c:forEach></select></div>
-                            <div><label for="section-name">Section</label><select class="form-select" id="section-name" name="sectionName" data-section-name><option value="">Select section</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select></div>
-                            <button class="btn btn-primary" type="submit">Open section</button>
-                        </form>
-                    </div>
+                        <p class="admin-academic-help" id="academic-group-help">Select a semester and section to view the discussion.</p>
+                    </section>
                 </section>
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
@@ -102,11 +98,12 @@
 <script src="${pageContext.request.contextPath}/assets/js/discussion-chat.js?v=${applicationScope.assetVersion}" defer></script>
 <script>
 (function() {
-    function initAdminSectionSelector() {
-        var form = document.querySelector('[data-admin-section-form]');
+    function initAdminAcademicSelector() {
+        var form = document.querySelector('[data-admin-academic-form]');
         if (!form) return;
-        var semester = form.querySelector('[data-section-semester]');
-        var section = form.querySelector('[data-section-name]');
+        var semester = form.querySelector('[data-academic-semester]');
+        var section = form.querySelector('[data-academic-section]');
+        var baseUrl = form.action;
         function filterSections(preserveSelection) {
             var selectedSemester = semester.value;
             var keptValue = preserveSelection ? section.value : '';
@@ -120,7 +117,13 @@
             section.disabled = selectedSemester === '';
             if (keptValue) section.value = keptValue;
         }
-        semester.addEventListener('change', function() { filterSections(false); });
+        semester.addEventListener('change', function() {
+            filterSections(false);
+            if (semester.value) window.location.assign(baseUrl + '?moderationScope=semester:' + encodeURIComponent(semester.value));
+        });
+        section.addEventListener('change', function() {
+            if (semester.value && section.value) window.location.assign(baseUrl + '?moderationScope=section:' + encodeURIComponent(semester.value) + ':' + encodeURIComponent(section.value));
+        });
         filterSections(true);
     }
     function scrollToBottom() {
@@ -136,7 +139,7 @@
         }
     }
     function initScrolls() {
-        initAdminSectionSelector();
+        initAdminAcademicSelector();
         scrollToBottom();
         scrollActiveRoomTab();
     }

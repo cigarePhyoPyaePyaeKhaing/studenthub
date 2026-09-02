@@ -15,13 +15,15 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(jsp.contains("class=\"admin-global-scopes\""));
         assertTrue(jsp.contains("items=\"${moderationSemesters}\""));
         assertTrue(jsp.contains("items=\"${moderationSections}\""));
-        assertTrue(jsp.contains("name=\"moderationScope\""));
         assertTrue(jsp.contains("moderationScope=all_students"));
         assertTrue(jsp.contains("moderationScope=all_cr"));
-        assertTrue(jsp.contains("name=\"sectionSemester\""));
-        assertTrue(jsp.contains("name=\"sectionName\""));
-        assertTrue(jsp.contains("data-section-semester"));
-        assertTrue(jsp.contains("data-section-name"));
+        assertEquals(1, occurrences(jsp, "id=\"moderation-semester\""));
+        assertEquals(1, occurrences(jsp, "id=\"section-name\""));
+        assertTrue(jsp.contains("data-academic-semester"));
+        assertTrue(jsp.contains("data-academic-section"));
+        assertTrue(jsp.contains("window.location.assign"));
+        assertFalse(jsp.contains("Section semester"));
+        assertFalse(jsp.contains("Open section"));
         assertFalse(jsp.contains("name=\"roomId\""));
         assertTrue(jsp.contains("Admin Moderation"));
         assertTrue(jsp.contains("admin-moderation-delete"));
@@ -65,6 +67,11 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(service.contains("\"all_students\""));
         assertTrue(service.contains("\"all_cr\""));
         assertTrue(service.contains("\"semester:\" + semester.getKey()"));
-        assertTrue(service.contains("\"section:\" + room.semester() + \":\" + room.sectionName()"));
+        assertTrue(service.contains("sectionName.matches(\"[A-E]\")"));
+        assertTrue(service.contains("\"section:\" + room.semester() + \":\" + sectionName"));
+    }
+
+    private static int occurrences(String source, String value) {
+        return (source.length() - source.replace(value, "").length()) / value.length();
     }
 }

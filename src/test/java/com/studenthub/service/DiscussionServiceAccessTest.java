@@ -88,6 +88,8 @@ class DiscussionServiceAccessTest {
         List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
         assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
         assertEquals(1, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertTrue(options.stream().filter(option -> "SECTIONS".equals(option.group()))
+                .allMatch(option -> option.sectionName().matches("[A-E]")));
         assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());
         assertEquals(1, options.stream().filter(option -> "all_cr".equals(option.key())).count());
     }
@@ -109,7 +111,8 @@ class DiscussionServiceAccessTest {
             @Override public List<RoomOption> findModerationRooms() {
                 return List.of(
                         new RoomOption(0L, DiscussionScope.SEMESTER, 5L, 4, null, "Semester 4"),
-                        new RoomOption(0L, DiscussionScope.SECTION, 5L, 4, "B", "Semester 4 / Section B"));
+                        new RoomOption(0L, DiscussionScope.SECTION, 5L, 4, "b", "Semester 4 / Section B"),
+                        new RoomOption(0L, DiscussionScope.SECTION, 5L, 4, "Z", "Unsupported section"));
             }
             @Override public Long findModerationUniversityId() { return 5L; }
         };
