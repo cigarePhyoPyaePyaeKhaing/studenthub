@@ -39,12 +39,12 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
         assertTrue(jsp.contains("class=\"profile-identity-block\""));
         assertTrue(jsp.indexOf("profile-hero-identity") < jsp.indexOf("profile-hero-eyebrow"));
-        assertTrue(css.contains(".profile-hero-identity{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}"));
-        assertTrue(css.contains(".profile-identity-block{display:grid;min-width:0;align-content:center}"));
-        assertTrue(css.contains("flex-shrink:0;width:88px;height:88px;aspect-ratio:1/1"));
+        assertTrue(css.contains(".profile-hero-identity{display:flex;width:100%;max-width:100%;align-items:center;gap:20px}"));
+        assertTrue(css.contains(".profile-identity-block{display:flex;min-width:0;flex:1 1 auto;flex-direction:column;justify-content:center}"));
+        assertTrue(css.contains("align-self:center;flex:0 0 88px;width:88px;height:88px"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
-        assertTrue(css.contains(".profile-identity-block .profile-message-action .btn{width:100%}"));
+        assertTrue(css.contains(".profile-identity-block .profile-message-action{width:100%!important}"));
         assertTrue(jsp.contains("<c:if test=\"${messageAllowed}\">"));
         assertTrue(jsp.indexOf("class=\"profile-identity\"") < jsp.indexOf("class=\"profile-message-action\""));
         assertTrue(jsp.contains("Academic information has not been configured yet."));
@@ -53,7 +53,11 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("/admin/users/view?id=${profile.userId}"));
         assertFalse(css.contains("margin-left:90px"));
         assertFalse(css.contains("margin-left:76px"));
-        assertTrue(css.contains(".profile-hero-identity{grid-template-columns:88px minmax(0,1fr);align-items:start}"));
+        assertTrue(jsp.contains("class=\"profile-identity-meta\""));
+        String hero = jsp.substring(jsp.indexOf("<section class=\"profile-hero\">"),
+                jsp.indexOf("</section>", jsp.indexOf("<section class=\"profile-hero\">")));
+        assertFalse(hero.contains("profile.studentId"));
+        assertFalse(css.contains(".profile-hero .profile-avatar{align-self:start"));
     }
 
     @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {

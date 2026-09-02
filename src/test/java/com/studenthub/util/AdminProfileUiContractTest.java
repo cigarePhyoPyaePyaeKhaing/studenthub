@@ -37,7 +37,9 @@ class AdminProfileUiContractTest {
 
     @Test void adminAccountIdAndRealActivityMetadataAreShownOnlyInAccountInformation() throws Exception {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
-        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><p>"));
+        String hero = jsp.substring(jsp.indexOf("<section class=\"profile-hero\">"),
+                jsp.indexOf("</section>", jsp.indexOf("<section class=\"profile-hero\">")));
+        assertTrue(!hero.contains("profile.studentId"));
         assertTrue(jsp.contains("${profile.role eq 'ADMIN' ? 'Account ID' : 'Student ID'}"));
         assertTrue(jsp.contains("<dt>Last active</dt>"));
         assertTrue(jsp.contains("<dt>Joined</dt>"));

@@ -14,6 +14,18 @@ class MessagingUiContractTest {
     }
 
     @Test
+    void discussionOwnershipLabelAndAttachmentBubbleShareServerOwnedPresentation() throws IOException {
+        String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
+        String refinedCss = source("src/main/webapp/assets/css/dashboard-refined.css");
+        assertTrue(jsp.contains("sessionScope.userId eq chatMessage.senderId"));
+        assertTrue(jsp.contains("<c:when test=\"${isOwn}\"><strong class=\"current-user-message-label\">You</strong>"));
+        assertTrue(jsp.contains("<c:out value=\"${chatMessage.authorName}\" />"));
+        assertTrue(jsp.contains("<jsp:include page=\"../partials/attachment.jsp\"/>"));
+        assertTrue(refinedCss.contains("[data-theme=\"dark\"] .message-bubble.outgoing{border-color:#19d8d8"));
+        assertTrue(refinedCss.contains(".message-bubble.outgoing .chat-media-card{width:100%}"));
+    }
+
+    @Test
     void chatAttachmentInputsHaveOneIdempotentPreviewOwner() throws IOException {
         String main = source("src/main/webapp/assets/js/main.js");
         String composer = source("src/main/webapp/assets/js/message-composer.js");

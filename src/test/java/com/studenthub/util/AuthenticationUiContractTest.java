@@ -38,11 +38,11 @@ class AuthenticationUiContractTest {
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
         assertTrue(login.contains("<h2>Welcome Back</h2>"));
         assertTrue(register.contains("<h2>Join StudentHub</h2>"));
-        assertTrue(css.contains(".account-auth-login{width:min(100%,70rem)"));
+        assertTrue(css.contains(".account-auth-login{width:min(100%,64rem)"));
         assertTrue(css.contains(".account-auth-login .account-auth-content{padding:clamp(30px,4vw,46px)"));
-        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:34rem}"));
+        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:30rem}"));
         assertTrue(css.contains(".account-auth-login .account-auth-brand-panel::after{display:none}"));
-        assertTrue(css.contains(".account-auth-register .account-auth-content>*{max-width:34rem}"));
+        assertTrue(css.contains(".account-auth-register .account-auth-content>*{max-width:32rem}"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {
@@ -62,7 +62,7 @@ class AuthenticationUiContractTest {
         assertFalse(register.contains("name=\"section"));
         assertTrue(login.contains("Sign in to continue."));
         assertTrue(register.contains(">Join StudentHub</h1>"));
-        assertTrue(register.contains("Create your account to access announcements, deadlines, discussions, and messages in one place."));
+        assertTrue(register.contains("Create your account to stay connected with announcements, deadlines, discussions, and messages."));
         assertTrue(register.contains("Already have an account?"));
     }
 }
