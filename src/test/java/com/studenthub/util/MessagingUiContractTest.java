@@ -18,7 +18,7 @@ class MessagingUiContractTest {
         String jsp = source("src/main/webapp/WEB-INF/views/discussions/index.jsp");
         String refinedCss = source("src/main/webapp/assets/css/dashboard-refined.css");
         assertTrue(jsp.contains("sessionScope.userId eq chatMessage.senderId"));
-        assertTrue(jsp.contains("<c:when test=\"${isOwn}\"><strong class=\"current-user-message-label\">You</strong>"));
+        assertTrue(jsp.contains("<strong class=\"current-user-message-label\">You<c:if test=\"${sessionScope.role eq 'ADMIN'}\"> (Admin)</c:if><c:if test=\"${sessionScope.role eq 'CR'}\"> (CR)</c:if></strong>"));
         assertTrue(jsp.contains("<c:out value=\"${chatMessage.authorName}\" />"));
         assertTrue(jsp.contains("<jsp:include page=\"../partials/attachment.jsp\"/>"));
         assertTrue(refinedCss.contains("[data-theme=\"dark\"] .message-bubble.outgoing{border-color:#19d8d8"));

@@ -65,6 +65,10 @@ public record UserProfile(
 
     public LocalDateTime getCreatedAt() { return createdAt; }
 
+    public String getDisplayId() {
+        return role == Role.ADMIN ? "ADMIN-" + userId : studentId;
+    }
+
     @Override
     public boolean academicInfoLocked() {
         return isAcademicInfoLocked();

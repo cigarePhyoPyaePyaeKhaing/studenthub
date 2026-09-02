@@ -152,10 +152,10 @@
                                     <dd><c:out value="${profile.fullName}" /></dd>
                                 </div>
                                 <div>
-                                    <dt>${profile.role eq 'ADMIN' ? 'Account ID' : 'Student ID'}</dt>
+                                    <dt>${profile.role eq 'ADMIN' ? 'Admin ID' : 'Student ID'}</dt>
                                     <dd>
                                         <c:choose>
-                                            <c:when test="${not empty profile.studentId}"><c:out value="${profile.studentId}" /></c:when>
+                                            <c:when test="${not empty profile.displayId}"><c:out value="${profile.displayId}" /></c:when>
                                             <c:otherwise>Not assigned</c:otherwise>
                                         </c:choose>
                                     </dd>

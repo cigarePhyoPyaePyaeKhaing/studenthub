@@ -40,7 +40,10 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("<h2>Join StudentHub</h2>"));
         assertTrue(css.contains(".account-auth-login{width:min(100%,64rem)"));
         assertTrue(css.contains(".account-auth-login .account-auth-content{padding:clamp(30px,4vw,46px)"));
-        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:30rem}"));
+        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:28rem}"));
+        assertTrue(css.contains("@media(max-width:600px){.account-auth-login .account-auth-content>*,.account-auth-register .account-auth-content>*{max-width:none}"));
+        assertTrue(css.contains(".account-auth-surface{display:grid;width:min(100%,64rem);grid-template-columns:minmax(0,1fr) minmax(19rem,.72fr);isolation:isolate;overflow:hidden}"));
+        assertTrue(css.contains(".account-auth-register .account-auth-brand-panel::after{position:absolute;top:0;right:-38px;bottom:0"));
         assertTrue(css.contains(".account-auth-login .account-auth-brand-panel::after{display:none}"));
         assertTrue(css.contains(".account-auth-register .account-auth-content>*{max-width:32rem}"));
     }

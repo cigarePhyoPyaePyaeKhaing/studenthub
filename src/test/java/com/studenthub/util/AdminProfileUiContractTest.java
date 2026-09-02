@@ -40,7 +40,8 @@ class AdminProfileUiContractTest {
         String hero = jsp.substring(jsp.indexOf("<section class=\"profile-hero\">"),
                 jsp.indexOf("</section>", jsp.indexOf("<section class=\"profile-hero\">")));
         assertTrue(!hero.contains("profile.studentId"));
-        assertTrue(jsp.contains("${profile.role eq 'ADMIN' ? 'Account ID' : 'Student ID'}"));
+        assertTrue(jsp.contains("${profile.role eq 'ADMIN' ? 'Admin ID' : 'Student ID'}"));
+        assertTrue(jsp.contains("${profile.displayId}"));
         assertTrue(jsp.contains("<dt>Last active</dt>"));
         assertTrue(jsp.contains("<dt>Joined</dt>"));
         assertTrue(jsp.contains("not empty joinedLabel"));
