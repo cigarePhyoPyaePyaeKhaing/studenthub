@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.studenthub.dao.DiscussionDAO;
 import com.studenthub.model.DiscussionScope;
 import com.studenthub.util.DiscussionTarget;
+import com.studenthub.util.AcademicGroupPolicy;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
@@ -83,13 +84,18 @@ class DiscussionServiceAccessTest {
         DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:B");
         assertEquals(DiscussionScope.SECTION, section.scope());
         assertEquals("B", section.sectionName());
+        assertEquals("SE", admin.service.load(7L, null, null, "section:7:SE").sectionName());
+        assertThrows(IllegalArgumentException.class,
+                () -> admin.service.load(7L, null, null, "section:3:E"));
+        assertThrows(IllegalArgumentException.class,
+                () -> admin.service.load(7L, null, null, "section:7:A"));
         assertThrows(IllegalArgumentException.class,
                 () -> admin.service.load(7L, null, null, "semester:99"));
         List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
         assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
-        assertEquals(1, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertEquals(56, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
         assertTrue(options.stream().filter(option -> "SECTIONS".equals(option.group()))
-                .allMatch(option -> option.sectionName().matches("[A-E]")));
+                .allMatch(option -> AcademicGroupPolicy.isValid(option.semester(), option.sectionName())));
         assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());
         assertEquals(1, options.stream().filter(option -> "all_cr".equals(option.key())).count());
     }

@@ -41,7 +41,7 @@ public class DiscussionService {
             if (scope == DiscussionScope.CR_SEMESTER) return "CRs in Semester " + semester;
             if (scope == DiscussionScope.CR_ADMIN) return "CR – Admin";
             if (scope == DiscussionScope.SEMESTER) return "Semester " + semester;
-            return "Semester " + semester + " / Section " + sectionName;
+            return "Semester " + semester + " / " + AcademicGroupPolicy.groupLabel(semester) + " " + sectionName;
         }
         public String getScopeLabel() { return scopeLabel(); }
     }
@@ -143,16 +143,12 @@ public class DiscussionService {
                     "Semester " + semester.getKey(), DiscussionScope.SEMESTER,
                     semester.getValue(), semester.getKey(), null));
         }
-        for (DiscussionDAO.RoomOption room : rooms) {
-            if (room.scope() == DiscussionScope.SEMESTER) {
-                continue;
-            } else if (room.scope() == DiscussionScope.SECTION) {
-                String sectionName = room.sectionName() == null ? "" : room.sectionName().trim().toUpperCase(java.util.Locale.ROOT);
-                if (sectionName.matches("[A-E]")) {
-                    options.add(new ModerationScopeOption("section:" + room.semester() + ":" + sectionName,
-                            "SECTIONS", "Semester " + room.semester() + " / Section " + sectionName,
-                            room.scope(), room.universityId(), room.semester(), sectionName));
-                }
+        for (java.util.Map.Entry<Integer, Long> semester : semesterUniversities.entrySet()) {
+            for (String group : AcademicGroupPolicy.optionsFor(semester.getKey())) {
+                options.add(new ModerationScopeOption("section:" + semester.getKey() + ":" + group,
+                        "SECTIONS", "Semester " + semester.getKey() + " / "
+                        + AcademicGroupPolicy.groupLabel(semester.getKey()) + " " + group,
+                        DiscussionScope.SECTION, semester.getValue(), semester.getKey(), group));
             }
         }
         return List.copyOf(options);

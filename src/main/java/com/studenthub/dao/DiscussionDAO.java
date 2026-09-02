@@ -4,6 +4,7 @@ import com.studenthub.model.DiscussionMessage;
 import com.studenthub.model.DiscussionScope;
 import com.studenthub.util.DBConnection;
 import com.studenthub.util.DiscussionTarget;
+import com.studenthub.util.AcademicGroupPolicy;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -265,7 +266,8 @@ public class DiscussionDAO {
         return switch (target.scope()) {
             case ALL -> "StudentHub All Chat";
             case SEMESTER -> "Semester " + target.semester();
-            case SECTION -> "Semester " + target.semester() + " / Section " + target.sectionName();
+            case SECTION -> "Semester " + target.semester() + " / "
+                    + AcademicGroupPolicy.groupLabel(target.semester()) + " " + target.sectionName();
             case CR_SEMESTER -> "CR Semester " + target.semester();
             case CR_ALL -> "CR All Chat";
             case CR_ADMIN -> "CR - Admin Chat";

@@ -10,6 +10,7 @@
     <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script>
     <script src="${pageContext.request.contextPath}/assets/js/profile-photo.js?v=${applicationScope.assetVersion}" defer></script>
     <script src="${pageContext.request.contextPath}/assets/js/account-deletion.js?v=${applicationScope.assetVersion}" defer></script>
+    <script src="${pageContext.request.contextPath}/assets/js/academic-group-selector.js?v=${applicationScope.assetVersion}" defer></script>
     <link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
@@ -109,15 +110,16 @@
                                         <strong>Semester <c:out value="${profile.semester}" /></strong>
                                     </div>
                                     <div class="locked-field">
-                                        <span>Section</span>
+                                        <span>${profile.semester ge 7 ? 'Major' : 'Section'}</span>
                                         <strong><c:out value="${profile.sectionName}" /></strong>
                                     </div>
                                     <p class="profile-security-note">Academic information is locked. Submit an academic change request if it needs correction.</p>
                                 </c:when>
                                 <c:otherwise>
+                                    <div class="profile-academic-picker" data-academic-group-picker>
                                     <div>
                                         <label for="semester">Semester</label>
-                                        <select class="form-select" id="semester" name="semester">
+                                        <select class="form-select" id="semester" name="semester" data-group-semester>
                                             <option value="">Not assigned</option>
                                             <c:forEach begin="1" end="10" var="number">
                                                 <option value="${number}" <c:if test="${profile.semester eq number}">selected</c:if>>Semester ${number}</option>
@@ -125,10 +127,11 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label for="sectionName">Section</label>
-                                        <input class="form-control" id="sectionName" name="sectionName" maxlength="20" pattern="[A-Za-z0-9][A-Za-z0-9 -]{0,19}" value="<c:out value='${profile.sectionName}' />" placeholder="For example: B">
+                                        <label for="sectionName" data-group-label>${profile.semester ge 7 ? 'Major' : 'Section'}</label>
+                                        <select class="form-select" id="sectionName" name="sectionName" data-group-name data-current-value="<c:out value='${profile.sectionName}' />"><option value="">Choose a semester first</option><c:forEach var="option" items="${academicGroupOptions}"><option value="<c:out value='${option.value}'/>" data-semester="${option.semester}"><c:out value="${option.value}" /></option></c:forEach></select>
                                     </div>
-                                    <p class="profile-security-note">Semester and section control access to scoped announcements, deadlines, and discussions. Once saved, they will be locked.</p>
+                                    </div>
+                                    <p class="profile-security-note">Semester and academic group control access to scoped announcements, deadlines, and discussions. Once saved, they will be locked.</p>
                                 </c:otherwise>
                             </c:choose></c:if>
                             <div class="profile-form-actions">
@@ -201,7 +204,7 @@
                                         <c:when test="${not empty profile.semester and not empty profile.sectionName}">
                                             <dl class="profile-details">
                                                 <div><dt>Semester</dt><dd>Semester <c:out value="${profile.semester}" /></dd></div>
-                                                <div><dt>Section</dt><dd><c:out value="${profile.sectionName}" /></dd></div>
+                                                <div><dt>${profile.semester ge 7 ? 'Major' : 'Section'}</dt><dd><c:out value="${profile.sectionName}" /></dd></div>
                                                 <div><dt>Role</dt><dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd></div>
                                             </dl>
                                         </c:when>
@@ -211,7 +214,7 @@
                                 <c:otherwise>
                                     <dl class="profile-details">
                                         <div><dt>Semester</dt><dd><c:choose><c:when test="${empty profile.semester}">Not assigned</c:when><c:otherwise>Semester <c:out value="${profile.semester}" /></c:otherwise></c:choose></dd></div>
-                                        <div><dt>Section</dt><dd><c:choose><c:when test="${empty profile.sectionName}">Not assigned</c:when><c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise></c:choose></dd></div>
+                                        <div><dt>${profile.semester ge 7 ? 'Major' : 'Section'}</dt><dd><c:choose><c:when test="${empty profile.sectionName}">Not assigned</c:when><c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise></c:choose></dd></div>
                                     </dl>
                                 </c:otherwise>
                             </c:choose>
@@ -221,7 +224,7 @@
                                     <c:choose>
                                         <c:when test="${not empty pendingAcademicRequest}">
                                             <div class="alert alert-info mt-3">
-                                                <strong>Academic change request pending:</strong> Requested Semester <c:out value="${pendingAcademicRequest.requestedSemester}" />, Section <c:out value="${pendingAcademicRequest.requestedSection}" />.
+                                                <strong>Academic change request pending:</strong> Requested Semester <c:out value="${pendingAcademicRequest.requestedSemester}" />, ${pendingAcademicRequest.requestedSemester ge 7 ? 'Major' : 'Section'} <c:out value="${pendingAcademicRequest.requestedSection}" />.
                                                 <div class="small text-secondary mt-1">Reason: <c:out value="${pendingAcademicRequest.reason}" /></div>
                                                 <div class="small text-secondary mt-1">Submitted on <c:out value="${pendingAcademicRequest.createdLabel}" /></div>
                                             </div>
@@ -244,26 +247,28 @@
                                                                 <span class="item-value">Semester <c:out value="${profile.semester}" /></span>
                                                             </div>
                                                             <div class="student-current-academic-item">
-                                                                <span class="item-label">Current section</span>
+                                                                <span class="item-label">Current ${profile.semester ge 7 ? 'major' : 'section'}</span>
                                                                 <span class="item-value"><c:out value="${profile.sectionName}" /></span>
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    <div class="profile-academic-picker" data-academic-group-picker data-group-label-prefix="Requested ">
                                                     <div class="mb-3">
                                                         <label class="form-label" for="reqSemester">Requested semester</label>
-                                                        <select class="form-select" id="reqSemester" name="semester" required>
+                                                        <select class="form-select" id="reqSemester" name="semester" data-group-semester required>
                                                             <c:forEach begin="1" end="10" var="number">
                                                                 <option value="${number}" <c:if test="${profile.semester eq number}">selected</c:if>>Semester ${number}</option>
                                                             </c:forEach>
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="reqSection">Requested section</label>
-                                                        <input class="form-control" id="reqSection" name="sectionName" maxlength="20" pattern="[A-Za-z0-9][A-Za-z0-9 -]{0,19}" value="<c:out value='${profile.sectionName}' />" placeholder="For example: B" required>
+                                                        <label class="form-label" for="reqSection" data-group-label>Requested ${profile.semester ge 7 ? 'major' : 'section'}</label>
+                                                        <select class="form-select" id="reqSection" name="sectionName" data-group-name data-current-value="<c:out value='${profile.sectionName}' />" required><option value="">Choose a semester first</option><c:forEach var="option" items="${academicGroupOptions}"><option value="<c:out value='${option.value}'/>" data-semester="${option.semester}"><c:out value="${option.value}" /></option></c:forEach></select>
+                                                    </div>
                                                     </div>
                                                     <div class="mb-3">
                                                         <label class="form-label" for="reqReason">Reason</label>
-                                                        <textarea class="form-control" id="reqReason" name="reason" minlength="10" maxlength="1000" rows="3" placeholder="Explain why you need to change your semester or section (10-1000 characters)" required></textarea>
+                                                        <textarea class="form-control" id="reqReason" name="reason" minlength="10" maxlength="1000" rows="3" placeholder="Explain why you need to change your semester or academic group (10-1000 characters)" required></textarea>
                                                     </div>
                                                     <button class="btn btn-primary" type="submit">Submit request</button>
                                                 </form>
@@ -272,7 +277,7 @@
                                     </c:choose>
                                 </c:when>
                                 <c:otherwise>
-                                    <p class="profile-card-note text-primary">Academic information is not set yet. Click "Edit profile" above to choose your Semester and Section.</p>
+                                    <p class="profile-card-note text-primary">Academic information is not set yet. Click "Edit profile" above to choose your semester and academic group.</p>
                                 </c:otherwise>
                             </c:choose></c:if>
                         </section></c:if>

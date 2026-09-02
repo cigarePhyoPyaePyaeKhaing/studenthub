@@ -6,7 +6,6 @@ public final class ProfileValidation {
     public static final int MIN_SEMESTER = 1;
     public static final int MAX_SEMESTER = 10;
     public static final int MAX_SECTION_LENGTH = 20;
-    private static final String SECTION_PATTERN = "[A-Za-z0-9][A-Za-z0-9 -]{0,19}";
 
     private ProfileValidation() {}
 
@@ -33,11 +32,16 @@ public final class ProfileValidation {
 
         String section = sectionInput == null ? null : sectionInput.trim();
         if (section != null && section.isEmpty()) section = null;
-        if (section != null && (section.length() > MAX_SECTION_LENGTH || !section.matches(SECTION_PATTERN))) {
-            return new Result(null, "Section may contain letters, numbers, spaces, and hyphens only (maximum 20 characters).");
-        }
         if (semester == null && section != null) {
             return new Result(null, "Select a semester before setting a section.");
+        }
+        if (semester != null && section != null) {
+            section = AcademicGroupPolicy.normalize(semester, section);
+            if (section == null) {
+                return new Result(null, "Select a valid "
+                        + AcademicGroupPolicy.groupLabel(semester).toLowerCase(java.util.Locale.ROOT)
+                        + " for Semester " + semester + ".");
+            }
         }
         return new Result(new ProfileUpdate(fullName, semester, section), null);
     }

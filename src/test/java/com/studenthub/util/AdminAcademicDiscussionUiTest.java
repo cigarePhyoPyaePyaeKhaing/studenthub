@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Test;
 class AdminAcademicDiscussionUiTest {
     @Test void adminUsesModerationSelectorAndServerBackedMessageActions() throws Exception {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/discussions/index.jsp"));
+        String css = Files.readString(Path.of("src/main/webapp/assets/css/dashboard-refined.css"));
+        String script = Files.readString(Path.of("src/main/webapp/assets/js/academic-group-selector.js"));
         assertTrue(jsp.contains("class=\"admin-discussion-controls\""));
         assertTrue(jsp.contains("class=\"admin-global-scopes\""));
         assertTrue(jsp.contains("items=\"${moderationSemesters}\""));
@@ -19,9 +21,15 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(jsp.contains("moderationScope=all_cr"));
         assertEquals(1, occurrences(jsp, "id=\"moderation-semester\""));
         assertEquals(1, occurrences(jsp, "id=\"section-name\""));
-        assertTrue(jsp.contains("data-academic-semester"));
-        assertTrue(jsp.contains("data-academic-section"));
-        assertTrue(jsp.contains("window.location.assign"));
+        assertTrue(jsp.contains("data-group-semester"));
+        assertTrue(jsp.contains("data-group-name"));
+        assertTrue(jsp.contains("academic-group-selector.js"));
+        assertTrue(css.contains("grid-template-columns:repeat(4,minmax(0,1fr))"));
+        assertTrue(css.contains("@media(max-width:1024px)"));
+        assertTrue(css.contains("@media(max-width:600px)"));
+        assertTrue(script.contains("Choose a semester first"));
+        assertTrue(script.contains("major ? 'Major' : 'Section'"));
+        assertTrue(script.contains("option.dataset.semester === semesterValue"));
         assertFalse(jsp.contains("Section semester"));
         assertFalse(jsp.contains("Open section"));
         assertFalse(jsp.contains("name=\"roomId\""));
@@ -67,8 +75,8 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(service.contains("\"all_students\""));
         assertTrue(service.contains("\"all_cr\""));
         assertTrue(service.contains("\"semester:\" + semester.getKey()"));
-        assertTrue(service.contains("sectionName.matches(\"[A-E]\")"));
-        assertTrue(service.contains("\"section:\" + room.semester() + \":\" + sectionName"));
+        assertTrue(service.contains("AcademicGroupPolicy.optionsFor(semester.getKey())"));
+        assertTrue(service.contains("\"section:\" + semester.getKey() + \":\" + group"));
     }
 
     private static int occurrences(String source, String value) {

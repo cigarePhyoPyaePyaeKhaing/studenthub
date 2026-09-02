@@ -1,5 +1,7 @@
 package com.studenthub.dao;
 
+import com.studenthub.util.AcademicGroupPolicy;
+
 import com.studenthub.util.DBConnection;
 
 import java.sql.Connection;
@@ -239,6 +241,11 @@ public class AcademicChangeDAO {
                 }
             }
             if (approve) {
+                String normalizedGroup = AcademicGroupPolicy.normalize(semester, section);
+                if (normalizedGroup == null) {
+                    throw new SQLException("Academic change request contains an invalid semester/group combination.", "22023");
+                }
+                section = normalizedGroup;
                 try (PreparedStatement s = c.prepareStatement(
                         "UPDATE users SET semester = ?, section_name = ? WHERE user_id = ?")) {
                     s.setInt(1, semester);
@@ -261,7 +268,8 @@ public class AcademicChangeDAO {
             String type = approve ? "ACADEMIC_CHANGE_APPROVED" : "ACADEMIC_CHANGE_REJECTED";
             String message;
             if (approve) {
-                message = "Your academic information change request was approved. Your Semester and Section have been updated.";
+                message = "Your academic information change request was approved. Your semester and "
+                        + AcademicGroupPolicy.groupLabel(semester).toLowerCase(java.util.Locale.ROOT) + " have been updated.";
             } else {
                 if (note != null && !note.isBlank()) {
                     message = "Your academic information change request was rejected. Admin note: " + note.trim();

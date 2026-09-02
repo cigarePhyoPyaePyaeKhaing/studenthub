@@ -34,7 +34,7 @@
             <div>
                 <p class="eyebrow mb-1">Administration</p>
                 <h1>Academic Change Requests</h1>
-                <p class="mb-0 text-secondary">Review and approve student semester and section change requests.</p>
+                <p class="mb-0 text-secondary">Review and approve student semester and academic group change requests.</p>
             </div>
         </section>
 
@@ -79,7 +79,7 @@
                                                 </c:when>
                                                 <c:otherwise>
                                                     <div>Semester: <span><c:out value="${empty item.oldSemester ? 'Not assigned' : item.oldSemester}" /></span></div>
-                                                    <div>Section: <span><c:out value="${empty item.oldSection ? 'Not assigned' : item.oldSection}" /></span></div>
+                                                    <div>${item.oldSemester ge 7 ? 'Major' : 'Section'}: <span><c:out value="${empty item.oldSection ? 'Not assigned' : item.oldSection}" /></span></div>
                                                 </c:otherwise>
                                             </c:choose>
                                         </div>
@@ -88,7 +88,7 @@
                                         <span class="box-label">Requested Academic Info</span>
                                         <div class="box-values">
                                             <div>Semester: <span><c:out value="${item.requestedSemester}" /></span></div>
-                                            <div>Section: <span><c:out value="${item.requestedSection}" /></span></div>
+                                            <div>${item.requestedSemester ge 7 ? 'Major' : 'Section'}: <span><c:out value="${item.requestedSection}" /></span></div>
                                         </div>
                                     </div>
                                 </div>

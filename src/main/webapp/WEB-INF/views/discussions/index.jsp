@@ -52,19 +52,15 @@
                             <span class="admin-scope-card-icon" aria-hidden="true">CR</span><span><strong>All CRs</strong><small>Authorized class representative discussion</small></span>
                         </a>
                     </nav>
-                    <section class="admin-academic-groups" aria-labelledby="academic-groups-title">
-                        <div class="admin-academic-heading"><h2 id="academic-groups-title">Academic Groups</h2><p>Select a semester, then a section when needed.</p></div>
-                        <form class="admin-scope-form admin-academic-selectors" action="${pageContext.request.contextPath}/discussions" data-admin-academic-form>
-                            <div><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-academic-semester><option value="">Select semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
-                            <div><label for="section-name">Section</label><select class="form-select" id="section-name" data-academic-section aria-describedby="academic-group-help"><option value="">Select section</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select></div>
-                        </form>
-                        <p class="admin-academic-help" id="academic-group-help">Select a semester and section to view the discussion.</p>
-                    </section>
+                    <form class="admin-scope-form admin-academic-selectors" action="${pageContext.request.contextPath}/discussions" data-academic-group-picker data-navigation-base="${pageContext.request.contextPath}/discussions">
+                        <div class="admin-selector-item"><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-group-semester><option value="">Select Semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
+                        <div class="admin-selector-item"><label for="section-name" data-group-label>Section</label><select class="form-select" id="section-name" data-group-name aria-describedby="academic-group-help"><option value="">Choose a semester first</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select><span class="visually-hidden" id="academic-group-help">The available section or major options depend on the selected semester.</span></div>
+                    </form>
                 </section>
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
                 <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-five' : 'room-tabs-four'}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester ge 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                     <c:if test="${room.crSemesterRoomAvailable}"><a class="${room.scope eq 'CR_SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_SEMESTER">CR – Same Semester</a></c:if>
@@ -73,7 +69,7 @@
             </c:when>
             <c:otherwise>
                 <nav class="room-tabs ${not empty room and (room.sectionRoomAvailable and room.semesterRoomAvailable) ? 'room-tabs-four' : ((room.sectionRoomAvailable or room.semesterRoomAvailable) ? 'room-tabs-three' : 'room-tabs-two')}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester ge 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                 </nav>
@@ -96,36 +92,9 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="${pageContext.request.contextPath}/assets/js/message-composer.js?v=${applicationScope.assetVersion}" defer></script>
 <script src="${pageContext.request.contextPath}/assets/js/discussion-chat.js?v=${applicationScope.assetVersion}" defer></script>
+<script src="${pageContext.request.contextPath}/assets/js/academic-group-selector.js?v=${applicationScope.assetVersion}" defer></script>
 <script>
 (function() {
-    function initAdminAcademicSelector() {
-        var form = document.querySelector('[data-admin-academic-form]');
-        if (!form) return;
-        var semester = form.querySelector('[data-academic-semester]');
-        var section = form.querySelector('[data-academic-section]');
-        var baseUrl = form.action;
-        function filterSections(preserveSelection) {
-            var selectedSemester = semester.value;
-            var keptValue = preserveSelection ? section.value : '';
-            Array.prototype.forEach.call(section.options, function(option, index) {
-                if (index === 0) return;
-                var matches = selectedSemester !== '' && option.dataset.semester === selectedSemester;
-                option.disabled = !matches;
-                option.hidden = !matches;
-                if (!matches && option.selected) option.selected = false;
-            });
-            section.disabled = selectedSemester === '';
-            if (keptValue) section.value = keptValue;
-        }
-        semester.addEventListener('change', function() {
-            filterSections(false);
-            if (semester.value) window.location.assign(baseUrl + '?moderationScope=semester:' + encodeURIComponent(semester.value));
-        });
-        section.addEventListener('change', function() {
-            if (semester.value && section.value) window.location.assign(baseUrl + '?moderationScope=section:' + encodeURIComponent(semester.value) + ':' + encodeURIComponent(section.value));
-        });
-        filterSections(true);
-    }
     function scrollToBottom() {
         var messageList = document.querySelector('.message-list');
         if (messageList) {
@@ -139,7 +108,6 @@
         }
     }
     function initScrolls() {
-        initAdminAcademicSelector();
         scrollToBottom();
         scrollActiveRoomTab();
     }

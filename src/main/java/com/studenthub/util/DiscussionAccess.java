@@ -33,8 +33,9 @@ public final class DiscussionAccess {
                 || scope == DiscussionScope.CR_ADMIN || scope == DiscussionScope.ALL_STUDENTS_ADMIN) return null;
         if (universityId == null || universityId <= 0) return "Select your university to join its academic discussion groups.";
         if (semester == null || semester < 1 || semester > 10) return "Select a valid semester to join this discussion group.";
-        if (scope == DiscussionScope.SECTION && (sectionName == null || sectionName.isBlank()))
-            return "Select your section to join this discussion group.";
+        if (scope == DiscussionScope.SECTION && !AcademicGroupPolicy.isValid(semester, sectionName))
+            return "Select a valid " + AcademicGroupPolicy.groupLabel(semester).toLowerCase(java.util.Locale.ROOT)
+                    + " to join this discussion group.";
         return null;
     }
 
@@ -44,6 +45,8 @@ public final class DiscussionAccess {
                 || scope == DiscussionScope.CR_ADMIN || scope == DiscussionScope.ALL_STUDENTS_ADMIN) return true;
         if (viewerSemester == null || !viewerSemester.equals(roomSemester)) return false;
         return scope == DiscussionScope.SEMESTER || scope == DiscussionScope.CR_SEMESTER
-                || viewerSection != null && viewerSection.equals(roomSection);
+                || AcademicGroupPolicy.isValid(viewerSemester, viewerSection)
+                && AcademicGroupPolicy.normalize(viewerSemester, viewerSection).equals(
+                        AcademicGroupPolicy.normalize(roomSemester, roomSection));
     }
 }

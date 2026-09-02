@@ -12,13 +12,13 @@ class ProfileValidationTest {
     @Test void nullSemesterIsAccepted() { assertTrue(valid("Mya Mya", "", "").valid()); }
     @Test void validSemesterRangeIsAccepted() {
         assertTrue(valid("Mya Mya", "1", "A").valid());
-        assertTrue(valid("Mya Mya", "10", "A").valid());
+        assertTrue(valid("Mya Mya", "10", "ES").valid());
     }
     @Test void semesterBelowRangeIsRejected() { assertFalse(valid("Mya Mya", "0", "A").valid()); }
     @Test void semesterAboveRangeIsRejected() { assertFalse(valid("Mya Mya", "11", "A").valid()); }
     @Test void nonNumericSemesterIsRejected() { assertFalse(valid("Mya Mya", "four", "A").valid()); }
     @Test void validSectionIsAcceptedAndTrimmed() {
-        assertEquals("Section-B", valid("Mya Mya", "4", "  Section-B  ").update().sectionName());
+        assertEquals("B", valid("Mya Mya", "4", "  b  ").update().sectionName());
     }
     @Test void nullSectionIsAccepted() { assertNull(valid("Mya Mya", "4", "").update().sectionName()); }
     @Test void oversizedSectionIsRejected() { assertFalse(valid("Mya Mya", "4", "A".repeat(21)).valid()); }

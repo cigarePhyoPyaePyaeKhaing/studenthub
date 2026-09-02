@@ -6,6 +6,7 @@ import com.studenthub.model.Role;
 import com.studenthub.service.ProfileService;
 import com.studenthub.util.Authorization;
 import com.studenthub.util.CsrfToken;
+import com.studenthub.util.AcademicGroupPolicy;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -15,7 +16,6 @@ import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.Locale;
 import java.util.Optional;
 
 @WebServlet(name = "AcademicChangeRequestServlet", urlPatterns = "/profile/academic-change")
@@ -62,11 +62,11 @@ public class AcademicChangeRequestServlet extends HttpServlet {
                 throw new IllegalArgumentException("Semester is required.");
             }
             int semester = Integer.parseInt(semesterParam.trim());
-            String section = request.getParameter("sectionName") == null ? "" : request.getParameter("sectionName").trim().toUpperCase(Locale.ROOT);
+            String section = AcademicGroupPolicy.normalize(semester, request.getParameter("sectionName"));
             String reason = request.getParameter("reason") == null ? "" : request.getParameter("reason").trim();
 
-            if (semester < 1 || semester > 10 || !section.matches("[A-Z0-9][A-Z0-9 -]{0,19}") || reason.length() < 10 || reason.length() > 1000) {
-                throw new IllegalArgumentException("Enter a valid semester (1-10), section, and reason between 10 and 1000 characters.");
+            if (semester < 1 || semester > 10 || section == null || reason.length() < 10 || reason.length() > 1000) {
+                throw new IllegalArgumentException("Select a valid semester and academic group, and enter a reason between 10 and 1000 characters.");
             }
 
             if (currentProfile.isPresent()) {

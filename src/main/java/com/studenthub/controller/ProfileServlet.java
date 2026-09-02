@@ -121,6 +121,7 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("error", "Your profile is temporarily unavailable.");
         }
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession()));
+        request.setAttribute("academicGroupOptions", com.studenthub.util.AcademicGroupPolicy.allOptions());
         moveFlash(request, "flash", "message");
         moveFlash(request, "flashError", "error");
         if (request.getAttribute("error") == null) {
