@@ -11,8 +11,18 @@ import org.junit.jupiter.api.Test;
 class AdminAcademicDiscussionUiTest {
     @Test void adminUsesModerationSelectorAndServerBackedMessageActions() throws Exception {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/discussions/index.jsp"));
-        assertTrue(jsp.contains("class=\"admin-room-selector\""));
-        assertTrue(jsp.contains("items=\"${moderationRooms}\""));
+        assertTrue(jsp.contains("class=\"admin-discussion-controls\""));
+        assertTrue(jsp.contains("class=\"admin-global-scopes\""));
+        assertTrue(jsp.contains("items=\"${moderationSemesters}\""));
+        assertTrue(jsp.contains("items=\"${moderationSections}\""));
+        assertTrue(jsp.contains("name=\"moderationScope\""));
+        assertTrue(jsp.contains("moderationScope=all_students"));
+        assertTrue(jsp.contains("moderationScope=all_cr"));
+        assertTrue(jsp.contains("name=\"sectionSemester\""));
+        assertTrue(jsp.contains("name=\"sectionName\""));
+        assertTrue(jsp.contains("data-section-semester"));
+        assertTrue(jsp.contains("data-section-name"));
+        assertFalse(jsp.contains("name=\"roomId\""));
         assertTrue(jsp.contains("Admin Moderation"));
         assertTrue(jsp.contains("admin-moderation-delete"));
         assertTrue(jsp.contains("/discussions/messages/delete"));
@@ -35,11 +45,26 @@ class AdminAcademicDiscussionUiTest {
         assertFalse(DiscussionAccess.roleMayAccess(DiscussionScope.CR_ADMIN, "ADMIN"));
     }
 
-    @Test void moderationRoomRecordExposesPropertiesRequiredByJakartaEl() throws Exception {
-        var properties = Arrays.stream(Introspector.getBeanInfo(com.studenthub.dao.DiscussionDAO.RoomOption.class)
+    @Test void moderationScopeRecordExposesPropertiesRequiredByJakartaEl() throws Exception {
+        var properties = Arrays.stream(Introspector.getBeanInfo(com.studenthub.service.DiscussionService.ModerationScopeOption.class)
                 .getPropertyDescriptors()).map(descriptor -> descriptor.getName()).toList();
-        assertTrue(properties.contains("roomId"));
-        assertTrue(properties.contains("roomName"));
-        assertTrue(properties.contains("scope"));
+        assertTrue(properties.contains("key"));
+        assertTrue(properties.contains("group"));
+        assertTrue(properties.contains("label"));
+    }
+
+    @Test void canonicalScopesDeduplicatePhysicalRoomsAndPreserveEmptyState() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/discussions/index.jsp"));
+        String dao = Files.readString(Path.of("src/main/java/com/studenthub/dao/DiscussionDAO.java"));
+        String service = Files.readString(Path.of("src/main/java/com/studenthub/service/DiscussionService.java"));
+        assertFalse(jsp.contains("StudentHub ·"));
+        assertFalse(jsp.contains("UIT ·"));
+        assertTrue(jsp.contains("No messages yet."));
+        assertTrue(dao.contains("GROUP BY source.room_type, source.semester, source.section_name"));
+        assertTrue(dao.contains("findRecentForModeration"));
+        assertTrue(service.contains("\"all_students\""));
+        assertTrue(service.contains("\"all_cr\""));
+        assertTrue(service.contains("\"semester:\" + semester.getKey()"));
+        assertTrue(service.contains("\"section:\" + room.semester() + \":\" + room.sectionName()"));
     }
 }

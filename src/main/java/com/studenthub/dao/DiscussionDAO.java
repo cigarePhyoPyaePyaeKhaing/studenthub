@@ -42,13 +42,33 @@ public class DiscussionDAO {
 
     public List<RoomOption> findModerationRooms() throws SQLException {
         String sql = """
-                SELECT r.room_id, r.room_type, r.university_id, r.semester, r.section_name,
-                       CONCAT(COALESCE(u.short_name, u.name, 'StudentHub'), ' · ', r.room_name) AS room_name
-                FROM chat_rooms r
-                LEFT JOIN universities u ON u.university_id = r.university_id
-                WHERE r.room_type IN ('SEMESTER','SECTION','CR_SEMESTER','CR_ALL')
-                ORDER BY FIELD(r.room_type,'SEMESTER','SECTION','CR_SEMESTER','CR_ALL'),
-                         r.semester, r.section_name, r.room_name
+                SELECT MIN(source.room_id) AS room_id, source.room_type,
+                       MIN(source.university_id) AS university_id,
+                       source.semester, source.section_name,
+                       CASE WHEN source.room_type = 'SEMESTER'
+                            THEN CONCAT('Semester ', source.semester)
+                            ELSE CONCAT('Semester ', source.semester, ' / Section ', source.section_name)
+                       END AS room_name
+                FROM (
+                    SELECT room_id, room_type, university_id, semester,
+                           CASE WHEN room_type = 'SECTION' THEN UPPER(TRIM(section_name)) ELSE NULL END AS section_name
+                    FROM chat_rooms
+                    WHERE room_type IN ('SEMESTER','SECTION')
+                      AND semester BETWEEN 1 AND 10
+                      AND (room_type = 'SEMESTER' OR (section_name IS NOT NULL AND TRIM(section_name) <> ''))
+                    UNION ALL
+                    SELECT 0, 'SEMESTER', university_id, semester, NULL
+                    FROM users
+                    WHERE semester BETWEEN 1 AND 10 AND university_id IS NOT NULL
+                    UNION ALL
+                    SELECT 0, 'SECTION', university_id, semester, UPPER(TRIM(section_name))
+                    FROM users
+                    WHERE semester BETWEEN 1 AND 10 AND university_id IS NOT NULL
+                      AND section_name IS NOT NULL AND TRIM(section_name) <> ''
+                ) source
+                GROUP BY source.room_type, source.semester, source.section_name
+                ORDER BY FIELD(source.room_type,'SEMESTER','SECTION'),
+                         source.semester, source.section_name
                 """;
         List<RoomOption> rooms = new ArrayList<>();
         try (Connection connection = DBConnection.getConnection();
@@ -57,6 +77,26 @@ public class DiscussionDAO {
             while (results.next()) rooms.add(mapRoomOption(results));
         }
         return rooms;
+    }
+
+    public Long findModerationUniversityId() throws SQLException {
+        String sql = """
+                SELECT university_id
+                FROM (
+                    SELECT university_id, 1 AS priority FROM universities
+                    WHERE status = 'APPROVED'
+                    UNION ALL
+                    SELECT university_id, 2 AS priority FROM users
+                    WHERE university_id IS NOT NULL
+                ) candidates
+                ORDER BY priority, university_id
+                LIMIT 1
+                """;
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+            return results.next() ? results.getLong("university_id") : null;
+        }
     }
 
     public RoomOption findRoom(long roomId) throws SQLException {
@@ -80,6 +120,15 @@ public class DiscussionDAO {
     }
 
     public List<DiscussionMessage> findRecent(DiscussionTarget target, int limit) throws SQLException {
+        return findRecent(target, limit, false);
+    }
+
+    public List<DiscussionMessage> findRecentForModeration(DiscussionTarget target, int limit) throws SQLException {
+        return findRecent(target, limit, true);
+    }
+
+    private List<DiscussionMessage> findRecent(DiscussionTarget target, int limit,
+                                               boolean acrossEquivalentRooms) throws SQLException {
         StringBuilder sql = new StringBuilder("""
                 SELECT m.message_id, m.sender_id, m.message, m.created_at,
                        u.full_name, u.role, u.semester AS author_semester,
@@ -91,8 +140,9 @@ public class DiscussionDAO {
                 LEFT JOIN attachments a ON a.message_id=m.message_id
                 WHERE r.room_type = ?
                 """);
-        if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL
-                && target.scope() != DiscussionScope.CR_ADMIN && target.scope() != DiscussionScope.ALL_STUDENTS_ADMIN) sql.append(" AND r.university_id = ?");
+        boolean academicScope = target.scope() == DiscussionScope.SEMESTER
+                || target.scope() == DiscussionScope.SECTION || target.scope() == DiscussionScope.CR_SEMESTER;
+        if (academicScope && !acrossEquivalentRooms) sql.append(" AND r.university_id = ?");
         if (target.scope() == DiscussionScope.SEMESTER || target.scope() == DiscussionScope.CR_SEMESTER) sql.append(" AND r.semester = ? AND r.section_name IS NULL");
         if (target.scope() == DiscussionScope.SECTION) sql.append(" AND r.semester = ? AND r.section_name = ?");
         if (target.scope() == DiscussionScope.ALL || target.scope() == DiscussionScope.CR_ALL
@@ -104,9 +154,8 @@ public class DiscussionDAO {
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
             int index = 1;
             statement.setString(index++, target.scope().name());
-            if (target.scope() != DiscussionScope.ALL && target.scope() != DiscussionScope.CR_ALL
-                    && target.scope() != DiscussionScope.CR_ADMIN && target.scope() != DiscussionScope.ALL_STUDENTS_ADMIN) {
-                statement.setLong(index++, target.universityId());
+            if (academicScope) {
+                if (!acrossEquivalentRooms) statement.setLong(index++, target.universityId());
                 statement.setInt(index++, target.semester());
             }
             if (target.scope() == DiscussionScope.SECTION) statement.setString(index++, target.sectionName());

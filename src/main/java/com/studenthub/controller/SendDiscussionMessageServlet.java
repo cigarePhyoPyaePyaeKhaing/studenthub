@@ -20,20 +20,27 @@ public class SendDiscussionMessageServlet extends HttpServlet {
         if (!CsrfToken.isValid(request)) { if(json)fail(request,response,true,HttpServletResponse.SC_FORBIDDEN,"Your security token expired. Refresh and try again.");else response.sendError(HttpServletResponse.SC_FORBIDDEN); return; }
         String scope = DiscussionScope.fromRequest(request.getParameter("scope")).name();
         Long roomId = parsePositiveLong(request.getParameter("roomId"));
+        String moderationScope = request.getParameter("moderationScope");
         if (roomId == null && "ADMIN".equals(String.valueOf(request.getSession().getAttribute("role")))) {
-            Object selected = request.getSession().getAttribute("selectedDiscussionRoomId");
-            if (selected instanceof Long value && value > 0) roomId = value;
+            Object selected = request.getSession().getAttribute("selectedDiscussionScope");
+            if ((moderationScope == null || moderationScope.isBlank()) && selected instanceof String value) {
+                moderationScope = value;
+            }
         }
-        String redirect = "/discussions?scope=" + scope + (roomId == null ? "" : "&roomId=" + roomId);
+        String redirect = moderationScope == null || moderationScope.isBlank()
+                ? "/discussions?scope=" + scope + (roomId == null ? "" : "&roomId=" + roomId)
+                : "/discussions?moderationScope=" + java.net.URLEncoder.encode(moderationScope, java.nio.charset.StandardCharsets.UTF_8);
         com.studenthub.util.AttachmentRequest.Result attachment=com.studenthub.util.AttachmentRequest.read(request.getPart("attachment"));
         if(!attachment.valid()){fail(request,response,json,HttpServletResponse.SC_BAD_REQUEST,attachment.error());if(!json)response.sendRedirect(request.getContextPath()+redirect);return;}
         try {
-            DiscussionService.OperationResult result = service.send(
-                    (Long) request.getSession().getAttribute("userId"), scope, request.getParameter("message"),attachment.upload(),roomId);
+            long userId = (Long) request.getSession().getAttribute("userId");
+            DiscussionService.OperationResult result = moderationScope != null && !moderationScope.isBlank()
+                    ? service.sendModerated(userId, moderationScope, request.getParameter("message"), attachment.upload())
+                    : service.send(userId, scope, request.getParameter("message"), attachment.upload(), roomId);
             if(!result.successful()){com.studenthub.util.AttachmentRequest.discard(attachment.upload());fail(request,response,json,HttpServletResponse.SC_BAD_REQUEST,result.message());if(!json)response.sendRedirect(request.getContextPath()+redirect);return;}
             if(json){writeJson(response,HttpServletResponse.SC_OK,"{\"success\":true,\"redirectUrl\":\""+request.getContextPath()+redirect+"\"}");return;}
             request.getSession().setAttribute("flash", result.message());
-        } catch (SecurityException exception) {
+        } catch (SecurityException | IllegalArgumentException exception) {
             com.studenthub.util.AttachmentRequest.discard(attachment.upload());
             if(json)fail(request,response,true,HttpServletResponse.SC_FORBIDDEN,"You do not have access to this discussion.");else response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;

@@ -43,14 +43,28 @@
         </nav>
         <c:choose>
             <c:when test="${sessionScope.role eq 'ADMIN'}">
-                <form class="admin-room-selector" method="get" action="${pageContext.request.contextPath}/discussions">
-                    <label for="moderation-room">Moderation scope</label>
-                    <select class="form-select" id="moderation-room" name="roomId" onchange="this.form.submit()">
-                        <option value="">All Students</option>
-                        <c:forEach var="moderationRoom" items="${moderationRooms}"><option value="${moderationRoom.roomId}" ${selectedRoomId eq moderationRoom.roomId ? 'selected' : ''}><c:out value="${moderationRoom.roomName}" /></option></c:forEach>
-                    </select>
-                    <noscript><button class="btn btn-primary" type="submit">Open room</button></noscript>
-                </form>
+                <section class="admin-discussion-controls" aria-label="Admin discussion navigation">
+                    <nav class="admin-global-scopes" aria-label="Global discussion scopes">
+                        <a class="${selectedModerationScope eq 'all_students' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_students" ${selectedModerationScope eq 'all_students' ? 'aria-current="page"' : ''}>All Students</a>
+                        <a class="${selectedModerationScope eq 'all_cr' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_cr" ${selectedModerationScope eq 'all_cr' ? 'aria-current="page"' : ''}>All CRs</a>
+                    </nav>
+                    <div class="admin-academic-selectors">
+                        <form class="admin-scope-form admin-semester-form" method="get" action="${pageContext.request.contextPath}/discussions">
+                            <label for="moderation-semester">Semester</label>
+                            <select class="form-select" id="moderation-semester" name="moderationScope" onchange="this.form.submit()">
+                                <option value="">Select semester</option>
+                                <c:forEach var="option" items="${moderationSemesters}"><option value="<c:out value='${option.key}'/>" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.label}" /></option></c:forEach>
+                            </select>
+                            <noscript><button class="btn btn-primary" type="submit">Open semester</button></noscript>
+                        </form>
+                        <form class="admin-scope-form admin-section-form" method="get" action="${pageContext.request.contextPath}/discussions" data-admin-section-form>
+                            <input type="hidden" name="moderationMode" value="section">
+                            <div><label for="section-semester">Section semester</label><select class="form-select" id="section-semester" name="sectionSemester" data-section-semester><option value="">Select semester</option><c:forEach var="semester" items="${sectionSemesters}"><option value="${semester}" ${selectedModerationSemester eq semester and not empty selectedModerationSection ? 'selected' : ''}>Semester ${semester}</option></c:forEach></select></div>
+                            <div><label for="section-name">Section</label><select class="form-select" id="section-name" name="sectionName" data-section-name><option value="">Select section</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select></div>
+                            <button class="btn btn-primary" type="submit">Open section</button>
+                        </form>
+                    </div>
+                </section>
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
                 <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-five' : 'room-tabs-four'}" aria-label="Discussion rooms">
@@ -78,7 +92,7 @@
                 <c:when test="${empty room.messages}"><div class="chat-empty"><div class="empty-icon">C</div><h2>No messages yet.</h2><p>Start the conversation.</p></div></c:when>
                 <c:otherwise><div class="message-list"><c:set var="lastDate" value="" /><c:forEach var="chatMessage" items="${room.messages}"><c:set var="isOwn" value="${sessionScope.userId eq chatMessage.senderId}" /><c:set var="currentDate" value="${chatMessage.dateGroupLabel}" /><c:if test="${currentDate ne lastDate}"><div class="chat-date-separator"><span><c:out value="${currentDate}" /></span></div><c:set var="lastDate" value="${currentDate}" /></c:if><div class="message-row ${isOwn ? 'outgoing' : 'incoming'}"><c:if test="${not isOwn}"><a class="profile-identity-link message-avatar-link" href="${pageContext.request.contextPath}/profile?userId=${chatMessage.senderId}"><div class="avatar"><jsp:include page="../partials/avatar.jsp"><jsp:param name="photo" value="${chatMessage.authorAvatarUrl}"/><jsp:param name="initial" value="${chatMessage.authorName.substring(0,1)}"/></jsp:include></div></a></c:if><div class="message-bubble ${isOwn ? 'outgoing' : 'incoming'}"><header class="message-header"><c:choose><c:when test="${isOwn}"><strong class="current-user-message-label">You</strong><span class="role-badge role-${sessionScope.role}"><c:out value="${sessionScope.role}" /></span></c:when><c:otherwise><a class="profile-name-link" href="${pageContext.request.contextPath}/profile?userId=${chatMessage.senderId}"><strong><c:out value="${chatMessage.authorName}" /></strong></a><span class="role-badge role-${chatMessage.authorRole}"><c:out value="${chatMessage.authorRole}" /></span><c:if test="${room.scope eq 'CR_SEMESTER' or room.scope eq 'CR_ALL' or room.scope eq 'CR_ADMIN' or room.scope eq 'ALL_STUDENTS_ADMIN'}"><span class="message-scope"><c:if test="${not empty chatMessage.authorSemester}">Sem <c:out value="${chatMessage.authorSemester}" /></c:if><c:if test="${not empty chatMessage.authorSection}"> · <c:out value="${chatMessage.authorSection}" /></c:if></span></c:if></c:otherwise></c:choose></header><c:if test="${not empty chatMessage.message}"><p class="message-text"><c:out value="${chatMessage.message}" /></p></c:if><c:set var="attachment" value="${chatMessage.attachment}" scope="request"/><jsp:include page="../partials/attachment.jsp"/><footer class="message-meta"><time><c:out value="${chatMessage.createdLabel}" /></time><c:if test="${sessionScope.role eq 'ADMIN' or isOwn}"><details class="message-actions-menu ${sessionScope.role eq 'ADMIN' ? 'admin-message-actions' : 'own-message-actions'}"><summary title="Message actions" aria-label="${sessionScope.role eq 'ADMIN' ? 'Open moderation actions' : 'Open message actions'}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></summary><div class="message-actions-popover"><form class="message-delete-form ${sessionScope.role eq 'ADMIN' ? 'admin-moderation-delete' : 'own-message-delete'}" method="post" action="${pageContext.request.contextPath}/discussions/messages/delete" onsubmit="return confirm('Delete this message?');"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><input type="hidden" name="id" value="${chatMessage.messageId}"><button type="submit"><c:choose><c:when test="${sessionScope.role eq 'ADMIN'}">Remove as moderator</c:when><c:otherwise>Delete message</c:otherwise></c:choose></button></form></div></details></c:if></footer></div></div></c:forEach></div></c:otherwise>
             </c:choose>
-            <c:if test="${not empty room and room.available}"><form class="chat-composer message-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><div class="attachment-preview-area" hidden></div><div class="composer-controls-row"><label class="attachment-button" title="Attach image, video, audio or file" aria-label="Attach image, video, audio or file"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"></label><span class="composer-input"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Message..."></textarea></span><button class="btn btn-primary composer-send-btn" type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button></div></form></c:if>
+            <c:if test="${not empty room and room.available}"><form class="chat-composer message-composer" method="post" enctype="multipart/form-data" action="${pageContext.request.contextPath}/discussions/messages"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}' />"><input type="hidden" name="scope" value="<c:out value='${room.scope}' />"><c:if test="${sessionScope.role eq 'ADMIN'}"><input type="hidden" name="moderationScope" value="<c:out value='${selectedModerationScope}' />"></c:if><div class="attachment-preview-area" hidden></div><div class="composer-controls-row"><label class="attachment-button" title="Attach image, video, audio or file" aria-label="Attach image, video, audio or file"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg><input type="file" name="attachment" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,audio/mpeg,audio/mp4,audio/aac,audio/wav,audio/ogg,audio/webm,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.zip"></label><span class="composer-input"><label class="visually-hidden" for="message">Type a message</label><textarea id="message" name="message" rows="1" maxlength="2000" placeholder="Message..."></textarea></span><button class="btn btn-primary composer-send-btn" type="submit" aria-label="Send message" title="Send message"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg></button></div></form></c:if>
         </section>
     </main>
 </div>
@@ -88,6 +102,27 @@
 <script src="${pageContext.request.contextPath}/assets/js/discussion-chat.js?v=${applicationScope.assetVersion}" defer></script>
 <script>
 (function() {
+    function initAdminSectionSelector() {
+        var form = document.querySelector('[data-admin-section-form]');
+        if (!form) return;
+        var semester = form.querySelector('[data-section-semester]');
+        var section = form.querySelector('[data-section-name]');
+        function filterSections(preserveSelection) {
+            var selectedSemester = semester.value;
+            var keptValue = preserveSelection ? section.value : '';
+            Array.prototype.forEach.call(section.options, function(option, index) {
+                if (index === 0) return;
+                var matches = selectedSemester !== '' && option.dataset.semester === selectedSemester;
+                option.disabled = !matches;
+                option.hidden = !matches;
+                if (!matches && option.selected) option.selected = false;
+            });
+            section.disabled = selectedSemester === '';
+            if (keptValue) section.value = keptValue;
+        }
+        semester.addEventListener('change', function() { filterSections(false); });
+        filterSections(true);
+    }
     function scrollToBottom() {
         var messageList = document.querySelector('.message-list');
         if (messageList) {
@@ -101,6 +136,7 @@
         }
     }
     function initScrolls() {
+        initAdminSectionSelector();
         scrollToBottom();
         scrollActiveRoomTab();
     }

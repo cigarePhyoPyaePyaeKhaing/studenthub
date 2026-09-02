@@ -77,18 +77,41 @@ class DiscussionServiceAccessTest {
         assertFalse(admin.service.load(7L, "SEMESTER").available());
         assertFalse(admin.service.load(7L, "CR_SEMESTER").available());
         assertTrue(admin.service.load(7L, "CR_ALL").available());
+        assertTrue(admin.service.load(7L, null, null, "all_students").available());
+        assertTrue(admin.service.load(7L, null, null, "all_cr").available());
+        assertEquals(4, admin.service.load(7L, null, null, "semester:4").semester());
+        DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:B");
+        assertEquals(DiscussionScope.SECTION, section.scope());
+        assertEquals("B", section.sectionName());
+        assertThrows(IllegalArgumentException.class,
+                () -> admin.service.load(7L, null, null, "semester:99"));
+        List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
+        assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
+        assertEquals(1, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());
+        assertEquals(1, options.stream().filter(option -> "all_cr".equals(option.key())).count());
     }
 
     private Fixture fixture(String role, Integer semester, String section) {
         AtomicInteger recentCalls = new AtomicInteger();
         DiscussionDAO dao = new DiscussionDAO() {
             @Override public AcademicProfile findAcademicProfile(long userId) {
-                return new AcademicProfile(role, 5L, semester, section);
+                return new AcademicProfile(role, "ADMIN".equals(role) ? null : 5L, semester, section);
             }
             @Override public List<com.studenthub.model.DiscussionMessage> findRecent(DiscussionTarget target, int limit) {
                 recentCalls.incrementAndGet();
                 return List.of();
             }
+            @Override public List<com.studenthub.model.DiscussionMessage> findRecentForModeration(DiscussionTarget target, int limit) {
+                recentCalls.incrementAndGet();
+                return List.of();
+            }
+            @Override public List<RoomOption> findModerationRooms() {
+                return List.of(
+                        new RoomOption(0L, DiscussionScope.SEMESTER, 5L, 4, null, "Semester 4"),
+                        new RoomOption(0L, DiscussionScope.SECTION, 5L, 4, "B", "Semester 4 / Section B"));
+            }
+            @Override public Long findModerationUniversityId() { return 5L; }
         };
         return new Fixture(new DiscussionService(dao), recentCalls);
     }

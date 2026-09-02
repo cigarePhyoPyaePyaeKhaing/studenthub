@@ -36,6 +36,7 @@ class AdminAcademicCommunicationTest {
             @Override public AcademicProfile findAcademicProfile(long userId) { return new AcademicProfile(role, 5L, null, null); }
             @Override public RoomOption findRoom(long roomId) { return roomId == 42L ? new RoomOption(42L, DiscussionScope.SECTION, 5L, 4, "B", "Semester 4 / Section B") : null; }
             @Override public List<com.studenthub.model.DiscussionMessage> findRecent(DiscussionTarget target, int limit) { return List.of(); }
+            @Override public List<com.studenthub.model.DiscussionMessage> findRecentForModeration(DiscussionTarget target, int limit) { return List.of(); }
             @Override public MessageRecord findMessage(long messageId) { return new MessageRecord(messageId, 55L, DiscussionScope.ALL, null, null); }
             @Override public int delete(long messageId) { return 1; }
         };
