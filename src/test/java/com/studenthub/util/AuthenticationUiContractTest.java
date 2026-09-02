@@ -38,7 +38,10 @@ class AuthenticationUiContractTest {
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
         assertTrue(login.contains("<h2>Welcome Back</h2>"));
         assertTrue(register.contains("<h2>Join StudentHub</h2>"));
-        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:30rem}"));
+        assertTrue(css.contains(".account-auth-login{width:min(100%,70rem)"));
+        assertTrue(css.contains(".account-auth-login .account-auth-content{padding:clamp(30px,4vw,46px)"));
+        assertTrue(css.contains(".account-auth-login .account-auth-content>*{max-width:34rem}"));
+        assertTrue(css.contains(".account-auth-login .account-auth-brand-panel::after{display:none}"));
         assertTrue(css.contains(".account-auth-register .account-auth-content>*{max-width:34rem}"));
     }
 

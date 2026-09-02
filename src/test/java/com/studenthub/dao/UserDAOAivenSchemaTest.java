@@ -11,6 +11,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -60,6 +62,7 @@ class UserDAOAivenSchemaTest {
         row.put("email_verified", true);
         row.put("semester", 4);
         row.put("section_name", "A");
+        row.put("created_at", Timestamp.valueOf("2026-08-01 10:15:00"));
 
         Connection connection = createMockConnection(executedSql, row, true);
 
@@ -75,11 +78,13 @@ class UserDAOAivenSchemaTest {
         assertTrue(p.isEmailVerified());
         assertEquals(4, p.getSemester());
         assertEquals("A", p.getSectionName());
+        assertEquals(LocalDateTime.of(2026, 8, 1, 10, 15), p.getCreatedAt());
 
         String sql = executedSql.get();
         assertNotNull(sql);
         assertTrue(sql.contains("FROM users"));
         assertTrue(sql.contains("user_id = ?"));
+        assertTrue(sql.contains("u.created_at"));
     }
 
     @Test
@@ -224,6 +229,7 @@ class UserDAOAivenSchemaTest {
                         Object val = row.get(col);
                         yield Boolean.TRUE.equals(val);
                     }
+                    case "getTimestamp" -> (Timestamp) row.get((String) args[0]);
                     case "wasNull" -> {
                         yield row.get("semester") == null;
                     }

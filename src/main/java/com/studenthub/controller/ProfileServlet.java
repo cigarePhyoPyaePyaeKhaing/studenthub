@@ -23,6 +23,8 @@ import java.sql.SQLException;
 import java.util.Optional;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @WebServlet(name = "ProfileServlet", urlPatterns = "/profile")
 @MultipartConfig(maxFileSize = ProfilePhotoValidator.MAX_BYTES, maxRequestSize = 2300000L)
@@ -79,6 +81,8 @@ public class ProfileServlet extends HttpServlet {
             request.setAttribute("editing", editing);
             request.setAttribute("publicProfile", publicProfile);
             request.setAttribute("messageAllowed", publicProfile && profile.isEmailVerified());
+            request.setAttribute("joinedLabel", profile.getCreatedAt() == null ? null
+                    : profile.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM yyyy", Locale.ENGLISH)));
             try {
                 setPresence(request, profileService.findLastActive(userId).orElse(null));
             } catch (Exception presenceException) {

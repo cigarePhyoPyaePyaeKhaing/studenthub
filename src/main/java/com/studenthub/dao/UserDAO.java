@@ -115,7 +115,7 @@ public class UserDAO {
     public Optional<UserProfile> findProfileById(Connection connection, long userId) throws SQLException {
         String sqlWithJoin = """
                 SELECT u.user_id, u.student_id, u.full_name, u.email, u.role, u.email_verified,
-                       u.semester, u.section_name, u.profile_image, u.university_id,
+                       u.semester, u.section_name, u.profile_image, u.university_id, u.created_at,
                        v.name AS university_name, v.short_name AS university_short_name
                 FROM users u
                 LEFT JOIN universities v ON v.university_id = u.university_id
@@ -155,11 +155,14 @@ public class UserDAO {
                         univName,
                         univShort,
                         univLocked,
-                        academicInfoLocked));
+                        academicInfoLocked,
+                        results.getTimestamp("created_at") == null
+                                ? null : results.getTimestamp("created_at").toLocalDateTime()));
             }
         } catch (SQLException ex) {
             String fallbackSql = """
-                    SELECT user_id, student_id, full_name, email, role, email_verified, semester, section_name
+                    SELECT user_id, student_id, full_name, email, role, email_verified,
+                           semester, section_name, created_at
                     FROM users WHERE user_id = ?
                     """;
             try (PreparedStatement fallbackStmt = connection.prepareStatement(fallbackSql)) {
@@ -190,7 +193,9 @@ public class UserDAO {
                             null,
                             null,
                             false,
-                            academicInfoLocked));
+                            academicInfoLocked,
+                            results.getTimestamp("created_at") == null
+                                    ? null : results.getTimestamp("created_at").toLocalDateTime()));
                 }
             }
         }

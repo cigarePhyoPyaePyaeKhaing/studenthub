@@ -157,15 +157,15 @@
                                     <dt>Full name</dt>
                                     <dd><c:out value="${profile.fullName}" /></dd>
                                 </div>
-                                <c:if test="${profile.role ne 'ADMIN'}"><div>
-                                    <dt>Student ID</dt>
+                                <div>
+                                    <dt>${profile.role eq 'ADMIN' ? 'Account ID' : 'Student ID'}</dt>
                                     <dd>
                                         <c:choose>
                                             <c:when test="${not empty profile.studentId}"><c:out value="${profile.studentId}" /></c:when>
                                             <c:otherwise>Not assigned</c:otherwise>
                                         </c:choose>
                                     </dd>
-                                </div></c:if>
+                                </div>
                                 <c:if test="${not publicProfile}"><div><dt>Email</dt><dd><c:out value="${profile.email}" /></dd></div></c:if>
                                 <div>
                                     <dt>University</dt>
@@ -188,6 +188,8 @@
                                     <dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd>
                                 </div></c:if>
                                 <c:if test="${not publicProfile}"><div><dt>Email status</dt><dd><span class="verification-status ${profile.emailVerified ? 'verified' : 'unverified'}">${profile.emailVerified ? 'Verified' : 'Not verified'}</span></dd></div></c:if>
+                                <c:if test="${not publicProfile and profile.role eq 'ADMIN'}"><div><dt>Last active</dt><dd><c:out value="${presenceLabel}" /></dd></div></c:if>
+                                <c:if test="${not publicProfile and profile.role eq 'ADMIN' and not empty joinedLabel}"><div><dt>Joined</dt><dd><c:out value="${joinedLabel}" /></dd></div></c:if>
                             </dl>
                         </section>
                         <c:if test="${profile.role ne 'ADMIN'}"><section class="profile-card">

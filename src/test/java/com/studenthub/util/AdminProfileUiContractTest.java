@@ -35,9 +35,12 @@ class AdminProfileUiContractTest {
         assertTrue(jsp.contains("${pageContext.request.contextPath}/admin"));
     }
 
-    @Test void adminStudentIdIsOmittedFromHeroAndAccountInformation() throws Exception {
+    @Test void adminAccountIdAndRealActivityMetadataAreShownOnlyInAccountInformation() throws Exception {
         String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/profile.jsp"));
         assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><p>"));
-        assertTrue(jsp.contains("<c:if test=\"${profile.role ne 'ADMIN'}\"><div>\n                                    <dt>Student ID</dt>"));
+        assertTrue(jsp.contains("${profile.role eq 'ADMIN' ? 'Account ID' : 'Student ID'}"));
+        assertTrue(jsp.contains("<dt>Last active</dt>"));
+        assertTrue(jsp.contains("<dt>Joined</dt>"));
+        assertTrue(jsp.contains("not empty joinedLabel"));
     }
 }
