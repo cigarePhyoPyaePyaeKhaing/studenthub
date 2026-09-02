@@ -42,10 +42,12 @@
                     <div class="profile-hero-identity">
                         <div class="profile-avatar"><span class="avatar-fallback"><c:out value="${profile.initial}"/></span><c:if test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="" onerror="this.hidden=true;this.previousElementSibling.hidden=false" onload="this.previousElementSibling.hidden=true"></c:if></div>
                         <div class="profile-identity-block">
+                        <div class="profile-identity-copy">
                         <p class="eyebrow profile-hero-eyebrow">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                         <div class="profile-identity">
                         <h1><c:out value="${profile.fullName}" /></h1>
                         <div class="profile-identity-meta"><span class="profile-role role-${profile.role}"><c:out value="${profile.role}" /></span><p class="presence-status ${activeNow ? 'is-active' : ''}"><span aria-hidden="true"></span><c:out value="${presenceLabel}" /></p></div>
+                        </div>
                         </div>
                         <c:if test="${messageAllowed}"><form method="post" action="${pageContext.request.contextPath}/messages/start" class="profile-message-action"><input type="hidden" name="csrfToken" value="<c:out value='${csrfToken}'/>"><input type="hidden" name="targetUserId" value="${profile.userId}"><button class="btn btn-primary" type="submit" aria-label="Start private conversation"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9.6 9.6 0 0 1-3.8-.8L3 21l1.8-4.8A8.4 8.4 0 1 1 21 11.5Z"/></svg><span>Message</span></button></form></c:if>
                         </div>

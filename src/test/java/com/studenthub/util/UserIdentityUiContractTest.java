@@ -39,9 +39,11 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
         assertTrue(jsp.contains("class=\"profile-identity-block\""));
         assertTrue(jsp.indexOf("profile-hero-identity") < jsp.indexOf("profile-hero-eyebrow"));
-        assertTrue(css.contains(".profile-hero-identity{display:flex;width:100%;max-width:100%;align-items:center;gap:20px}"));
-        assertTrue(css.contains(".profile-identity-block{display:flex;min-width:0;flex:1 1 auto;flex-direction:column;justify-content:center}"));
-        assertTrue(css.contains("align-self:center;flex:0 0 88px;width:88px;height:88px"));
+        assertTrue(jsp.contains("class=\"profile-identity-copy\""));
+        assertTrue(css.contains(".profile-hero-identity{display:grid;width:100%;max-width:100%;grid-template-columns:88px minmax(0,1fr);align-items:center;gap:20px}"));
+        assertTrue(css.contains(".profile-identity-block{display:flex;min-width:0;grid-column:2;flex-direction:column;justify-content:center}"));
+        assertTrue(css.contains(".profile-identity-copy{display:flex;min-width:0;flex-direction:column;justify-content:center}"));
+        assertTrue(css.contains("grid-column:1;align-self:center;width:88px;height:88px"));
         assertTrue(css.contains("@media(max-width:700px)"));
         assertTrue(css.contains("@media(max-width:480px)"));
         assertTrue(css.contains(".profile-identity-block .profile-message-action{width:100%!important}"));

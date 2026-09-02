@@ -51,6 +51,7 @@ class AuthenticationUiContractTest {
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {
         String login = source("src/main/webapp/WEB-INF/views/auth/login.jsp");
         String register = source("src/main/webapp/WEB-INF/views/auth/register.jsp");
+        String css = source("src/main/webapp/assets/css/auth-refined.css");
         assertTrue(login.contains("name=\"login\""));
         assertTrue(login.contains("name=\"password\""));
         assertTrue(login.contains("name=\"csrfToken\""));
@@ -67,5 +68,12 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains(">Join StudentHub</h1>"));
         assertTrue(register.contains("Create your account to stay connected with announcements, deadlines, discussions, and messages."));
         assertTrue(register.contains("Already have an account?"));
+        assertTrue(login.contains("viewport-fit=cover"));
+        assertTrue(register.contains("viewport-fit=cover"));
+        assertTrue(css.contains("-webkit-text-size-adjust:100%"));
+        assertTrue(css.contains("@media(max-width:900px)"));
+        assertTrue(css.contains("display:flex!important;width:100%!important;max-width:100%!important;min-width:0!important"));
+        assertTrue(css.contains(".account-auth-page .auth-form-grid{display:block!important;width:100%!important"));
+        assertTrue(css.contains(".account-auth-brand-panel::before,.account-auth-brand-panel::after{display:none!important"));
     }
 }
