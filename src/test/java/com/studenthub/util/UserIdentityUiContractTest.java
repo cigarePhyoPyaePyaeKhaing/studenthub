@@ -38,7 +38,7 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("class=\"eyebrow profile-hero-eyebrow\""));
         assertTrue(jsp.contains("class=\"profile-hero-identity\""));
         assertTrue(jsp.contains("class=\"profile-identity-block\""));
-        assertTrue(jsp.indexOf("profile-hero-eyebrow") < jsp.indexOf("profile-hero-identity"));
+        assertTrue(jsp.indexOf("profile-hero-identity") < jsp.indexOf("profile-hero-eyebrow"));
         assertTrue(css.contains(".profile-hero-identity{display:grid;grid-template-columns:auto minmax(0,1fr);gap:18px;align-items:center}"));
         assertTrue(css.contains(".profile-identity-block{display:grid;min-width:0;align-content:center}"));
         assertTrue(css.contains("flex-shrink:0;width:88px;height:88px;aspect-ratio:1/1"));
@@ -53,6 +53,7 @@ class UserIdentityUiContractTest {
         assertTrue(jsp.contains("/admin/users/view?id=${profile.userId}"));
         assertFalse(css.contains("margin-left:90px"));
         assertFalse(css.contains("margin-left:76px"));
+        assertTrue(css.contains(".profile-hero-identity{grid-template-columns:88px minmax(0,1fr);align-items:start}"));
     }
 
     @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {

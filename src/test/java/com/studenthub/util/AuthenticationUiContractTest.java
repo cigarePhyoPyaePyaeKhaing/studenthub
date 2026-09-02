@@ -33,7 +33,11 @@ class AuthenticationUiContractTest {
         assertFalse(css.contains("clip-path"));
         assertFalse(css.contains(".auth-experience"));
         assertFalse(css.contains("grid-template-columns:minmax(0,46%)"));
-        assertTrue(css.contains("@media(max-width:600px){.account-auth-brand-panel{display:none}"));
+        assertTrue(css.contains("@media(max-width:600px){.account-auth-brand-panel{display:grid"));
+        assertTrue(css.contains("@keyframes studenthub-auth-float"));
+        assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
+        assertTrue(login.contains("<h2>Welcome Back</h2>"));
+        assertTrue(register.contains("<h2>Join StudentHub</h2>"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {

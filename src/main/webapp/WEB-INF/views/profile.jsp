@@ -39,10 +39,10 @@
             <c:if test="${not empty profile.avatarUrl}"><c:url var="profilePhotoUrl" value="/profile/photo/${profile.avatarUrl}"><c:param name="v" value="${profile.avatarUrl}"/></c:url></c:if>
             <section class="profile-hero">
                 <div class="profile-hero-content">
-                    <p class="eyebrow profile-hero-eyebrow">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                     <div class="profile-hero-identity">
                         <div class="profile-avatar"><span class="avatar-fallback"><c:out value="${profile.initial}"/></span><c:if test="${not empty profile.avatarUrl}"><img src="${profilePhotoUrl}" alt="" onerror="this.hidden=true;this.previousElementSibling.hidden=false" onload="this.previousElementSibling.hidden=true"></c:if></div>
                         <div class="profile-identity-block">
+                        <p class="eyebrow profile-hero-eyebrow">${publicProfile ? 'StudentHub profile' : 'My StudentHub account'}</p>
                         <div class="profile-identity">
                         <h1><c:out value="${profile.fullName}" /></h1>
                         <p>
