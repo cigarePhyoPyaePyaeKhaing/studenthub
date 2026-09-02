@@ -29,6 +29,9 @@ public class DeleteDiscussionMessageServlet extends HttpServlet {
             getServletContext().log("Discussion message delete failed: " + exception.getClass().getName());
             request.getSession().setAttribute("flashError", "The message could not be deleted right now.");
         }
-        response.sendRedirect(request.getContextPath() + "/discussions?scope=" + scope);
+        Object selectedRoom = request.getSession().getAttribute("selectedDiscussionRoomId");
+        String roomQuery = "ADMIN".equals(String.valueOf(request.getSession().getAttribute("role")))
+                && selectedRoom instanceof Long roomId && roomId > 0 ? "&roomId=" + roomId : "";
+        response.sendRedirect(request.getContextPath() + "/discussions?scope=" + scope + roomQuery);
     }
 }

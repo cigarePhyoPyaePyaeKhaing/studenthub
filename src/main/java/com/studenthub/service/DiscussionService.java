@@ -54,21 +54,40 @@ public class DiscussionService {
     }
 
     public RoomView load(long userId, String requestedScope) throws SQLException {
+        return load(userId, requestedScope, null);
+    }
+
+    public RoomView load(long userId, String requestedScope, Long requestedRoomId) throws SQLException {
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        DiscussionTarget target;
+        if ("ADMIN".equals(profile.role()) && requestedRoomId != null) {
+            DiscussionDAO.RoomOption room = dao.findRoom(requestedRoomId);
+            if (room == null || !DiscussionAccess.roleMayAccess(room.scope(), profile.role())) {
+                throw new SecurityException("FORBIDDEN");
+            }
+            scope = room.scope();
+            target = new DiscussionTarget(userId, scope, room.universityId(), room.semester(), room.sectionName());
+            return roomView(scope, room.semester(), room.sectionName(), profile, null, target);
+        }
         if (requestedScope == null || requestedScope.isBlank()) {
             if ("ADMIN".equals(profile.role())) {
-                scope = DiscussionScope.ALL_STUDENTS_ADMIN;
+                scope = DiscussionScope.ALL;
             } else if (DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) != null) {
                 scope = DiscussionScope.ALL;
             }
         }
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
         String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());
-        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
+        target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
+        return roomView(scope, profile.semester(), profile.sectionName(), profile, denial, target);
+    }
+
+    private RoomView roomView(DiscussionScope scope, Integer semester, String sectionName,
+                              DiscussionDAO.AcademicProfile profile, String denial, DiscussionTarget target) throws SQLException {
         boolean crRoomsVisible = DiscussionAccess.roleMayAccess(DiscussionScope.CR_ALL, profile.role());
-        return new RoomView(scope, profile.semester(), profile.sectionName(), crRoomsVisible,
+        return new RoomView(scope, semester, sectionName, crRoomsVisible,
                 DiscussionAccess.denialReason(DiscussionScope.SEMESTER, profile.universityId(), profile.semester(), profile.sectionName()) == null,
                 DiscussionAccess.denialReason(DiscussionScope.SECTION, profile.universityId(), profile.semester(), profile.sectionName()) == null,
                 crRoomsVisible && DiscussionAccess.denialReason(DiscussionScope.CR_SEMESTER, profile.universityId(), profile.semester(), profile.sectionName()) == null,
@@ -76,19 +95,36 @@ public class DiscussionService {
                 denial == null ? dao.findRecent(target, 50) : List.of());
     }
 
+    public List<DiscussionDAO.RoomOption> moderationRooms(long userId) throws SQLException {
+        DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        if (!"ADMIN".equals(profile.role())) throw new SecurityException("FORBIDDEN");
+        return dao.findModerationRooms();
+    }
+
     public OperationResult send(long userId, String requestedScope, String rawMessage) throws SQLException {
         return send(userId,requestedScope,rawMessage,null);
     }
     public OperationResult send(long userId,String requestedScope,String rawMessage,AttachmentUpload attachment)throws SQLException{
+        return send(userId, requestedScope, rawMessage, attachment, null);
+    }
+    public OperationResult send(long userId,String requestedScope,String rawMessage,AttachmentUpload attachment,Long requestedRoomId)throws SQLException{
         DiscussionScope scope = DiscussionScope.fromRequest(requestedScope);
         String validation = DiscussionValidation.validate(rawMessage,attachment!=null);
         if (validation != null) return new OperationResult(false, validation);
         DiscussionDAO.AcademicProfile profile = dao.findAcademicProfile(userId);
+        DiscussionTarget target;
+        if ("ADMIN".equals(profile.role()) && requestedRoomId != null) {
+            DiscussionDAO.RoomOption room = dao.findRoom(requestedRoomId);
+            if (room == null || !DiscussionAccess.roleMayAccess(room.scope(), profile.role())) throw new SecurityException("FORBIDDEN");
+            scope = room.scope();
+            target = new DiscussionTarget(userId, scope, room.universityId(), room.semester(), room.sectionName());
+        } else {
         if (!DiscussionAccess.roleMayAccess(scope, profile.role())) throw new SecurityException("FORBIDDEN");
         String denial = DiscussionAccess.denialReason(scope, profile.universityId(), profile.semester(), profile.sectionName());
         if (denial != null) return new OperationResult(false, denial);
-        DiscussionTarget target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
+        target = DiscussionTarget.fromAuthenticatedUser(userId, scope, profile.universityId(),
                 profile.semester(), profile.sectionName());
+        }
         try (Connection connection = connectionSupplier.get()) {
             connection.setAutoCommit(false);
             try {
@@ -119,8 +155,16 @@ public class DiscussionService {
             if (!DiscussionAccess.matches(message.scope(), profile.semester(), profile.sectionName(),
                     message.semester(), message.sectionName())) return new OperationResult(false, "FORBIDDEN");
         }
-        String attachmentKey=new AttachmentDAO().findStorageKey("MESSAGE",messageId);
-        if(dao.delete(messageId)==1){if(attachmentKey!=null)new AttachmentStorage().delete(attachmentKey);return new OperationResult(true,"Message deleted.");}
+        String attachmentKey=findAttachmentStorageKey(messageId);
+        if(dao.delete(messageId)==1){if(attachmentKey!=null)deleteStoredAttachment(attachmentKey);return new OperationResult(true,"Message deleted.");}
         return new OperationResult(false,"NOT_FOUND");
+    }
+
+    String findAttachmentStorageKey(long messageId) throws SQLException {
+        return new AttachmentDAO().findStorageKey("MESSAGE", messageId);
+    }
+
+    void deleteStoredAttachment(String storageKey) {
+        new AttachmentStorage().delete(storageKey);
     }
 }

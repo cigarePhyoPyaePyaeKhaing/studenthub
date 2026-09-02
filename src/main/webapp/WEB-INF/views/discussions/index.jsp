@@ -43,19 +43,22 @@
         </nav>
         <c:choose>
             <c:when test="${sessionScope.role eq 'ADMIN'}">
-                <nav class="room-tabs room-tabs-two" aria-label="Discussion rooms">
-                    <a class="${room.scope eq 'ALL_STUDENTS_ADMIN' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL_STUDENTS_ADMIN">All Students</a>
-                    <a class="${room.scope eq 'CR_ADMIN' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_ADMIN">CR Community</a>
-                </nav>
+                <form class="admin-room-selector" method="get" action="${pageContext.request.contextPath}/discussions">
+                    <label for="moderation-room">Moderation scope</label>
+                    <select class="form-select" id="moderation-room" name="roomId" onchange="this.form.submit()">
+                        <option value="">All Students</option>
+                        <c:forEach var="moderationRoom" items="${moderationRooms}"><option value="${moderationRoom.roomId}" ${selectedRoomId eq moderationRoom.roomId ? 'selected' : ''}><c:out value="${moderationRoom.roomName}" /></option></c:forEach>
+                    </select>
+                    <noscript><button class="btn btn-primary" type="submit">Open room</button></noscript>
+                </form>
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
-                <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-six' : 'room-tabs-five'}" aria-label="Discussion rooms">
+                <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-five' : 'room-tabs-four'}" aria-label="Discussion rooms">
                     <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                     <c:if test="${room.crSemesterRoomAvailable}"><a class="${room.scope eq 'CR_SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_SEMESTER">CR – Same Semester</a></c:if>
                     <a class="${room.scope eq 'CR_ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_ALL">CR – All</a>
-                    <a class="${room.scope eq 'CR_ADMIN' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_ADMIN">CR – Admin</a>
                 </nav>
             </c:when>
             <c:otherwise>
@@ -63,7 +66,6 @@
                     <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">Section</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
-                    <a class="${room.scope eq 'ALL_STUDENTS_ADMIN' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL_STUDENTS_ADMIN">All Students – Admin</a>
                 </nav>
             </c:otherwise>
         </c:choose>

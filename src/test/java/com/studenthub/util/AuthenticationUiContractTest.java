@@ -24,13 +24,16 @@ class AuthenticationUiContractTest {
         assertFalse(register.contains("class=\"auth-card"));
         assertFalse(login.contains("auth-brand-panel.jsp"));
         assertFalse(register.contains("auth-brand-panel.jsp"));
-        assertTrue(css.contains(".account-auth-surface{width:min(100%,48rem)"));
-        assertTrue(css.contains(".account-auth-login{width:min(100%,33rem)}"));
+        assertTrue(css.contains(".account-auth-surface{display:grid;width:min(100%,64rem)"));
+        assertTrue(css.contains(".account-auth-brand-panel"));
+        assertTrue(login.contains("account-auth-brand-panel"));
+        assertTrue(register.contains("account-auth-brand-panel"));
         assertTrue(css.contains("@media(max-width:600px)"));
         assertTrue(css.contains(".account-auth-page .auth-form-grid{grid-template-columns:minmax(0,1fr)"));
         assertFalse(css.contains("clip-path"));
         assertFalse(css.contains(".auth-experience"));
         assertFalse(css.contains("grid-template-columns:minmax(0,46%)"));
+        assertTrue(css.contains("@media(max-width:600px){.account-auth-brand-panel{display:none}"));
     }
 
     @Test void authFormsPreserveBackendNamesSecurityAndAccessibleErrors() throws Exception {

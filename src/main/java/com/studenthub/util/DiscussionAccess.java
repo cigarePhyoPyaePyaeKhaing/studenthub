@@ -9,13 +9,18 @@ public final class DiscussionAccess {
         if (role == null || scope == null) return false;
         String trustedRole = String.valueOf(role);
         if ("ADMIN".equals(trustedRole)) {
-            return scope == DiscussionScope.ALL_STUDENTS_ADMIN || scope == DiscussionScope.CR_ADMIN;
+            return scope == DiscussionScope.ALL || scope == DiscussionScope.SEMESTER
+                    || scope == DiscussionScope.SECTION || scope == DiscussionScope.CR_SEMESTER
+                    || scope == DiscussionScope.CR_ALL;
         }
         if ("STUDENT".equals(trustedRole)) {
-            return scope == DiscussionScope.ALL_STUDENTS_ADMIN || !scope.isCrOnly();
+            return scope == DiscussionScope.ALL || scope == DiscussionScope.SEMESTER
+                    || scope == DiscussionScope.SECTION;
         }
         if ("CR".equals(trustedRole)) {
-            return scope != DiscussionScope.ALL_STUDENTS_ADMIN;
+            return scope == DiscussionScope.ALL || scope == DiscussionScope.SEMESTER
+                    || scope == DiscussionScope.SECTION || scope == DiscussionScope.CR_SEMESTER
+                    || scope == DiscussionScope.CR_ALL;
         }
         return false;
     }

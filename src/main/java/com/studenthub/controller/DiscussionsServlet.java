@@ -16,7 +16,14 @@ public class DiscussionsServlet extends HttpServlet {
             throws ServletException, IOException {
         long userId = (Long) request.getSession().getAttribute("userId");
         try {
-            request.setAttribute("room", service.load(userId, request.getParameter("scope")));
+            Long roomId = parsePositiveLong(request.getParameter("roomId"));
+            request.setAttribute("room", service.load(userId, request.getParameter("scope"), roomId));
+            if ("ADMIN".equals(String.valueOf(request.getSession().getAttribute("role")))) {
+                request.setAttribute("moderationRooms", service.moderationRooms(userId));
+                request.setAttribute("selectedRoomId", roomId);
+                if (roomId == null) request.getSession().removeAttribute("selectedDiscussionRoomId");
+                else request.getSession().setAttribute("selectedDiscussionRoomId", roomId);
+            }
         } catch (SecurityException exception) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return;
@@ -36,5 +43,11 @@ public class DiscussionsServlet extends HttpServlet {
             request.getSession().removeAttribute("flashError");
         }
         request.getRequestDispatcher("/WEB-INF/views/discussions/index.jsp").forward(request, response);
+    }
+
+    private Long parsePositiveLong(String value) {
+        if (value == null || value.isBlank()) return null;
+        try { long parsed = Long.parseLong(value); return parsed > 0 ? parsed : null; }
+        catch (NumberFormatException exception) { return null; }
     }
 }

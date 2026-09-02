@@ -14,6 +14,8 @@ public class DiscussionDAO {
     public record AcademicProfile(String role, Long universityId, Integer semester, String sectionName) {}
     public record MessageRecord(long messageId, long senderId, DiscussionScope scope,
                                 Integer semester, String sectionName) {}
+    public record RoomOption(long roomId, DiscussionScope scope, Long universityId,
+                             Integer semester, String sectionName, String roomName) {}
 
     public AcademicProfile findAcademicProfile(long userId) throws SQLException {
         String sql = "SELECT role, university_id, semester, section_name FROM users WHERE user_id = ?";
@@ -29,6 +31,45 @@ public class DiscussionDAO {
                         results.getString("section_name"));
             }
         }
+    }
+
+    public List<RoomOption> findModerationRooms() throws SQLException {
+        String sql = """
+                SELECT r.room_id, r.room_type, r.university_id, r.semester, r.section_name,
+                       CONCAT(COALESCE(u.short_name, u.name, 'StudentHub'), ' · ', r.room_name) AS room_name
+                FROM chat_rooms r
+                LEFT JOIN universities u ON u.university_id = r.university_id
+                WHERE r.room_type IN ('SEMESTER','SECTION','CR_SEMESTER','CR_ALL')
+                ORDER BY FIELD(r.room_type,'SEMESTER','SECTION','CR_SEMESTER','CR_ALL'),
+                         r.semester, r.section_name, r.room_name
+                """;
+        List<RoomOption> rooms = new ArrayList<>();
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet results = statement.executeQuery()) {
+            while (results.next()) rooms.add(mapRoomOption(results));
+        }
+        return rooms;
+    }
+
+    public RoomOption findRoom(long roomId) throws SQLException {
+        String sql = "SELECT room_id, room_type, university_id, semester, section_name, room_name FROM chat_rooms WHERE room_id = ?";
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, roomId);
+            try (ResultSet results = statement.executeQuery()) {
+                return results.next() ? mapRoomOption(results) : null;
+            }
+        }
+    }
+
+    private RoomOption mapRoomOption(ResultSet results) throws SQLException {
+        long university = results.getLong("university_id");
+        Long universityId = results.wasNull() ? null : university;
+        return new RoomOption(results.getLong("room_id"),
+                DiscussionScope.valueOf(results.getString("room_type")), universityId,
+                nullableInteger(results, "semester"), results.getString("section_name"),
+                results.getString("room_name"));
     }
 
     public List<DiscussionMessage> findRecent(DiscussionTarget target, int limit) throws SQLException {
