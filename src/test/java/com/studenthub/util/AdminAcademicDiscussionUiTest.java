@@ -30,6 +30,10 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(script.contains("Choose a semester first"));
         assertTrue(script.contains("major ? 'Major' : 'Section'"));
         assertTrue(script.contains("option.dataset.semester === semesterValue"));
+        assertTrue(css.contains(".admin-scope-card.active,.admin-selector-item.active"));
+        assertTrue(jsp.contains("${isAcademicSemesterActive ? 'active' : ''}"));
+        assertTrue(jsp.contains("${isAcademicSectionActive ? 'active' : ''}"));
+        assertTrue(script.contains("syncActiveScope"));
         assertFalse(jsp.contains("Section semester"));
         assertFalse(jsp.contains("Open section"));
         assertFalse(jsp.contains("name=\"roomId\""));
@@ -77,6 +81,29 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(service.contains("\"semester:\" + semester.getKey()"));
         assertTrue(service.contains("AcademicGroupPolicy.optionsFor(semester.getKey())"));
         assertTrue(service.contains("\"section:\" + semester.getKey() + \":\" + group"));
+    }
+
+    @Test void activeSelectionStatesAreMutuallyExclusiveAcrossCardsAndSelectors() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/discussions/index.jsp"));
+        String script = Files.readString(Path.of("src/main/webapp/assets/js/academic-group-selector.js"));
+        String css = Files.readString(Path.of("src/main/webapp/assets/css/dashboard-refined.css"));
+
+        assertTrue(jsp.contains("isGlobalAllStudents"));
+        assertTrue(jsp.contains("isGlobalAllCr"));
+        assertTrue(jsp.contains("isAcademicSemesterActive"));
+        assertTrue(jsp.contains("isAcademicSectionActive"));
+
+        assertTrue(jsp.contains("admin-scope-card ${isGlobalAllStudents ? 'active' : ''}"));
+        assertTrue(jsp.contains("admin-scope-card ${isGlobalAllCr ? 'active' : ''}"));
+        assertTrue(jsp.contains("admin-selector-item ${isAcademicSemesterActive ? 'active' : ''}"));
+        assertTrue(jsp.contains("admin-selector-item ${isAcademicSectionActive ? 'active' : ''}"));
+
+        assertTrue(css.contains(".admin-scope-card.active,.admin-selector-item.active{border-color:var(--cyan-primary)"));
+
+        assertTrue(script.contains("card.classList.remove('active')"));
+        assertTrue(script.contains("card.removeAttribute('aria-current')"));
+        assertTrue(script.contains("semesterItem.classList.toggle('active'"));
+        assertTrue(script.contains("groupItem.classList.toggle('active'"));
     }
 
     private static int occurrences(String source, String value) {

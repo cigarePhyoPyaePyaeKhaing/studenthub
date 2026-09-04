@@ -44,17 +44,21 @@
         <c:choose>
             <c:when test="${sessionScope.role eq 'ADMIN'}">
                 <section class="admin-discussion-controls" aria-label="Admin discussion navigation">
+                    <c:set var="isGlobalAllStudents" value="${selectedModerationScope eq 'all_students'}" />
+                    <c:set var="isGlobalAllCr" value="${selectedModerationScope eq 'all_cr'}" />
+                    <c:set var="isAcademicSemesterActive" value="${not empty selectedModerationSemester and not isGlobalAllStudents and not isGlobalAllCr}" />
+                    <c:set var="isAcademicSectionActive" value="${not empty selectedModerationSection and not isGlobalAllStudents and not isGlobalAllCr}" />
                     <nav class="admin-global-scopes" aria-label="Global discussion scopes">
-                        <a class="admin-scope-card ${selectedModerationScope eq 'all_students' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_students" ${selectedModerationScope eq 'all_students' ? 'aria-current="page"' : ''}>
+                        <a class="admin-scope-card ${isGlobalAllStudents ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_students" ${isGlobalAllStudents ? 'aria-current="page"' : ''}>
                             <span class="admin-scope-card-icon" aria-hidden="true">A</span><span><strong>All Students</strong><small>University-wide student discussion</small></span>
                         </a>
-                        <a class="admin-scope-card ${selectedModerationScope eq 'all_cr' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_cr" ${selectedModerationScope eq 'all_cr' ? 'aria-current="page"' : ''}>
+                        <a class="admin-scope-card ${isGlobalAllCr ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?moderationScope=all_cr" ${isGlobalAllCr ? 'aria-current="page"' : ''}>
                             <span class="admin-scope-card-icon" aria-hidden="true">CR</span><span><strong>All CRs</strong><small>Authorized class representative discussion</small></span>
                         </a>
                     </nav>
                     <form class="admin-scope-form admin-academic-selectors" action="${pageContext.request.contextPath}/discussions" data-academic-group-picker data-navigation-base="${pageContext.request.contextPath}/discussions">
-                        <div class="admin-selector-item"><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-group-semester><option value="">Select Semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
-                        <div class="admin-selector-item"><label for="section-name" data-group-label>Section</label><select class="form-select" id="section-name" data-group-name aria-describedby="academic-group-help"><option value="">Choose a semester first</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select><span class="visually-hidden" id="academic-group-help">The available section or major options depend on the selected semester.</span></div>
+                        <div class="admin-selector-item ${isAcademicSemesterActive ? 'active' : ''}"><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-group-semester><option value="">Select Semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
+                        <div class="admin-selector-item ${isAcademicSectionActive ? 'active' : ''}"><label for="section-name" data-group-label>Section</label><select class="form-select" id="section-name" data-group-name aria-describedby="academic-group-help"><option value="">Choose a semester first</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select><span class="visually-hidden" id="academic-group-help">The available section or major options depend on the selected semester.</span></div>
                     </form>
                 </section>
             </c:when>
