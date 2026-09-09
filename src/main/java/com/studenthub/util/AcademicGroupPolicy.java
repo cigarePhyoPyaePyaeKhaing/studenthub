@@ -17,12 +17,13 @@ public final class AcademicGroupPolicy {
     public static List<String> optionsFor(int semester) {
         if (semester == 1 || semester == 2 || semester == 5 || semester == 6) return FIVE_SECTIONS;
         if (semester == 3 || semester == 4) return FOUR_SECTIONS;
-        if (semester >= 7 && semester <= 10) return MAJORS;
+        if (semester == 7) return MAJORS;
+        if (semester >= 8 && semester <= 10) return FIVE_SECTIONS;
         return List.of();
     }
 
     public static boolean isMajorSemester(int semester) {
-        return semester >= 7 && semester <= 10;
+        return semester == 7;
     }
 
     public static String groupLabel(int semester) {

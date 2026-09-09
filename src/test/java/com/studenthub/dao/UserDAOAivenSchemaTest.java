@@ -30,13 +30,14 @@ class UserDAOAivenSchemaTest {
 
         Connection connection = createMockInsertConnection(executedSql, boundParams, 123L);
 
-        long generatedId = dao.createPendingStudent(connection, "TNT-1234", "Mg Ba", "mgba@uit.edu", "hashed_pw");
+        long generatedId = dao.createPendingStudent(connection, "TNT-1234", "Mg Ba", "mgba@uit.edu",
+                "hashed_pw", 8, "A");
 
         assertEquals(123L, generatedId);
         String sql = executedSql.get();
         assertNotNull(sql);
         assertTrue(sql.contains("INSERT INTO users"));
-        assertTrue(sql.contains("(username, student_id, email, password_hash, full_name, role, email_verified)"));
+        assertTrue(sql.contains("semester, section_name"));
         assertFalse(sql.contains("universities"));
         assertFalse(sql.contains("university_id"));
         assertFalse(sql.contains("academic_info_locked"));
@@ -47,6 +48,8 @@ class UserDAOAivenSchemaTest {
         assertEquals("hashed_pw", boundParams.get(4));
         assertEquals("Mg Ba", boundParams.get(5));
         assertEquals("STUDENT", boundParams.get(6));
+        assertEquals(8, boundParams.get(7));
+        assertEquals("A", boundParams.get(8));
     }
 
     @Test
@@ -198,7 +201,7 @@ class UserDAOAivenSchemaTest {
                 new Class[]{PreparedStatement.class},
                 (proxy, method, args) -> switch (method.getName()) {
                     case "executeUpdate" -> 1;
-                    case "setString" -> {
+                    case "setString", "setInt" -> {
                         boundParams.put((Integer) args[0], args[1]);
                         yield null;
                     }

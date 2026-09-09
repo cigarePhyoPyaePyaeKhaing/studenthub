@@ -58,13 +58,13 @@
                     </nav>
                     <form class="admin-scope-form admin-academic-selectors" action="${pageContext.request.contextPath}/discussions" data-academic-group-picker data-navigation-base="${pageContext.request.contextPath}/discussions">
                         <div class="admin-selector-item ${isAcademicSemesterActive ? 'active' : ''}"><label for="moderation-semester">Semester</label><select class="form-select" id="moderation-semester" data-group-semester><option value="">Select Semester</option><c:forEach var="option" items="${moderationSemesters}"><option value="${option.semester}" ${selectedModerationSemester eq option.semester ? 'selected' : ''}>Semester ${option.semester}</option></c:forEach></select></div>
-                        <div class="admin-selector-item ${isAcademicSectionActive ? 'active' : ''}"><label for="section-name" data-group-label>Section</label><select class="form-select" id="section-name" data-group-name aria-describedby="academic-group-help"><option value="">Choose a semester first</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select><span class="visually-hidden" id="academic-group-help">The available section or major options depend on the selected semester.</span></div>
+                        <div class="admin-selector-item ${isAcademicSectionActive ? 'active' : ''}"><label for="section-name" data-group-label>Section</label><select class="form-select" id="section-name" data-group-name aria-describedby="academic-group-help"><option value="">Choose a semester first</option><c:forEach var="option" items="${moderationSections}"><option value="<c:out value='${option.sectionName}'/>" data-semester="${option.semester}" ${selectedModerationScope eq option.key ? 'selected' : ''}><c:out value="${option.sectionName}" /></option></c:forEach></select><span class="visually-hidden" id="academic-group-help">The available academic group options depend on the selected semester.</span></div>
                     </form>
                 </section>
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
                 <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-five' : 'room-tabs-four'}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester ge 7 ? 'Major' : 'Section'}</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester eq 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                     <c:if test="${room.crSemesterRoomAvailable}"><a class="${room.scope eq 'CR_SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_SEMESTER">CR – Same Semester</a></c:if>
@@ -73,7 +73,7 @@
             </c:when>
             <c:otherwise>
                 <nav class="room-tabs ${not empty room and (room.sectionRoomAvailable and room.semesterRoomAvailable) ? 'room-tabs-four' : ((room.sectionRoomAvailable or room.semesterRoomAvailable) ? 'room-tabs-three' : 'room-tabs-two')}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester ge 7 ? 'Major' : 'Section'}</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester eq 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                 </nav>

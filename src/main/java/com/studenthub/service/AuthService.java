@@ -4,6 +4,7 @@ import com.studenthub.dao.UserDAO;
 import com.studenthub.model.OtpPurpose;
 import com.studenthub.model.User;
 import com.studenthub.util.AuthValidation;
+import com.studenthub.util.AcademicGroupPolicy;
 import com.studenthub.util.DBConnection;
 import com.studenthub.util.PasswordUtil;
 
@@ -43,7 +44,8 @@ public class AuthService {
     }
 
     public RegistrationResult register(String studentIdInput, String fullNameInput, String emailInput,
-                                       String password, String confirmation)
+                                       String password, String confirmation, String semesterInput,
+                                       String sectionInput)
             throws SQLException, EmailServiceException {
         String studentId = AuthValidation.normalizeStudentId(studentIdInput);
         String email = AuthValidation.normalizeEmail(emailInput);
@@ -66,13 +68,29 @@ public class AuthService {
             return new RegistrationResult(false, 0, "Password confirmation does not match.");
         }
 
+        int semester;
+        try {
+            semester = Integer.parseInt(semesterInput == null ? "" : semesterInput.trim());
+        } catch (NumberFormatException exception) {
+            return new RegistrationResult(false, 0, "Select a valid semester.");
+        }
+        if (semester < 1 || semester > 10) {
+            return new RegistrationResult(false, 0, "Semester must be between 1 and 10.");
+        }
+        String sectionName = AcademicGroupPolicy.normalize(semester, sectionInput);
+        if (sectionName == null) {
+            return new RegistrationResult(false, 0, "Select a valid "
+                    + AcademicGroupPolicy.groupLabel(semester).toLowerCase(java.util.Locale.ROOT)
+                    + " for Semester " + semester + ".");
+        }
+
         long userId;
         String otp;
         try (Connection connection = connectionProvider.get()) {
             connection.setAutoCommit(false);
             try {
                 userId = userDAO.createPendingStudent(connection, studentId, fullName, email,
-                        PasswordUtil.hash(password));
+                        PasswordUtil.hash(password), semester, sectionName);
                 otp = otpService.issue(connection, userId, email, OtpPurpose.EMAIL_VERIFICATION);
                 connection.commit();
             } catch (SQLException exception) {

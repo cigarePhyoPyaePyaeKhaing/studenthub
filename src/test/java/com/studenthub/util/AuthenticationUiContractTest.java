@@ -62,8 +62,10 @@ class AuthenticationUiContractTest {
         assertTrue(register.contains("name=\"email\""));
         assertTrue(register.contains("name=\"confirmPassword\""));
         assertTrue(register.contains("name=\"csrfToken\""));
-        assertFalse(register.contains("name=\"semester\""));
-        assertFalse(register.contains("name=\"section"));
+        assertTrue(register.contains("name=\"semester\""));
+        assertTrue(register.contains("name=\"sectionName\""));
+        assertTrue(register.contains("data-academic-group-picker"));
+        assertTrue(register.contains("academic-group-selector.js"));
         assertTrue(login.contains("Sign in to continue."));
         assertTrue(register.contains(">Join StudentHub</h1>"));
         assertTrue(register.contains("Create your account to stay connected with announcements, deadlines, discussions, and messages."));

@@ -3,6 +3,7 @@ package com.studenthub.controller;
 import com.studenthub.service.AuthService;
 import com.studenthub.service.EmailServiceException;
 import com.studenthub.util.CsrfToken;
+import com.studenthub.util.AcademicGroupPolicy;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,6 +24,7 @@ public class RegisterServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         request.setAttribute("csrfToken", CsrfToken.getOrCreate(request.getSession(true)));
+        request.setAttribute("academicGroupOptions", AcademicGroupPolicy.allOptions());
         request.getRequestDispatcher("/WEB-INF/views/auth/register.jsp").forward(request, response);
     }
 
@@ -37,7 +39,8 @@ public class RegisterServlet extends HttpServlet {
         try {
             AuthService.RegistrationResult result = authService.register(request.getParameter("studentId"),
                     request.getParameter("fullName"), request.getParameter("email"),
-                    request.getParameter("password"), request.getParameter("confirmPassword"));
+                    request.getParameter("password"), request.getParameter("confirmPassword"),
+                    request.getParameter("semester"), request.getParameter("sectionName"));
             if (result.successful()) {
                 request.getSession().setAttribute("pendingVerificationUserId", result.userId());
                 response.sendRedirect(request.getContextPath() + "/verify-email");

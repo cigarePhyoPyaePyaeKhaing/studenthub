@@ -25,11 +25,13 @@ public class UserDAO {
         List<UserSearchResult> out=new ArrayList<>();try(Connection c=DBConnection.getConnection();PreparedStatement s=c.prepareStatement(sql)){s.setLong(1,currentUserId);s.setString(2,like);s.setString(3,like);s.setString(4,like);s.setString(5,query);s.setInt(6,safeLimit);try(ResultSet r=s.executeQuery()){while(r.next()){var active=r.getTimestamp("last_active_at");out.add(new UserSearchResult(r.getLong("user_id"),r.getString("student_id"),r.getString("full_name"),r.getString("role"),r.getString("profile_image"),active==null?null:active.toLocalDateTime()));}}}return out;
     }
     public long createPendingStudent(Connection connection, String studentId, String fullName,
-                                     String email, String passwordHash) throws SQLException {
+                                     String email, String passwordHash, int semester,
+                                     String sectionName) throws SQLException {
         String sql = """
                 INSERT INTO users
-                    (username, student_id, email, password_hash, full_name, role, email_verified)
-                VALUES (?, ?, ?, ?, ?, ?, FALSE)
+                    (username, student_id, email, password_hash, full_name, role, email_verified,
+                     semester, section_name)
+                VALUES (?, ?, ?, ?, ?, ?, FALSE, ?, ?)
                 """;
         try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             statement.setString(1, studentId);
@@ -38,6 +40,8 @@ public class UserDAO {
             statement.setString(4, passwordHash);
             statement.setString(5, fullName);
             statement.setString(6, RegistrationPolicy.initialRole().name());
+            statement.setInt(7, semester);
+            statement.setString(8, sectionName);
             statement.executeUpdate();
             try (ResultSet keys = statement.getGeneratedKeys()) {
                 if (keys.next()) {

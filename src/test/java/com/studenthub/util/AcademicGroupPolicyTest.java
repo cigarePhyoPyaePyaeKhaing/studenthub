@@ -14,33 +14,36 @@ class AcademicGroupPolicyTest {
         assertEquals(List.of("A", "B", "C", "D"), AcademicGroupPolicy.optionsFor(4));
         assertEquals(List.of("A", "B", "C", "D", "E"), AcademicGroupPolicy.optionsFor(5));
         assertEquals(List.of("A", "B", "C", "D", "E"), AcademicGroupPolicy.optionsFor(6));
-        for (int semester = 7; semester <= 10; semester++) {
-            assertEquals(List.of("SE", "KE", "BIS", "HPC", "CN", "CSec", "ES"),
-                    AcademicGroupPolicy.optionsFor(semester));
-            assertEquals("Major", AcademicGroupPolicy.groupLabel(semester));
+        assertEquals(List.of("SE", "KE", "BIS", "HPC", "CN", "CSec", "ES"),
+                AcademicGroupPolicy.optionsFor(7));
+        assertEquals("Major", AcademicGroupPolicy.groupLabel(7));
+        for (int semester = 8; semester <= 10; semester++) {
+            assertEquals(List.of("A", "B", "C", "D", "E"), AcademicGroupPolicy.optionsFor(semester));
+            assertEquals("Section", AcademicGroupPolicy.groupLabel(semester));
         }
-        assertEquals(56, AcademicGroupPolicy.allOptions().size());
+        assertEquals(50, AcademicGroupPolicy.allOptions().size());
     }
 
     @Test void requiredValidCombinationsAreAccepted() {
         assertValid(1, "A"); assertValid(1, "E"); assertValid(2, "E");
         assertValid(3, "A"); assertValid(3, "D"); assertValid(4, "D");
         assertValid(5, "E"); assertValid(6, "E"); assertValid(7, "SE");
-        assertValid(7, "CSec"); assertValid(8, "BIS"); assertValid(9, "HPC");
-        assertValid(10, "ES");
+        assertValid(7, "CSec"); assertValid(8, "A"); assertValid(8, "E");
+        assertValid(9, "C"); assertValid(10, "E");
     }
 
     @Test void requiredInvalidCombinationsAreRejected() {
         assertFalse(AcademicGroupPolicy.isValid(3, "E"));
         assertFalse(AcademicGroupPolicy.isValid(4, "E"));
         assertFalse(AcademicGroupPolicy.isValid(7, "A"));
-        assertFalse(AcademicGroupPolicy.isValid(8, "D"));
-        assertFalse(AcademicGroupPolicy.isValid(9, "E"));
-        assertFalse(AcademicGroupPolicy.isValid(10, "B"));
+        assertFalse(AcademicGroupPolicy.isValid(8, "BIS"));
+        assertFalse(AcademicGroupPolicy.isValid(9, "HPC"));
+        assertFalse(AcademicGroupPolicy.isValid(10, "ES"));
     }
 
     @Test void canonicalNormalizationPreservesMajorDisplayCase() {
-        assertEquals("CSec", AcademicGroupPolicy.normalize(10, " csec "));
+        assertEquals("CSec", AcademicGroupPolicy.normalize(7, " csec "));
+        assertEquals("E", AcademicGroupPolicy.normalize(10, " e "));
         assertEquals("B", AcademicGroupPolicy.normalize(3, " b "));
     }
 

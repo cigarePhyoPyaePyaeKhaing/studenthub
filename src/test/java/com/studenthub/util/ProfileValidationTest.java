@@ -12,7 +12,8 @@ class ProfileValidationTest {
     @Test void nullSemesterIsAccepted() { assertTrue(valid("Mya Mya", "", "").valid()); }
     @Test void validSemesterRangeIsAccepted() {
         assertTrue(valid("Mya Mya", "1", "A").valid());
-        assertTrue(valid("Mya Mya", "10", "ES").valid());
+        assertTrue(valid("Mya Mya", "10", "E").valid());
+        assertFalse(valid("Mya Mya", "10", "ES").valid());
     }
     @Test void semesterBelowRangeIsRejected() { assertFalse(valid("Mya Mya", "0", "A").valid()); }
     @Test void semesterAboveRangeIsRejected() { assertFalse(valid("Mya Mya", "11", "A").valid()); }

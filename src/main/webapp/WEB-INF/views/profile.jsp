@@ -110,7 +110,7 @@
                                         <strong>Semester <c:out value="${profile.semester}" /></strong>
                                     </div>
                                     <div class="locked-field">
-                                        <span>${profile.semester ge 7 ? 'Major' : 'Section'}</span>
+                                        <span>${profile.semester eq 7 ? 'Major' : 'Section'}</span>
                                         <strong><c:out value="${profile.sectionName}" /></strong>
                                     </div>
                                     <p class="profile-security-note">Academic information is locked. Submit an academic change request if it needs correction.</p>
@@ -127,7 +127,7 @@
                                         </select>
                                     </div>
                                     <div>
-                                        <label for="sectionName" data-group-label>${profile.semester ge 7 ? 'Major' : 'Section'}</label>
+                                        <label for="sectionName" data-group-label>${profile.semester eq 7 ? 'Major' : 'Section'}</label>
                                         <select class="form-select" id="sectionName" name="sectionName" data-group-name data-current-value="<c:out value='${profile.sectionName}' />"><option value="">Choose a semester first</option><c:forEach var="option" items="${academicGroupOptions}"><option value="<c:out value='${option.value}'/>" data-semester="${option.semester}"><c:out value="${option.value}" /></option></c:forEach></select>
                                     </div>
                                     </div>
@@ -204,7 +204,7 @@
                                         <c:when test="${not empty profile.semester and not empty profile.sectionName}">
                                             <dl class="profile-details">
                                                 <div><dt>Semester</dt><dd>Semester <c:out value="${profile.semester}" /></dd></div>
-                                                <div><dt>${profile.semester ge 7 ? 'Major' : 'Section'}</dt><dd><c:out value="${profile.sectionName}" /></dd></div>
+                                                <div><dt>${profile.semester eq 7 ? 'Major' : 'Section'}</dt><dd><c:out value="${profile.sectionName}" /></dd></div>
                                                 <div><dt>Role</dt><dd><span class="role-badge role-${profile.role}"><c:out value="${profile.role}" /></span></dd></div>
                                             </dl>
                                         </c:when>
@@ -214,7 +214,7 @@
                                 <c:otherwise>
                                     <dl class="profile-details">
                                         <div><dt>Semester</dt><dd><c:choose><c:when test="${empty profile.semester}">Not assigned</c:when><c:otherwise>Semester <c:out value="${profile.semester}" /></c:otherwise></c:choose></dd></div>
-                                        <div><dt>${profile.semester ge 7 ? 'Major' : 'Section'}</dt><dd><c:choose><c:when test="${empty profile.sectionName}">Not assigned</c:when><c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise></c:choose></dd></div>
+                                        <div><dt>${profile.semester eq 7 ? 'Major' : 'Section'}</dt><dd><c:choose><c:when test="${empty profile.sectionName}">Not assigned</c:when><c:otherwise><c:out value="${profile.sectionName}" /></c:otherwise></c:choose></dd></div>
                                     </dl>
                                 </c:otherwise>
                             </c:choose>
@@ -224,7 +224,7 @@
                                     <c:choose>
                                         <c:when test="${not empty pendingAcademicRequest}">
                                             <div class="alert alert-info mt-3">
-                                                <strong>Academic change request pending:</strong> Requested Semester <c:out value="${pendingAcademicRequest.requestedSemester}" />, ${pendingAcademicRequest.requestedSemester ge 7 ? 'Major' : 'Section'} <c:out value="${pendingAcademicRequest.requestedSection}" />.
+                                                <strong>Academic change request pending:</strong> Requested Semester <c:out value="${pendingAcademicRequest.requestedSemester}" />, ${pendingAcademicRequest.requestedSemester eq 7 ? 'Major' : 'Section'} <c:out value="${pendingAcademicRequest.requestedSection}" />.
                                                 <div class="small text-secondary mt-1">Reason: <c:out value="${pendingAcademicRequest.reason}" /></div>
                                                 <div class="small text-secondary mt-1">Submitted on <c:out value="${pendingAcademicRequest.createdLabel}" /></div>
                                             </div>
@@ -247,7 +247,7 @@
                                                                 <span class="item-value">Semester <c:out value="${profile.semester}" /></span>
                                                             </div>
                                                             <div class="student-current-academic-item">
-                                                                <span class="item-label">Current ${profile.semester ge 7 ? 'major' : 'section'}</span>
+                                                                <span class="item-label">Current ${profile.semester eq 7 ? 'major' : 'section'}</span>
                                                                 <span class="item-value"><c:out value="${profile.sectionName}" /></span>
                                                             </div>
                                                         </div>
@@ -262,7 +262,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="mb-3">
-                                                        <label class="form-label" for="reqSection" data-group-label>Requested ${profile.semester ge 7 ? 'major' : 'section'}</label>
+                                                        <label class="form-label" for="reqSection" data-group-label>Requested ${profile.semester eq 7 ? 'major' : 'section'}</label>
                                                         <select class="form-select" id="reqSection" name="sectionName" data-group-name data-current-value="<c:out value='${profile.sectionName}' />" required><option value="">Choose a semester first</option><c:forEach var="option" items="${academicGroupOptions}"><option value="<c:out value='${option.value}'/>" data-semester="${option.semester}"><c:out value="${option.value}" /></option></c:forEach></select>
                                                     </div>
                                                     </div>
