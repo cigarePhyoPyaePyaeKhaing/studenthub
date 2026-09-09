@@ -16,12 +16,23 @@ class PublicLandingAnnouncementUiContractTest {
         String home = source("src/main/webapp/WEB-INF/views/public/home.jsp");
         assertFalse(header.contains(">Features</a>"));
         assertFalse(header.contains(">About</a>"));
+        assertFalse(header.contains(">Home</a>"));
+        assertFalse(header.contains(">How It Works</a>"));
+        assertFalse(header.contains("data-menu-toggle"));
         assertFalse(footer.contains(">Features</a>"));
         assertFalse(footer.contains(">About</a>"));
         for (String demo : new String[]{"Database Assignment", "Normalization Exercises", "Linear Algebra Exam", "Lecture Material uploaded", "Semester 4", "Section B", "Campus Pulse academic preview"}) {
             assertFalse(home.contains(demo));
         }
-        assertTrue(home.contains("class=\"hero-visual\""));
+        assertTrue(home.contains("class=\"hero-product-visual\""));
+        assertTrue(home.contains("class=\"product-window\""));
+        assertTrue(home.contains("Announcements</span>"));
+        assertTrue(home.contains("Discussions</span>"));
+        assertTrue(home.contains("Deadlines</span>"));
+        assertTrue(home.contains("Community</span>"));
+        assertTrue(home.contains("Same campus. A brighter tomorrow."));
+        assertFalse(home.contains("hero-orbit"));
+        assertFalse(home.contains("hero-node"));
         assertTrue(home.contains("/register"));
         assertTrue(home.contains("/login"));
     }

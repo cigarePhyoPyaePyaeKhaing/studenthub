@@ -65,14 +65,14 @@ class UserIdentityUiContractTest {
     @Test void publicHomeAbstractVisualUsesCssOnlyAndHonorsReducedMotion() throws Exception {
         String css = source("src/main/webapp/assets/css/public.css");
         String home = source("src/main/webapp/WEB-INF/views/public/home.jsp");
-        assertTrue(home.contains("class=\"hero-visual\""));
+        assertTrue(home.contains("class=\"hero-product-visual\""));
         assertTrue(home.contains("<jsp:include page=\"../partials/logo.jsp\">"));
-        assertTrue(css.contains("@keyframes hero-mark-breathe"));
-        assertTrue(css.contains(".hero-visual::before"));
+        assertTrue(css.contains(".product-window"));
+        assertTrue(css.contains(".feature-float"));
         assertFalse(css.contains("background-size:34px 34px"));
         assertFalse(css.contains("@keyframes pulse-ambient-drift"));
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
-        assertTrue(css.contains(".hero-visual-mark{animation:none"));
+        assertTrue(css.contains("@media(prefers-reduced-motion:reduce){.product-window,.feature-float{transition:none}"));
     }
 
     @Test void sharedAvatarRendererAlwaysCropsInsideItsParentShape() throws Exception {

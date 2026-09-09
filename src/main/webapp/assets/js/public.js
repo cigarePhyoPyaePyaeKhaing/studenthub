@@ -2,8 +2,6 @@
     "use strict";
     var root = document.documentElement;
     var themeButton = document.querySelector("[data-theme-toggle]");
-    var menuButton = document.querySelector("[data-menu-toggle]");
-    var navigation = document.querySelector("[data-public-nav]");
 
     function updateThemeButton() {
         if (!themeButton) return;
@@ -25,16 +23,4 @@
         });
     }
 
-    if (menuButton && navigation) {
-        menuButton.addEventListener("click", function () {
-            var open = navigation.classList.toggle("is-open");
-            menuButton.setAttribute("aria-expanded", String(open));
-        });
-        navigation.addEventListener("click", function (event) {
-            if (event.target.closest("a")) {
-                navigation.classList.remove("is-open");
-                menuButton.setAttribute("aria-expanded", "false");
-            }
-        });
-    }
 }());
