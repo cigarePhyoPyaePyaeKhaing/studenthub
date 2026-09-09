@@ -19,4 +19,10 @@ class SidebarNavigationUiContractTest {
         assertFalse(jsp.contains("pageContext.request.requestURI"));
         assertFalse(jsp.contains("pageContext.request.servletPath"));
     }
+    @Test void desktopSidebarKeepsAccountControlsReachableOnShortLaptopScreens() throws Exception {
+        String jsp = Files.readString(Path.of("src/main/webapp/WEB-INF/views/partials/sidebar.jsp"));
+        assertTrue(jsp.contains("overflow-y: auto"));
+        assertTrue(jsp.contains("@media (min-width: 1181px) and (max-height: 850px)"));
+        assertTrue(jsp.contains("height: calc(100dvh - 28px)"));
+    }
 }

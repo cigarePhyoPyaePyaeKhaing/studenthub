@@ -1,5 +1,45 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<style>
+    /* Keep account controls reachable when laptop display scaling reduces viewport height. */
+    .dashboard-sidebar {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+    }
+
+    @media (min-width: 1181px) and (max-height: 850px) {
+        .dashboard-sidebar {
+            top: 14px;
+            height: calc(100dvh - 28px);
+            padding: 14px 16px;
+        }
+
+        .dashboard-sidebar .sidebar-links {
+            gap: 2px;
+            margin-top: 12px;
+        }
+
+        .dashboard-sidebar .sidebar-links a,
+        .dashboard-sidebar .sidebar-logout button {
+            min-height: 40px;
+            padding: 7px 12px;
+        }
+
+        .dashboard-sidebar .sidebar-theme {
+            margin: 8px 0 4px;
+        }
+
+        .dashboard-sidebar .sidebar-theme .theme-control {
+            padding: 2px;
+        }
+
+        .dashboard-sidebar .sidebar-theme .theme-control button {
+            width: 34px;
+            height: 34px;
+        }
+    }
+</style>
 <nav class="sidebar-content" aria-label="Primary navigation">
     <c:set var="homeActive" value="${activeNav eq 'HOME'}" />
     <c:set var="announcementsActive" value="${activeNav eq 'ANNOUNCEMENTS'}" />
