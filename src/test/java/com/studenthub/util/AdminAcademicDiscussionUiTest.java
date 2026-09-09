@@ -29,7 +29,7 @@ class AdminAcademicDiscussionUiTest {
         assertTrue(css.contains("@media(max-width:600px)"));
         assertTrue(script.contains("Choose a semester first"));
         assertTrue(script.contains("major ? 'Major' : 'Section'"));
-        assertTrue(script.contains("Number(semesterValue) <= 7"));
+        assertTrue(script.contains("Number(semesterValue) <= 6"));
         assertTrue(script.contains("option.dataset.semester === semesterValue"));
         assertTrue(css.contains(".admin-scope-card.active,.admin-selector-item.active"));
         assertTrue(jsp.contains("${isAcademicSemesterActive ? 'active' : ''}"));

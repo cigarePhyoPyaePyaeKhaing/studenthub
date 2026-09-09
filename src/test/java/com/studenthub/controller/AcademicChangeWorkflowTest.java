@@ -54,7 +54,7 @@ class AcademicChangeWorkflowTest {
         };
 
         UserProfile currentProfile = new UserProfile(55L, "TNT-0055", "Test Student", "test55@uit.edu",
-                Role.STUDENT, true, 4, "C");
+                Role.STUDENT, true, 4, "BIS");
         ProfileService mockProfileService = new ProfileService(null) {
             @Override
             public Optional<UserProfile> findOwnProfile(long userId) {
@@ -68,7 +68,7 @@ class AcademicChangeWorkflowTest {
         sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
         requestParameters.put("csrfToken", "valid-csrf");
         requestParameters.put("semester", "5");
-        requestParameters.put("sectionName", "B");
+        requestParameters.put("sectionName", "CN");
         requestParameters.put("reason", "Transferred to new major and section");
 
         HttpServletRequest request = createMockRequest();
@@ -79,7 +79,7 @@ class AcademicChangeWorkflowTest {
         assertEquals("/context/profile", redirectedUrl);
         assertEquals(55L, capturedUserId.get());
         assertEquals(5, capturedSemester.get());
-        assertEquals("B", capturedSection.get());
+        assertEquals("CN", capturedSection.get());
         assertEquals("Transferred to new major and section", capturedReason.get());
         assertEquals("Academic change request submitted for administrator review.", sessionAttributes.get("flash"));
     }
@@ -88,7 +88,7 @@ class AcademicChangeWorkflowTest {
     void requestWithExactSameSemesterAndSectionIsRejected() throws Exception {
         AcademicChangeDAO mockDao = new AcademicChangeDAO();
         UserProfile currentProfile = new UserProfile(55L, "TNT-0055", "Test Student", "test55@uit.edu",
-                Role.STUDENT, true, 4, "C");
+                Role.STUDENT, true, 4, "BIS");
         ProfileService mockProfileService = new ProfileService(null) {
             @Override
             public Optional<UserProfile> findOwnProfile(long userId) {
@@ -102,7 +102,7 @@ class AcademicChangeWorkflowTest {
         sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
         requestParameters.put("csrfToken", "valid-csrf");
         requestParameters.put("semester", "4");
-        requestParameters.put("sectionName", "C");
+        requestParameters.put("sectionName", "BIS");
         requestParameters.put("reason", "Trying to request same values");
 
         HttpServletRequest request = createMockRequest();
@@ -134,7 +134,7 @@ class AcademicChangeWorkflowTest {
         sessionAttributes.put(CsrfToken.SESSION_KEY, "valid-csrf");
         requestParameters.put("csrfToken", "valid-csrf");
         requestParameters.put("semester", "5");
-        requestParameters.put("sectionName", "C");
+        requestParameters.put("sectionName", "CN");
         requestParameters.put("reason", "Transferred to new major and section");
 
         HttpServletRequest request = createMockRequest();

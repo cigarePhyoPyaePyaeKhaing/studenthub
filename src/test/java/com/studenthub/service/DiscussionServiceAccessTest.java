@@ -41,7 +41,7 @@ class DiscussionServiceAccessTest {
     }
 
     @Test void studentWithCompleteAcademicProfileCanLoadMatchingRooms() throws Exception {
-        Fixture fixture = fixture("STUDENT", 2, "A");
+        Fixture fixture = fixture("STUDENT", 2, "KE");
         assertTrue(fixture.service.load(7L, "ALL").available());
         assertThrows(SecurityException.class, () -> fixture.service.load(7L, "ALL_STUDENTS_ADMIN"));
         assertTrue(fixture.service.load(7L, "SEMESTER").available());
@@ -84,19 +84,19 @@ class DiscussionServiceAccessTest {
         DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:SE");
         assertEquals(DiscussionScope.SECTION, section.scope());
         assertEquals("SE", section.sectionName());
-        assertEquals("SE", admin.service.load(7L, null, null, "section:7:SE").sectionName());
+        assertEquals("A", admin.service.load(7L, null, null, "section:7:A").sectionName());
         assertEquals("E", admin.service.load(7L, null, null, "section:8:E").sectionName());
         assertThrows(IllegalArgumentException.class,
                 () -> admin.service.load(7L, null, null, "section:3:E"));
         assertThrows(IllegalArgumentException.class,
-                () -> admin.service.load(7L, null, null, "section:7:A"));
+                () -> admin.service.load(7L, null, null, "section:7:SE"));
         assertThrows(IllegalArgumentException.class,
                 () -> admin.service.load(7L, null, null, "section:8:SE"));
         assertThrows(IllegalArgumentException.class,
                 () -> admin.service.load(7L, null, null, "semester:99"));
         List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
         assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
-        assertEquals(64, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertEquals(62, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
         assertTrue(options.stream().filter(option -> "SECTIONS".equals(option.group()))
                 .allMatch(option -> AcademicGroupPolicy.isValid(option.semester(), option.sectionName())));
         assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());

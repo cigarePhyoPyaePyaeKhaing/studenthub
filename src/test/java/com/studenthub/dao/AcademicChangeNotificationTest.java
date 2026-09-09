@@ -44,9 +44,9 @@ class AcademicChangeNotificationTest {
         AcademicChangeDAO dao = new AcademicChangeDAO(mockNotificationDAO);
 
         AtomicReference<String> insertSql = new AtomicReference<>();
-        Connection mockConn = createMockCreateConnection(insertSql, "Shin Thant Hnin", "TNT-2395", 4, "B");
+        Connection mockConn = createMockCreateConnection(insertSql, "Shin Thant Hnin", "TNT-2395", 4, "BIS");
 
-        dao.create(mockConn, 55L, 4, "A", "Change section to A");
+        dao.create(mockConn, 55L, 4, "SE", "Change major to SE");
 
         assertNotNull(insertSql.get());
         assertEquals(1, createdNotifications.size());
@@ -57,8 +57,8 @@ class AcademicChangeNotificationTest {
         assertEquals("/admin/academic-changes?status=PENDING", adminNotif.get("linkUrl"));
         String msg = (String) adminNotif.get("message");
         assertTrue(msg.contains("Shin Thant Hnin (TNT-2395)"));
-        assertTrue(msg.contains("Semester 4 / Section B"));
-        assertTrue(msg.contains("Semester 4 / Section A"));
+        assertTrue(msg.contains("Semester 4 / Major BIS"));
+        assertTrue(msg.contains("Semester 4 / Major SE"));
     }
 
     @Test
@@ -82,7 +82,7 @@ class AcademicChangeNotificationTest {
                 new Class[]{Connection.class},
                 (proxy, method, args) -> null);
 
-        assertThrows(IllegalStateException.class, () -> dao.create(mockConn, 55L, 4, "A", "Reason here"));
+        assertThrows(IllegalStateException.class, () -> dao.create(mockConn, 55L, 4, "SE", "Reason here"));
         assertEquals(0, createdNotifications.size());
     }
 
@@ -111,7 +111,7 @@ class AcademicChangeNotificationTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                55L, 4, "A",
+                55L, 4, "SE",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);
@@ -158,7 +158,7 @@ class AcademicChangeNotificationTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                55L, 4, "A",
+                55L, 4, "SE",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);

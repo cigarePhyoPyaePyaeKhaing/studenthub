@@ -46,7 +46,7 @@
 
         function update(preserveSelection) {
             var semesterValue = semester.value;
-            var major = Number(semesterValue) >= 1 && Number(semesterValue) <= 7;
+            var major = Number(semesterValue) >= 1 && Number(semesterValue) <= 6;
             var previous = preserveSelection ? group.dataset.currentValue || group.value : '';
             var placeholder = group.options[0];
             if (label) label.textContent = (picker.dataset.groupLabelPrefix || '') + (major ? 'Major' : 'Section');

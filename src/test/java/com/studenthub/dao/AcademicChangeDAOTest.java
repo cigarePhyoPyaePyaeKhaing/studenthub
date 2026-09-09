@@ -23,7 +23,7 @@ class AcademicChangeDAOTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                101L, 4, "B",
+                101L, 4, "BIS",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);
@@ -37,7 +37,7 @@ class AcademicChangeDAOTest {
         assertTrue(userUpdateSql.get().contains("UPDATE users SET semester = ?, section_name = ? WHERE user_id = ?"));
         assertFalse(userUpdateSql.get().contains("academic_info_locked"));
         assertEquals(4, userParams.get(1));
-        assertEquals("B", userParams.get(2));
+        assertEquals("BIS", userParams.get(2));
         assertEquals(101L, userParams.get(3));
 
         assertNotNull(requestUpdateSql.get());
@@ -58,7 +58,7 @@ class AcademicChangeDAOTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                101L, 4, "B",
+                101L, 4, "BIS",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);

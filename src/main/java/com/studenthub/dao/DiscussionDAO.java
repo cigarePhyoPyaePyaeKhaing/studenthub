@@ -48,7 +48,8 @@ public class DiscussionDAO {
                        source.semester, source.section_name,
                        CASE WHEN source.room_type = 'SEMESTER'
                             THEN CONCAT('Semester ', source.semester)
-                            ELSE CONCAT('Semester ', source.semester, ' / Section ', source.section_name)
+                            ELSE CONCAT('Semester ', source.semester, ' / ',
+                                        IF(source.semester >= 7, 'Section ', 'Major '), source.section_name)
                        END AS room_name
                 FROM (
                     SELECT room_id, room_type, university_id, semester,

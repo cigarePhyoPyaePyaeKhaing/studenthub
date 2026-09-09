@@ -35,7 +35,12 @@ public final class ProfileValidation {
         if (semester == null && section != null) {
             return new Result(null, "Select a semester before setting a section.");
         }
-        if (semester != null && section != null) {
+        if (semester != null && section == null) {
+            return new Result(null, "Select a "
+                    + AcademicGroupPolicy.groupLabel(semester).toLowerCase(java.util.Locale.ROOT)
+                    + " for Semester " + semester + ".");
+        }
+        if (semester != null) {
             section = AcademicGroupPolicy.normalize(semester, section);
             if (section == null) {
                 return new Result(null, "Select a valid "

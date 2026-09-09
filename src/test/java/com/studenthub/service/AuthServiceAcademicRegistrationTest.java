@@ -35,14 +35,25 @@ class AuthServiceAcademicRegistrationTest {
         assertEquals(0, users.insertCount);
     }
 
-    @Test void semesterSevenStoresCanonicalMajor() throws Exception {
+    @Test void semesterSevenStoresCanonicalSection() throws Exception {
         CapturingUserDAO users = new CapturingUserDAO();
         AuthService.RegistrationResult result = service(users, new CapturingEmailService()).register(
-                "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "7", "CSec");
+                "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "7", " c ");
 
         assertTrue(result.successful());
         assertEquals(7, users.semester);
-        assertEquals("CSec", users.sectionName);
+        assertEquals("C", users.sectionName);
+    }
+
+    @Test void semesterSevenRejectsMajorAndInvalidSectionBeforeInsert() throws Exception {
+        CapturingUserDAO users = new CapturingUserDAO();
+        AuthService service = service(users, new CapturingEmailService());
+
+        assertFalse(service.register("TNT-1234", "Test Student", "student@example.com",
+                "Password1", "Password1", "7", "CSec").successful());
+        assertFalse(service.register("TNT-1234", "Test Student", "student@example.com",
+                "Password1", "Password1", "7", "F").successful());
+        assertEquals(0, users.insertCount);
     }
 
     @Test void semesterSixKeepsMajorSelection() throws Exception {

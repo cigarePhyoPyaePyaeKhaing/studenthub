@@ -45,7 +45,7 @@ class ProfileServiceAcademicLockTest {
         AtomicReference<ProfileUpdate> savedUpdate = new AtomicReference<>();
         UserProfile lockedProfileAfterSave = new UserProfile(
                 10L, "TNT-0010", "New Student Updated", "new@uit.edu",
-                Role.STUDENT, true, 3, "A",
+                Role.STUDENT, true, 3, "BIS",
                 null, null, null, null, null,
                 null, null, null, false, true);
 
@@ -67,13 +67,13 @@ class ProfileServiceAcademicLockTest {
 
         ProfileService service = new ProfileService(mockDao);
 
-        ProfileService.UpdateResult result = service.updateOwnProfile(10L, "New Student Updated", "3", "A");
+        ProfileService.UpdateResult result = service.updateOwnProfile(10L, "New Student Updated", "3", "BIS");
 
         assertTrue(result.successful());
         assertNotNull(savedUpdate.get());
         assertEquals("New Student Updated", savedUpdate.get().fullName());
         assertEquals(3, savedUpdate.get().semester());
-        assertEquals("A", savedUpdate.get().sectionName());
+        assertEquals("BIS", savedUpdate.get().sectionName());
         assertTrue(result.profile().isAcademicInfoLocked());
     }
 
