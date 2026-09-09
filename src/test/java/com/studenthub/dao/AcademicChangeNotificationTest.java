@@ -130,7 +130,7 @@ class AcademicChangeNotificationTest {
         assertEquals("/profile", studentNotif.get("linkUrl"));
         String msg = (String) studentNotif.get("message");
         assertTrue(msg.contains("approved"));
-        assertTrue(msg.contains("semester and section have been updated"));
+        assertTrue(msg.contains("semester and major have been updated"));
     }
 
     @Test

@@ -81,9 +81,9 @@ class DiscussionServiceAccessTest {
         assertTrue(admin.service.load(7L, null, null, "all_students").available());
         assertTrue(admin.service.load(7L, null, null, "all_cr").available());
         assertEquals(4, admin.service.load(7L, null, null, "semester:4").semester());
-        DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:B");
+        DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:SE");
         assertEquals(DiscussionScope.SECTION, section.scope());
-        assertEquals("B", section.sectionName());
+        assertEquals("SE", section.sectionName());
         assertEquals("SE", admin.service.load(7L, null, null, "section:7:SE").sectionName());
         assertEquals("E", admin.service.load(7L, null, null, "section:8:E").sectionName());
         assertThrows(IllegalArgumentException.class,
@@ -96,7 +96,7 @@ class DiscussionServiceAccessTest {
                 () -> admin.service.load(7L, null, null, "semester:99"));
         List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
         assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
-        assertEquals(50, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertEquals(64, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
         assertTrue(options.stream().filter(option -> "SECTIONS".equals(option.group()))
                 .allMatch(option -> AcademicGroupPolicy.isValid(option.semester(), option.sectionName())));
         assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());

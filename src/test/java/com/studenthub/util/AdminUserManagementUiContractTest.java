@@ -70,6 +70,14 @@ class AdminUserManagementUiContractTest {
         assertTrue(js.contains("ArrowRight")); assertTrue(js.contains("ArrowLeft"));
     }
 
+    @Test void managedUserHeaderKeepsIdentityAndRoleCompact() throws IOException {
+        String jsp=Files.readString(Path.of("src/main/webapp/WEB-INF/views/admin/user-detail.jsp"));
+        String css=Files.readString(Path.of("src/main/webapp/assets/css/dashboard-refined.css"));
+        assertTrue(jsp.contains("<section class=\"profile-hero\""));
+        assertTrue(css.contains(".admin-column>.profile-hero{display:grid;grid-template-columns:88px minmax(0,1fr) auto"));
+        assertTrue(css.contains(".admin-column>.profile-hero>.profile-role{width:auto;max-width:max-content"));
+    }
+
     private static int occurrences(String value, String token) {
         int count = 0;
         for (int index = 0; (index = value.indexOf(token, index)) >= 0; index += token.length()) count++;

@@ -35,7 +35,7 @@ class AuthServiceAcademicRegistrationTest {
         assertEquals(0, users.insertCount);
     }
 
-    @Test void semesterSevenKeepsExistingMajorSelection() throws Exception {
+    @Test void semesterSevenStoresCanonicalMajor() throws Exception {
         CapturingUserDAO users = new CapturingUserDAO();
         AuthService.RegistrationResult result = service(users, new CapturingEmailService()).register(
                 "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "7", "CSec");
@@ -43,6 +43,16 @@ class AuthServiceAcademicRegistrationTest {
         assertTrue(result.successful());
         assertEquals(7, users.semester);
         assertEquals("CSec", users.sectionName);
+    }
+
+    @Test void semesterSixKeepsMajorSelection() throws Exception {
+        CapturingUserDAO users = new CapturingUserDAO();
+        AuthService.RegistrationResult result = service(users, new CapturingEmailService()).register(
+                "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "6", "KE");
+
+        assertTrue(result.successful());
+        assertEquals(6, users.semester);
+        assertEquals("KE", users.sectionName);
     }
 
     private AuthService service(CapturingUserDAO users, CapturingEmailService email) {

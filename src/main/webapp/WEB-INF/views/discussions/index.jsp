@@ -64,7 +64,7 @@
             </c:when>
             <c:when test="${sessionScope.role eq 'CR'}">
                 <nav class="room-tabs ${not empty room and room.crSemesterRoomAvailable ? 'room-tabs-five' : 'room-tabs-four'}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester eq 7 ? 'Major' : 'Section'}</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester le 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                     <c:if test="${room.crSemesterRoomAvailable}"><a class="${room.scope eq 'CR_SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=CR_SEMESTER">CR – Same Semester</a></c:if>
@@ -73,7 +73,7 @@
             </c:when>
             <c:otherwise>
                 <nav class="room-tabs ${not empty room and (room.sectionRoomAvailable and room.semesterRoomAvailable) ? 'room-tabs-four' : ((room.sectionRoomAvailable or room.semesterRoomAvailable) ? 'room-tabs-three' : 'room-tabs-two')}" aria-label="Discussion rooms">
-                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester eq 7 ? 'Major' : 'Section'}</a></c:if>
+                    <c:if test="${not empty room and room.sectionRoomAvailable}"><a class="${room.scope eq 'SECTION' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SECTION">${room.semester le 7 ? 'Major' : 'Section'}</a></c:if>
                     <c:if test="${not empty room and room.semesterRoomAvailable}"><a class="${room.scope eq 'SEMESTER' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=SEMESTER">Semester</a></c:if>
                     <a class="${room.scope eq 'ALL' ? 'active' : ''}" href="${pageContext.request.contextPath}/discussions?scope=ALL">All Students</a>
                 </nav>

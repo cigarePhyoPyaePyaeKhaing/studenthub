@@ -15,15 +15,13 @@ public final class AcademicGroupPolicy {
     private AcademicGroupPolicy() {}
 
     public static List<String> optionsFor(int semester) {
-        if (semester == 1 || semester == 2 || semester == 5 || semester == 6) return FIVE_SECTIONS;
-        if (semester == 3 || semester == 4) return FOUR_SECTIONS;
-        if (semester == 7) return MAJORS;
+        if (semester >= 1 && semester <= 7) return MAJORS;
         if (semester >= 8 && semester <= 10) return FIVE_SECTIONS;
         return List.of();
     }
 
     public static boolean isMajorSemester(int semester) {
-        return semester == 7;
+        return semester >= 1 && semester <= 7;
     }
 
     public static String groupLabel(int semester) {
@@ -33,9 +31,14 @@ public final class AcademicGroupPolicy {
     public static String normalize(int semester, String value) {
         if (value == null || value.isBlank()) return null;
         String candidate = value.trim();
-        return optionsFor(semester).stream()
+        String normalized = optionsFor(semester).stream()
                 .filter(option -> option.equalsIgnoreCase(candidate))
                 .findFirst().orElse(null);
+        if (normalized != null) return normalized;
+        List<String> historicalSections = semester == 3 || semester == 4 ? FOUR_SECTIONS : FIVE_SECTIONS;
+        return semester >= 1 && semester <= 7 ? historicalSections.stream()
+                .filter(option -> option.equalsIgnoreCase(candidate))
+                .findFirst().orElse(null) : null;
     }
 
     public static boolean isValid(int semester, String value) {
