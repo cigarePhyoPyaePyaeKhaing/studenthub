@@ -4,9 +4,7 @@
     <a class="public-brand" href="${pageContext.request.contextPath}/" aria-label="StudentHub home"><jsp:include page="../../partials/logo.jsp" /></a>
     <nav class="public-nav" data-public-nav aria-label="Primary navigation">
       <a class="${publicPage eq 'home' ? 'active' : ''}" href="${pageContext.request.contextPath}/">Home</a>
-      <a class="${publicPage eq 'features' ? 'active' : ''}" href="${pageContext.request.contextPath}/features">Features</a>
       <a class="${publicPage eq 'how-it-works' ? 'active' : ''}" href="${pageContext.request.contextPath}/how-it-works">How It Works</a>
-      <a class="${publicPage eq 'about' ? 'active' : ''}" href="${pageContext.request.contextPath}/about">About</a>
       <div class="public-nav-mobile-actions"><a href="${pageContext.request.contextPath}/login">Sign In</a><a class="public-button small" href="${pageContext.request.contextPath}/register">Get Started</a></div>
     </nav>
     <div class="public-actions">

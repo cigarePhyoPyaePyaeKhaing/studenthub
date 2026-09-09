@@ -62,17 +62,17 @@ class UserIdentityUiContractTest {
         assertFalse(css.contains(".profile-hero .profile-avatar{align-self:start"));
     }
 
-    @Test void publicHomeAmbientCardUsesCssOnlyAndHonorsReducedMotion() throws Exception {
+    @Test void publicHomeAbstractVisualUsesCssOnlyAndHonorsReducedMotion() throws Exception {
         String css = source("src/main/webapp/assets/css/public.css");
         String home = source("src/main/webapp/WEB-INF/views/public/home.jsp");
-        assertTrue(home.contains("class=\"pulse-brand-motion\""));
+        assertTrue(home.contains("class=\"hero-visual\""));
         assertTrue(home.contains("<jsp:include page=\"../partials/logo.jsp\">"));
-        assertTrue(css.contains("@keyframes studenthub-logo-float"));
-        assertTrue(css.contains(".pulse-today::before"));
+        assertTrue(css.contains("@keyframes hero-mark-breathe"));
+        assertTrue(css.contains(".hero-visual::before"));
         assertFalse(css.contains("background-size:34px 34px"));
         assertFalse(css.contains("@keyframes pulse-ambient-drift"));
         assertTrue(css.contains("@media(prefers-reduced-motion:reduce)"));
-        assertTrue(css.contains(".pulse-brand-motion{animation:none"));
+        assertTrue(css.contains(".hero-visual-mark{animation:none"));
     }
 
     @Test void sharedAvatarRendererAlwaysCropsInsideItsParentShape() throws Exception {
