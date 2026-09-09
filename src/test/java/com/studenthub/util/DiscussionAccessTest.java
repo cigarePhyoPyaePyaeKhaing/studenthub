@@ -31,19 +31,19 @@ class DiscussionAccessTest {
     }
 
     @Test void sectionDoesNotCrossSectionBoundary() {
-        assertFalse(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "BIS", 4, "SE"));
+        assertFalse(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "B", 4, "A"));
     }
 
     @Test void sectionDoesNotCrossSemesterBoundary() {
-        assertFalse(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "BIS", 3, "BIS"));
+        assertFalse(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "B", 3, "B"));
     }
 
     @Test void semesterDoesNotCrossSemesterBoundary() {
-        assertFalse(DiscussionAccess.matches(DiscussionScope.SEMESTER, 4, "BIS", 3, null));
+        assertFalse(DiscussionAccess.matches(DiscussionScope.SEMESTER, 4, "B", 3, null));
     }
 
     @Test void matchingAcademicRoomsAreAllowed() {
-        assertTrue(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "BIS", 4, "BIS"));
-        assertTrue(DiscussionAccess.matches(DiscussionScope.SEMESTER, 4, "BIS", 4, null));
+        assertTrue(DiscussionAccess.matches(DiscussionScope.SECTION, 4, "B", 4, "B"));
+        assertTrue(DiscussionAccess.matches(DiscussionScope.SEMESTER, 4, "B", 4, null));
     }
 }

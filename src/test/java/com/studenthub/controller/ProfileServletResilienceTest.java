@@ -79,7 +79,7 @@ class ProfileServletResilienceTest {
 
         AcademicChangeDAO.Item pendingItem = new AcademicChangeDAO.Item(
                 10L, 55L, "TNT-0055", "Test Student", "test55@uit.edu",
-                4, "C", 5, "B", "Change major section", "PENDING", null,
+                4, "C", 5, "B", "Change academic section", "PENDING", null,
                 LocalDateTime.now(), null);
 
         AcademicChangeDAO mockDao = new AcademicChangeDAO() {

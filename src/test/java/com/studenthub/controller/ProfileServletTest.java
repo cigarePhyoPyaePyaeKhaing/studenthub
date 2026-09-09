@@ -244,7 +244,7 @@ class ProfileServletTest {
         UserProfile initial = new UserProfile(42L, "UIT-0042", "Mg Mg", "mgmg@uit.edu",
                 Role.STUDENT, true, null, null, 1L, "UIT", "UIT", true, false);
         UserProfile updated = new UserProfile(42L, "UIT-0042", "Mg Mg Updated", "mgmg@uit.edu",
-                Role.STUDENT, true, 2, "KE", 1L, "UIT", "UIT", true, true);
+                Role.STUDENT, true, 2, "B", 1L, "UIT", "UIT", true, true);
 
         FakeProfileDAO dao = new FakeProfileDAO(initial);
         dao.updatedProfile = updated;
@@ -255,7 +255,7 @@ class ProfileServletTest {
         requestParameters.put("csrfToken", "token123");
         requestParameters.put("fullName", "Mg Mg Updated");
         requestParameters.put("semester", "2");
-        requestParameters.put("sectionName", "KE");
+        requestParameters.put("sectionName", "B");
 
         HttpServletRequest request = createRequest("POST", true);
         HttpServletResponse response = createResponse();
@@ -265,7 +265,7 @@ class ProfileServletTest {
         assertEquals("/context/profile", redirectedUrl);
         assertEquals("Mg Mg Updated", sessionAttributes.get("fullName"));
         assertEquals(2, sessionAttributes.get("semester"));
-        assertEquals("KE", sessionAttributes.get("sectionName"));
+        assertEquals("B", sessionAttributes.get("sectionName"));
         assertEquals("Profile updated successfully.", sessionAttributes.get("flash"));
     }
 
@@ -282,7 +282,7 @@ class ProfileServletTest {
         requestParameters.put("csrfToken", "token123");
         requestParameters.put("fullName", "Mg Mg New");
         requestParameters.put("semester", "2");
-        requestParameters.put("sectionName", "KE");
+        requestParameters.put("sectionName", "B");
 
         HttpServletRequest request = createRequest("POST", true);
         HttpServletResponse response = createResponse();

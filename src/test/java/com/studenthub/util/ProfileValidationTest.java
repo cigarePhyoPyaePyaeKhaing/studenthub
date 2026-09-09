@@ -4,14 +4,14 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ProfileValidationTest {
-    @Test void validFullNameIsAccepted() { assertTrue(valid("Mya Mya", "4", "SE").valid()); }
-    @Test void emptyFullNameIsRejected() { assertFalse(valid("", "4", "SE").valid()); }
-    @Test void whitespaceFullNameIsRejected() { assertFalse(valid("   ", "4", "SE").valid()); }
-    @Test void oversizedFullNameIsRejected() { assertFalse(valid("x".repeat(101), "4", "SE").valid()); }
-    @Test void nameIsTrimmed() { assertEquals("Mya Mya", valid("  Mya Mya  ", "4", "SE").update().fullName()); }
+    @Test void validFullNameIsAccepted() { assertTrue(valid("Mya Mya", "4", "B").valid()); }
+    @Test void emptyFullNameIsRejected() { assertFalse(valid("", "4", "B").valid()); }
+    @Test void whitespaceFullNameIsRejected() { assertFalse(valid("   ", "4", "B").valid()); }
+    @Test void oversizedFullNameIsRejected() { assertFalse(valid("x".repeat(101), "4", "B").valid()); }
+    @Test void nameIsTrimmed() { assertEquals("Mya Mya", valid("  Mya Mya  ", "4", "B").update().fullName()); }
     @Test void nullSemesterIsAccepted() { assertTrue(valid("Mya Mya", "", "").valid()); }
     @Test void validSemesterRangeIsAccepted() {
-        assertTrue(valid("Mya Mya", "1", "SE").valid());
+        assertTrue(valid("Mya Mya", "1", "A").valid());
         assertTrue(valid("Mya Mya", "10", "E").valid());
         assertFalse(valid("Mya Mya", "10", "ES").valid());
     }
@@ -19,7 +19,7 @@ class ProfileValidationTest {
     @Test void semesterAboveRangeIsRejected() { assertFalse(valid("Mya Mya", "11", "A").valid()); }
     @Test void nonNumericSemesterIsRejected() { assertFalse(valid("Mya Mya", "four", "A").valid()); }
     @Test void validAcademicGroupIsAcceptedAndTrimmed() {
-        assertEquals("BIS", valid("Mya Mya", "4", "  bis  ").update().sectionName());
+        assertEquals("B", valid("Mya Mya", "4", "  b  ").update().sectionName());
         assertEquals("B", valid("Mya Mya", "7", "  b  ").update().sectionName());
     }
     @Test void missingAcademicGroupIsRejectedWhenSemesterIsSet() { assertFalse(valid("Mya Mya", "4", "").valid()); }

@@ -66,7 +66,7 @@ class UserProfileAcademicLockTest {
         UserProfile locked = new UserProfile(
                 6L, "TNT-0006", "Full Student", "full@uit.edu",
                 Role.STUDENT, true, 2, "A",
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, false, false);
 
         assertTrue(locked.academicInfoLocked());

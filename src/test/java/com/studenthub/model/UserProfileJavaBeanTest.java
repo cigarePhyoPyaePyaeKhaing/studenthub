@@ -16,8 +16,7 @@ class UserProfileJavaBeanTest {
     void studentProfileExposesExpectedProperties() {
         UserProfile profile = new UserProfile(
                 101L, "TNT-0101", "Student One", "student1@uit.edu",
-                Role.STUDENT, true, 3, "A", "Computer Science",
-                "+95912345678", "Yangon, Myanmar", "Software engineering student",
+                Role.STUDENT, true, 3, "A", "+95912345678", "Yangon, Myanmar", "Software engineering student",
                 "https://example.com/avatar.png", 1L, "University of Information Technology", "UIT", true, true);
 
         assertEquals(101L, profile.getUserId());
@@ -31,7 +30,6 @@ class UserProfileJavaBeanTest {
         assertEquals(3, profile.getSemester());
         assertEquals("A", profile.getSectionName());
         assertEquals("A", profile.getSection());
-        assertEquals("Computer Science", profile.getMajor());
         assertEquals("+95912345678", profile.getPhone());
         assertEquals("Yangon, Myanmar", profile.getAddress());
         assertEquals("Software engineering student", profile.getBio());
@@ -90,7 +88,6 @@ class UserProfileJavaBeanTest {
         assertNull(profile.getSemester());
         assertNull(profile.getSectionName());
         assertNull(profile.getSection());
-        assertNull(profile.getMajor());
         assertNull(profile.getPhone());
         assertNull(profile.getAddress());
         assertNull(profile.getBio());
@@ -135,7 +132,6 @@ class UserProfileJavaBeanTest {
         assertTrue(propertyNames.contains("semester"));
         assertTrue(propertyNames.contains("sectionName"));
         assertTrue(propertyNames.contains("section"));
-        assertTrue(propertyNames.contains("major"));
         assertTrue(propertyNames.contains("phone"));
         assertTrue(propertyNames.contains("address"));
         assertTrue(propertyNames.contains("bio"));

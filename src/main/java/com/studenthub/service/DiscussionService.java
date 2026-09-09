@@ -41,7 +41,7 @@ public class DiscussionService {
             if (scope == DiscussionScope.CR_SEMESTER) return "CRs in Semester " + semester;
             if (scope == DiscussionScope.CR_ADMIN) return "CR – Admin";
             if (scope == DiscussionScope.SEMESTER) return "Semester " + semester;
-            return "Semester " + semester + " / " + AcademicGroupPolicy.groupLabel(semester) + " " + sectionName;
+            return "Semester " + semester + " · Section " + sectionName;
         }
         public String getScopeLabel() { return scopeLabel(); }
     }
@@ -146,8 +146,7 @@ public class DiscussionService {
         for (java.util.Map.Entry<Integer, Long> semester : semesterUniversities.entrySet()) {
             for (String group : AcademicGroupPolicy.optionsFor(semester.getKey())) {
                 options.add(new ModerationScopeOption("section:" + semester.getKey() + ":" + group,
-                        "SECTIONS", "Semester " + semester.getKey() + " / "
-                        + AcademicGroupPolicy.groupLabel(semester.getKey()) + " " + group,
+                        "SECTIONS", "Semester " + semester.getKey() + " · Section " + group,
                         DiscussionScope.SECTION, semester.getValue(), semester.getKey(), group));
             }
         }

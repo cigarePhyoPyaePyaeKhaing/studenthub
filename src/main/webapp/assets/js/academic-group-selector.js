@@ -46,11 +46,10 @@
 
         function update(preserveSelection) {
             var semesterValue = semester.value;
-            var major = Number(semesterValue) >= 1 && Number(semesterValue) <= 6;
             var previous = preserveSelection ? group.dataset.currentValue || group.value : '';
             var placeholder = group.options[0];
-            if (label) label.textContent = (picker.dataset.groupLabelPrefix || '') + (major ? 'Major' : 'Section');
-            placeholder.textContent = semesterValue ? (major ? 'Select major' : 'Select section') : 'Choose a semester first';
+            if (label) label.textContent = (picker.dataset.groupLabelPrefix || '') + 'Section';
+            placeholder.textContent = semesterValue ? 'Select section' : 'Choose a semester first';
             Array.prototype.forEach.call(group.options, function (option, index) {
                 if (index === 0) return;
                 var matches = semesterValue !== '' && option.dataset.semester === semesterValue;

@@ -48,8 +48,7 @@ public class DiscussionDAO {
                        source.semester, source.section_name,
                        CASE WHEN source.room_type = 'SEMESTER'
                             THEN CONCAT('Semester ', source.semester)
-                            ELSE CONCAT('Semester ', source.semester, ' / ',
-                                        IF(source.semester >= 7, 'Section ', 'Major '), source.section_name)
+                            ELSE CONCAT('Semester ', source.semester, ' · Section ', source.section_name)
                        END AS room_name
                 FROM (
                     SELECT room_id, room_type, university_id, semester,
@@ -267,7 +266,7 @@ public class DiscussionDAO {
         return switch (target.scope()) {
             case ALL -> "StudentHub All Chat";
             case SEMESTER -> "Semester " + target.semester();
-            case SECTION -> "Semester " + target.semester() + " / "
+            case SECTION -> "Semester " + target.semester() + " · "
                     + AcademicGroupPolicy.groupLabel(target.semester()) + " " + target.sectionName();
             case CR_SEMESTER -> "CR Semester " + target.semester();
             case CR_ALL -> "CR All Chat";

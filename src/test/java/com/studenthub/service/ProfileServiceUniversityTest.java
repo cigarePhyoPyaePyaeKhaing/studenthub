@@ -46,7 +46,7 @@ class ProfileServiceUniversityTest {
         AtomicLong assignedUnivId = new AtomicLong(0);
         AtomicReference<UserProfile> state = new AtomicReference<>(new UserProfile(
                 10L, "TNT-1010", "Aung Aung", "aung@uit.edu", Role.STUDENT, true,
-                4, "C", null, null, null, null, null,
+                4, "C", null, null, null, null,
                 null, null, null, false, true
         ));
 
@@ -60,7 +60,7 @@ class ProfileServiceUniversityTest {
             public int updateFullName(long userId, String fullName) {
                 state.set(new UserProfile(
                         10L, "TNT-1010", fullName, "aung@uit.edu", Role.STUDENT, true,
-                        4, "C", null, null, null, null, null,
+                        4, "C", null, null, null, null,
                         assignedUnivId.get() > 0 ? assignedUnivId.get() : null,
                         assignedUnivId.get() > 0 ? "University of Information Technology" : null,
                         assignedUnivId.get() > 0 ? "UIT" : null,
@@ -102,7 +102,7 @@ class ProfileServiceUniversityTest {
         AtomicLong assignedUnivId = new AtomicLong(1L);
         UserProfile initialLockedProfile = new UserProfile(
                 10L, "TNT-1010", "Aung Aung", "aung@uit.edu", Role.STUDENT, true,
-                4, "C", null, null, null, null, null,
+                4, "C", null, null, null, null,
                 1L, "University of Information Technology", "UIT", true, true
         );
 
@@ -143,7 +143,7 @@ class ProfileServiceUniversityTest {
     void invalidOrUnapprovedUniversityIsSafelyRejected() throws Exception {
         UserProfile initialProfile = new UserProfile(
                 10L, "TNT-1010", "Aung Aung", "aung@uit.edu", Role.STUDENT, true,
-                null, null, null, null, null, null, null,
+                null, null, null, null, null, null,
                 null, null, null, false, false
         );
 

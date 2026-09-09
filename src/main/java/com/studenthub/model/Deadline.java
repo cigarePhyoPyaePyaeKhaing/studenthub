@@ -19,7 +19,7 @@ public record Deadline(long deadlineId, Long postId, String relatedPostTitle, St
     public long getCreatedBy() { return createdBy; }
     public String getCreatorName() { return creatorName; }
     public String getInputDueDate() { return dueDate == null ? "" : dueDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")); }
-    public String getScopeLabel() { return sectionName == null ? "Semester " + semester : "Semester " + semester + " / " + sectionName; }
+    public String getScopeLabel() { return sectionName == null ? "Semester " + semester : "Semester " + semester + " · Section " + sectionName; }
     public boolean isExpired() { return dueDate != null && dueDate.isBefore(LocalDateTime.now()); }
     public String getStatus() {
         if (isExpired()) return "Expired";

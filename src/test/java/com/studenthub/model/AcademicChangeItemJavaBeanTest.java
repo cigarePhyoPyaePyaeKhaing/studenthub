@@ -19,7 +19,7 @@ class AcademicChangeItemJavaBeanTest {
         LocalDateTime now = LocalDateTime.of(2026, 8, 21, 18, 0);
         AcademicChangeDAO.Item item = new AcademicChangeDAO.Item(
                 10L, 55L, "TNT-0055", "Test Student", "test55@uit.edu",
-                4, "C", 5, "B", "Change major section", "PENDING", "Note",
+                4, "C", 5, "B", "Change academic section", "PENDING", "Note",
                 now, now);
 
         assertEquals(10L, item.getRequestId());
@@ -31,7 +31,7 @@ class AcademicChangeItemJavaBeanTest {
         assertEquals("C", item.getOldSection());
         assertEquals(5, item.getRequestedSemester());
         assertEquals("B", item.getRequestedSection());
-        assertEquals("Change major section", item.getReason());
+        assertEquals("Change academic section", item.getReason());
         assertEquals("PENDING", item.getStatus());
         assertEquals("Note", item.getAdminNote());
         assertEquals(now, item.getCreatedAt());

@@ -41,7 +41,7 @@ class DiscussionServiceAccessTest {
     }
 
     @Test void studentWithCompleteAcademicProfileCanLoadMatchingRooms() throws Exception {
-        Fixture fixture = fixture("STUDENT", 2, "KE");
+        Fixture fixture = fixture("STUDENT", 2, "A");
         assertTrue(fixture.service.load(7L, "ALL").available());
         assertThrows(SecurityException.class, () -> fixture.service.load(7L, "ALL_STUDENTS_ADMIN"));
         assertTrue(fixture.service.load(7L, "SEMESTER").available());
@@ -81,13 +81,12 @@ class DiscussionServiceAccessTest {
         assertTrue(admin.service.load(7L, null, null, "all_students").available());
         assertTrue(admin.service.load(7L, null, null, "all_cr").available());
         assertEquals(4, admin.service.load(7L, null, null, "semester:4").semester());
-        DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:SE");
+        DiscussionService.RoomView section = admin.service.load(7L, null, null, "section:4:A");
         assertEquals(DiscussionScope.SECTION, section.scope());
-        assertEquals("SE", section.sectionName());
+        assertEquals("A", section.sectionName());
         assertEquals("A", admin.service.load(7L, null, null, "section:7:A").sectionName());
         assertEquals("E", admin.service.load(7L, null, null, "section:8:E").sectionName());
-        assertThrows(IllegalArgumentException.class,
-                () -> admin.service.load(7L, null, null, "section:3:E"));
+        assertEquals("E", admin.service.load(7L, null, null, "section:3:E").sectionName());
         assertThrows(IllegalArgumentException.class,
                 () -> admin.service.load(7L, null, null, "section:7:SE"));
         assertThrows(IllegalArgumentException.class,
@@ -96,7 +95,7 @@ class DiscussionServiceAccessTest {
                 () -> admin.service.load(7L, null, null, "semester:99"));
         List<DiscussionService.ModerationScopeOption> options = admin.service.moderationRooms(7L);
         assertEquals(10, options.stream().filter(option -> "SEMESTERS".equals(option.group())).count());
-        assertEquals(62, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
+        assertEquals(50, options.stream().filter(option -> "SECTIONS".equals(option.group())).count());
         assertTrue(options.stream().filter(option -> "SECTIONS".equals(option.group()))
                 .allMatch(option -> AcademicGroupPolicy.isValid(option.semester(), option.sectionName())));
         assertEquals(1, options.stream().filter(option -> "all_students".equals(option.key())).count());

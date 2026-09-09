@@ -39,14 +39,14 @@ class ProfileServiceAcademicLockTest {
         UserProfile unlockedProfile = new UserProfile(
                 10L, "TNT-0010", "New Student", "new@uit.edu",
                 Role.STUDENT, true, null, null,
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, false, false);
 
         AtomicReference<ProfileUpdate> savedUpdate = new AtomicReference<>();
         UserProfile lockedProfileAfterSave = new UserProfile(
                 10L, "TNT-0010", "New Student Updated", "new@uit.edu",
-                Role.STUDENT, true, 3, "BIS",
-                null, null, null, null, null,
+                Role.STUDENT, true, 3, "A",
+                null, null, null, null,
                 null, null, null, false, true);
 
         UserDAO mockDao = new UserDAO() {
@@ -67,13 +67,13 @@ class ProfileServiceAcademicLockTest {
 
         ProfileService service = new ProfileService(mockDao);
 
-        ProfileService.UpdateResult result = service.updateOwnProfile(10L, "New Student Updated", "3", "BIS");
+        ProfileService.UpdateResult result = service.updateOwnProfile(10L, "New Student Updated", "3", "A");
 
         assertTrue(result.successful());
         assertNotNull(savedUpdate.get());
         assertEquals("New Student Updated", savedUpdate.get().fullName());
         assertEquals(3, savedUpdate.get().semester());
-        assertEquals("BIS", savedUpdate.get().sectionName());
+        assertEquals("A", savedUpdate.get().sectionName());
         assertTrue(result.profile().isAcademicInfoLocked());
     }
 
@@ -82,7 +82,7 @@ class ProfileServiceAcademicLockTest {
         UserProfile lockedProfile = new UserProfile(
                 20L, "TNT-0020", "Locked Student", "locked@uit.edu",
                 Role.STUDENT, true, 4, "B",
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, false, true);
 
         AtomicReference<String> updatedFullName = new AtomicReference<>();
@@ -91,7 +91,7 @@ class ProfileServiceAcademicLockTest {
         UserProfile updatedProfile = new UserProfile(
                 20L, "TNT-0020", "Renamed Locked Student", "locked@uit.edu",
                 Role.STUDENT, true, 4, "B",
-                null, null, null, null, null,
+                null, null, null, null,
                 null, null, null, false, true);
 
         UserDAO mockDao = new UserDAO() {

@@ -24,7 +24,7 @@ class AuthServiceAcademicRegistrationTest {
         assertEquals("student@example.com", email.recipient);
     }
 
-    @Test void semesterEightRejectsLegacyMajorAndInvalidSectionBeforeInsert() throws Exception {
+    @Test void semesterEightRejectsInvalidSectionsBeforeInsert() throws Exception {
         CapturingUserDAO users = new CapturingUserDAO();
         AuthService service = service(users, new CapturingEmailService());
 
@@ -45,7 +45,7 @@ class AuthServiceAcademicRegistrationTest {
         assertEquals("C", users.sectionName);
     }
 
-    @Test void semesterSevenRejectsMajorAndInvalidSectionBeforeInsert() throws Exception {
+    @Test void semesterSevenRejectsNonSectionValuesBeforeInsert() throws Exception {
         CapturingUserDAO users = new CapturingUserDAO();
         AuthService service = service(users, new CapturingEmailService());
 
@@ -56,14 +56,14 @@ class AuthServiceAcademicRegistrationTest {
         assertEquals(0, users.insertCount);
     }
 
-    @Test void semesterSixKeepsMajorSelection() throws Exception {
+    @Test void semesterSixStoresCanonicalSection() throws Exception {
         CapturingUserDAO users = new CapturingUserDAO();
         AuthService.RegistrationResult result = service(users, new CapturingEmailService()).register(
-                "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "6", "KE");
+                "TNT-1234", "Test Student", "student@example.com", "Password1", "Password1", "6", " b ");
 
         assertTrue(result.successful());
         assertEquals(6, users.semester);
-        assertEquals("KE", users.sectionName);
+        assertEquals("B", users.sectionName);
     }
 
     private AuthService service(CapturingUserDAO users, CapturingEmailService email) {

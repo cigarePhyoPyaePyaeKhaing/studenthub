@@ -8,22 +8,18 @@ public final class AcademicGroupPolicy {
         public String getValue() { return value; }
     }
     private static final List<String> FIVE_SECTIONS = List.of("A", "B", "C", "D", "E");
-    private static final List<String> MAJORS = List.of("SE", "KE", "BIS", "HPC", "CN", "CSec", "ES");
 
     private AcademicGroupPolicy() {}
 
     public static List<String> optionsFor(int semester) {
-        if (semester >= 1 && semester <= 6) return MAJORS;
-        if (semester >= 7 && semester <= 10) return FIVE_SECTIONS;
+        if (semester >= ProfileValidation.MIN_SEMESTER && semester <= ProfileValidation.MAX_SEMESTER) {
+            return FIVE_SECTIONS;
+        }
         return List.of();
     }
 
-    public static boolean isMajorSemester(int semester) {
-        return semester >= 1 && semester <= 6;
-    }
-
     public static String groupLabel(int semester) {
-        return isMajorSemester(semester) ? "Major" : "Section";
+        return "Section";
     }
 
     public static String normalize(int semester, String value) {

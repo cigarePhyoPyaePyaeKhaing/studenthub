@@ -11,7 +11,6 @@ public record UserProfile(
         boolean emailVerified,
         Integer semester,
         String sectionName,
-        String major,
         String phone,
         String address,
         String bio,
@@ -34,7 +33,6 @@ public record UserProfile(
     public Integer getSemester() { return semester; }
     public String getSectionName() { return sectionName; }
     public String getSection() { return sectionName; }
-    public String getMajor() { return major; }
     public String getPhone() { return phone; }
     public String getAddress() { return address; }
     public String getBio() { return bio; }
@@ -73,7 +71,7 @@ public record UserProfile(
     public UserProfile(long userId, String studentId, String fullName, String email,
                        Role role, boolean emailVerified, Integer semester, String sectionName) {
         this(userId, studentId, fullName, email, role, emailVerified, semester, sectionName,
-                null, null, null, null, null, null, null, null, false,
+                null, null, null, null, null, null, null, false,
                 semester != null && sectionName != null && !sectionName.isBlank(), null);
     }
 
@@ -82,18 +80,18 @@ public record UserProfile(
                        Long universityId, String universityName, String universityShortName,
                        boolean universityLocked, boolean academicInfoLocked) {
         this(userId, studentId, fullName, email, role, emailVerified, semester, sectionName,
-                null, null, null, null, null,
+                null, null, null, null,
                 universityId, universityName, universityShortName, universityLocked,
                 semester != null && sectionName != null && !sectionName.isBlank(), null);
     }
 
     public UserProfile(long userId, String studentId, String fullName, String email,
                        Role role, boolean emailVerified, Integer semester, String sectionName,
-                       String major, String phone, String address, String bio, String avatarUrl,
+                       String phone, String address, String bio, String avatarUrl,
                        Long universityId, String universityName, String universityShortName,
                        boolean universityLocked, boolean academicInfoLocked) {
         this(userId, studentId, fullName, email, role, emailVerified, semester, sectionName,
-                major, phone, address, bio, avatarUrl, universityId, universityName,
+                phone, address, bio, avatarUrl, universityId, universityName,
                 universityShortName, universityLocked, academicInfoLocked, null);
     }
 

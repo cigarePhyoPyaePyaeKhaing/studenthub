@@ -44,9 +44,9 @@ class AcademicChangeNotificationTest {
         AcademicChangeDAO dao = new AcademicChangeDAO(mockNotificationDAO);
 
         AtomicReference<String> insertSql = new AtomicReference<>();
-        Connection mockConn = createMockCreateConnection(insertSql, "Shin Thant Hnin", "TNT-2395", 4, "BIS");
+        Connection mockConn = createMockCreateConnection(insertSql, "Shin Thant Hnin", "TNT-2395", 4, "B");
 
-        dao.create(mockConn, 55L, 4, "SE", "Change major to SE");
+        dao.create(mockConn, 55L, 4, "A", "Change section to A");
 
         assertNotNull(insertSql.get());
         assertEquals(1, createdNotifications.size());
@@ -57,8 +57,8 @@ class AcademicChangeNotificationTest {
         assertEquals("/admin/academic-changes?status=PENDING", adminNotif.get("linkUrl"));
         String msg = (String) adminNotif.get("message");
         assertTrue(msg.contains("Shin Thant Hnin (TNT-2395)"));
-        assertTrue(msg.contains("Semester 4 / Major BIS"));
-        assertTrue(msg.contains("Semester 4 / Major SE"));
+        assertTrue(msg.contains("Semester 4 · Section B"));
+        assertTrue(msg.contains("Semester 4 · Section A"));
     }
 
     @Test
@@ -82,7 +82,7 @@ class AcademicChangeNotificationTest {
                 new Class[]{Connection.class},
                 (proxy, method, args) -> null);
 
-        assertThrows(IllegalStateException.class, () -> dao.create(mockConn, 55L, 4, "SE", "Reason here"));
+        assertThrows(IllegalStateException.class, () -> dao.create(mockConn, 55L, 4, "A", "Reason here"));
         assertEquals(0, createdNotifications.size());
     }
 
@@ -111,7 +111,7 @@ class AcademicChangeNotificationTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                55L, 4, "SE",
+                55L, 4, "A",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);
@@ -130,7 +130,7 @@ class AcademicChangeNotificationTest {
         assertEquals("/profile", studentNotif.get("linkUrl"));
         String msg = (String) studentNotif.get("message");
         assertTrue(msg.contains("approved"));
-        assertTrue(msg.contains("semester and major have been updated"));
+        assertTrue(msg.contains("semester and section have been updated"));
     }
 
     @Test
@@ -158,7 +158,7 @@ class AcademicChangeNotificationTest {
         AtomicBoolean committed = new AtomicBoolean(false);
 
         Connection connection = createMockReviewConnection(
-                55L, 4, "SE",
+                55L, 4, "A",
                 userUpdateSql, userParams,
                 requestUpdateSql, requestParams,
                 committed);

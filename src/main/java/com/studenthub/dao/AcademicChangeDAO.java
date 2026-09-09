@@ -169,12 +169,12 @@ public class AcademicChangeDAO {
             }
 
             if (oldSem != null && oldSec != null && !oldSec.isBlank()) {
-                msg.append(" requested to change Semester ").append(oldSem).append(" / ")
+                msg.append(" requested to change Semester ").append(oldSem).append(" · ")
                         .append(AcademicGroupPolicy.groupLabel(oldSem)).append(" ").append(oldSec)
-                        .append(" to Semester ").append(semester).append(" / ")
+                        .append(" to Semester ").append(semester).append(" · ")
                         .append(AcademicGroupPolicy.groupLabel(semester)).append(" ").append(section).append(".");
             } else {
-                msg.append(" requested Semester ").append(semester).append(" / ")
+                msg.append(" requested Semester ").append(semester).append(" · ")
                         .append(AcademicGroupPolicy.groupLabel(semester)).append(" ").append(section).append(".");
             }
 
