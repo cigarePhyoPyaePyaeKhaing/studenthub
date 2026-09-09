@@ -1,0 +1,82 @@
+/* Phone discussion layout: reserve space for the conversation and composer. */
+@media (max-width: 600px) {
+    .discussion-admin-mode .mobile-header .dashboard-brand > .studenthub-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .discussion-admin-mode .mobile-header .studenthub-logo-mark {
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+    }
+    .discussion-admin-mode .mobile-header .studenthub-logo-word {
+        font-size: 1rem;
+        white-space: nowrap;
+    }
+    .discussion-admin-mode .discussions-shell .discussion-column {
+        overflow-y: auto !important;
+        height: auto !important;
+        overscroll-behavior-y: contain;
+    }
+    .discussion-admin-mode .discussion-column > :not(.chat-panel) {
+        flex-shrink: 0;
+    }
+    .discussion-admin-mode .discussions-shell .discussion-header {
+        padding: 8px 10px !important;
+    }
+    .discussion-admin-mode .discussion-header-main {
+        gap: 6px;
+    }
+    .discussion-admin-mode .discussion-header-context {
+        gap: 4px;
+    }
+    .discussion-admin-mode .admin-moderation-badge {
+        color: var(--text-primary);
+        background: var(--cyan-soft);
+        min-height: 24px;
+        padding: 4px 7px;
+    }
+    .discussion-admin-mode .admin-discussion-controls {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+        padding: 6px;
+    }
+    .discussion-admin-mode .admin-scope-card {
+        min-height: 44px;
+        padding: 6px 8px;
+        gap: 6px;
+    }
+    .discussion-admin-mode .admin-scope-card-icon {
+        width: 26px;
+        height: 26px;
+        flex-basis: 26px;
+    }
+    .discussion-admin-mode .admin-scope-card strong {
+        font-size: .78rem;
+    }
+    .discussion-admin-mode .admin-scope-card small {
+        display: none;
+    }
+    .discussion-admin-mode .admin-selector-item {
+        min-height: 0;
+        padding: 6px;
+        gap: 3px;
+    }
+    .discussion-admin-mode .admin-scope-form .form-select {
+        min-height: 44px;
+        padding-left: 8px;
+        font-size: 16px;
+    }
+    .discussion-admin-mode .discussions-shell .chat-panel {
+        flex: 1 0 240px !important;
+        min-height: 240px !important;
+    }
+    .discussion-admin-mode .chat-empty {
+        padding: 12px;
+        overflow-y: auto;
+    }
+    .discussion-admin-mode .chat-composer textarea {
+        font-size: 16px !important;
+    }
+}

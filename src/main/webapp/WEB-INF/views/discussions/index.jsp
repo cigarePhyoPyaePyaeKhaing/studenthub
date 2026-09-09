@@ -8,6 +8,7 @@
     <script src="${pageContext.request.contextPath}/assets/js/main.js?v=${applicationScope.assetVersion}" defer></script><link href="${pageContext.request.contextPath}/assets/css/main.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard.css?v=${applicationScope.assetVersion}" rel="stylesheet">
     <link href="${pageContext.request.contextPath}/assets/css/dashboard-refined.css?v=${applicationScope.assetVersion}" rel="stylesheet">
+    <link href="${pageContext.request.contextPath}/assets/css/discussion-mobile.css?v=${applicationScope.assetVersion}" rel="stylesheet">
 </head><body class="dashboard-body ${sessionScope.role eq 'ADMIN' ? 'discussion-admin-mode' : ''}">
 <header class="mobile-header">
     <a class="dashboard-brand" href="${pageContext.request.contextPath}/home"><span>S</span> StudentHub</a>
